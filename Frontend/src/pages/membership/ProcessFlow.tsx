@@ -1,5 +1,5 @@
-import { ProcessStep } from "./ProcessStep";
-import { ProcessArrow } from "./ProcessArrow";
+import { ProcessStep } from "../../components/ui/ProcessStep";
+import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 export const ProcessFlow = () => {
