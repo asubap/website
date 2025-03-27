@@ -119,6 +119,15 @@ const Navbar: React.FC<NavbarProps> = ({
     objectFit: "contain" as const,
   };
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const heroSection = document.getElementById("hero");
+    if (heroSection) {
+      heroSection.scrollIntoView({ behavior: "smooth" });
+    }
+    if (onClick) onClick();
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
       <div
@@ -133,8 +142,8 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between pt-4 pb-4 px-4 sm:px-8 lg:px-12">
           <div
             className="flex items-center"
-            onClick={onClick}
-            style={{ cursor: onClick ? "pointer" : "default" }}
+            onClick={handleLogoClick}
+            style={{ cursor: "pointer" }}
           >
             <Link to="/" className="font-semibold text-xl flex items-center">
               <img

@@ -15,6 +15,18 @@ export default function Homepage() {
     { name: "Log In", href: "/login" },
   ];
 
+  // Define social links for Footer
+  const socialLinks = [
+    {
+      name: "linkedin" as const,
+      href: "https://www.linkedin.com/company/bap-betatauchapter/",
+    },
+    {
+      name: "instagram" as const,
+      href: "https://www.instagram.com/asubap/",
+    },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Add padding-top to account for fixed navbar */}
@@ -31,7 +43,11 @@ export default function Homepage() {
           <InstagramEmbed />
           <ApplyButton />
         </main>
-        <Footer backgroundColor="#AF272F" />
+        <Footer
+          backgroundColor="#AF272F"
+          socialLinks={socialLinks}
+          navLinks={navLinks}
+        />
       </div>
     </div>
   );
