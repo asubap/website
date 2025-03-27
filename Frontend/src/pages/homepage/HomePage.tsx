@@ -1,5 +1,9 @@
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
+import Hero from "../../components/Hero/Hero";
+import WhoWeAre from "../../components/Hero/WhoWeAre";
+import InstagramEmbed from "../../components/ui/InstagramEmbed";
+import ApplyButton from "../../components/ui/ApplyButton";
 
 export default function Homepage() {
   // Define navigation links to pass to Navbar
@@ -14,7 +18,7 @@ export default function Homepage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Add padding-top to account for fixed navbar */}
-      <div className="pt-24">
+      <div>
         <Navbar
           links={navLinks}
           title="Beta Alpha Psi | Beta Tau Chapter"
@@ -22,7 +26,10 @@ export default function Homepage() {
           outlineColor="#AF272F"
         />
         <main className="flex-grow">
-          {/* Your homepage content goes here */}
+          <Hero />
+          <WhoWeAre />
+          <InstagramEmbed />
+          <ApplyButton />
         </main>
         <Footer backgroundColor="#AF272F" />
       </div>
