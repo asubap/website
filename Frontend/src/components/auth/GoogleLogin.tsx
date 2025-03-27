@@ -19,8 +19,7 @@ const GoogleLogin = () => {
             // Get the session after successful login
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                setUser(session.user);
-                console.log(session.user.phone);
+                setUser(session.access_token);
             }
         } catch (error) {
             console.error('Error logging in with Google:', error);
