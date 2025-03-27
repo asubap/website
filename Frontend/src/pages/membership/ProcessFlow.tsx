@@ -1,16 +1,16 @@
-import { ProcessStep } from "./ProcessStep";
-import { ProcessArrow } from "./ProcessArrow";
-import Navbar from "../layout/Navbar";
-import Footer from "../layout/Footer";
+import { ProcessStep } from "../../components/ui/ProcessStep";
+import { ProcessArrow } from "../../components/ui/ProcessArrow";
+import Navbar from "../../components/layout/Navbar";
+import Footer from "../../components/layout/Footer";
 export const ProcessFlow = () => {
-    const navLinks = [
-        { name: "About Us", href: "/about" },
-        { name: "Our Sponsors", href: "/sponsors" },
-        { name: "Events", href: "/events" },
-        { name: "Membership", href: "/membership" },
-        { name: "Log In", href: "/login" },
-      ];
-    const steps = [
+  const navLinks = [
+    { name: "About Us", href: "/about" },
+    { name: "Our Sponsors", href: "/sponsors" },
+    { name: "Events", href: "/events" },
+    { name: "Membership", href: "/membership" },
+    { name: "Log In", href: "/login" },
+  ];
+  const steps = [
     {
       title: "W.P. Carey Student",
       requirements: [
@@ -42,23 +42,25 @@ export const ProcessFlow = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Navbar links={navLinks}
-          title="Beta Alpha Psi | Beta Tau Chapter"
-          backgroundColor="#FFFFFF"
-          outlineColor="#AF272F"/>
+      <Navbar
+        links={navLinks}
+        title="Beta Alpha Psi | Beta Tau Chapter"
+        backgroundColor="#FFFFFF"
+        outlineColor="#AF272F"
+      />
 
-    <main className="flex flex-col items-center mt-10 px-5 py-10 max-sm:py-5">
+      <main className="flex flex-col items-center mt-10 px-5 py-10 max-sm:py-5">
         <div className="flex justify-between items-start w-full max-w-[1400px] max-md:flex-col max-md:gap-10">
-            {steps.map((step, index) => (
-              <div key={index} className="flex flex-1 items-start">
-                <ProcessStep {...step} />
-                {index < steps.length - 1 && (
-                    <div className="flex mt-80">
-                      <ProcessArrow />
-                    </div>
-                )}
-              </div>
-            ))}
+          {steps.map((step, index) => (
+            <div key={index} className="flex flex-1 items-start">
+              <ProcessStep {...step} />
+              {index < steps.length - 1 && (
+                <div className="flex mt-80">
+                  <ProcessArrow />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         <button
@@ -77,9 +79,7 @@ export const ProcessFlow = () => {
           completed to reach member status.
         </div>
       </main>
-    <Footer backgroundColor="#AF272F"/>
-      
+      <Footer backgroundColor="#AF272F" />
     </div>
-    
   );
 };
