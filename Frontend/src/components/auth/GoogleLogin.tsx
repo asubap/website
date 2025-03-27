@@ -1,8 +1,32 @@
+import { supabase } from "../../context/auth/supabaseClient";
+import { useAuth } from "../../context/auth/authProvider";
+import { useState } from "react";
+
 const GoogleLogin = () => {
-    const handleGoogleLogin = () => {
-        console.log('Google login');
-    }
-    
+    const { user, setUser } = useAuth();
+
+    const handleGoogleLogin = async () => {
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/dashboard`
+                }
+            });
+            
+            if (error) throw error;
+            
+            // Get the session after successful login
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                setUser(session.user);
+                console.log(session.user);
+            }
+        } catch (error) {
+            console.error('Error logging in with Google:', error);
+        }
+    };
+
     return (
         <div className="flex flex-col items-center gap-4 p-8">
             <h1 className="text-4xl font-bold font-arial">Welcome Back<span className="text-bapred">.</span></h1>
