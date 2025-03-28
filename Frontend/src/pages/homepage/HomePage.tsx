@@ -2,8 +2,6 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import Hero from "../../components/Hero/Hero";
 import WhoWeAre from "../../components/Hero/WhoWeAre";
-import InstagramEmbed from "../../components/ui/InstagramEmbed";
-import ApplyButton from "../../components/ui/ApplyButton";
 
 export default function Homepage() {
   // Define navigation links to pass to Navbar
@@ -40,8 +38,6 @@ export default function Homepage() {
         <main className="flex-grow">
           <Hero />
           <WhoWeAre />
-          <InstagramEmbed />
-          <ApplyButton />
         </main>
         <Footer
           backgroundColor="#AF272F"

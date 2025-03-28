@@ -114,8 +114,8 @@ const Navbar: React.FC<NavbarProps> = ({
 
   // Logo style to ensure consistent sizing
   const logoStyle = {
-    width: "40px",
-    height: "40px",
+    width: "64px",
+    height: "64px",
     objectFit: "contain" as const,
   };
 
@@ -139,7 +139,7 @@ const Navbar: React.FC<NavbarProps> = ({
           isNavbarVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <div className="flex items-center justify-between pt-4 pb-4 px-4 sm:px-8 lg:px-12">
+        <div className="flex items-center justify-between pt-4 pb-4 px-8 sm:px-16 lg:px-24">
           <div
             className="flex items-center"
             onClick={handleLogoClick}
@@ -152,8 +152,12 @@ const Navbar: React.FC<NavbarProps> = ({
                 style={logoStyle}
                 className="mr-3"
               />
-              <span className="block md:hidden">BAP</span>
-              <span className="hidden md:block">{title}</span>
+              <div className="flex flex-col">
+                <span className="block text-xl">{title}</span>
+                <span className="block text-sm text-[#AF272F]">
+                  Arizona State University
+                </span>
+              </div>
             </Link>
           </div>
           <div className="hidden md:flex space-x-6 z-10">
