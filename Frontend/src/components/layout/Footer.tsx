@@ -46,7 +46,7 @@ const Footer: React.FC<FooterProps> = ({
 }) => {
   return (
     <footer style={{ backgroundColor }} className="text-white w-full">
-      <div className="pt-4 pb-4 px-4 sm:px-8 lg:px-12">
+      <div className="pt-4 pb-4 px-8 sm:px-16 lg:px-24">
         <div className="flex flex-col">
           {/* Main Row */}
           <div className="flex items-center justify-between">
