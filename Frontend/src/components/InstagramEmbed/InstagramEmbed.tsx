@@ -25,7 +25,7 @@ export default function InstagramEmbed() {
 
   return (
     <section className="py-16 px-4 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+      <div className="flex items-center justify-between pt-4 pb-4 px-8 sm:px-16 lg:px-24">
         <div className="bg-white p-8 rounded-lg shadow-sm">
           <h2 className="text-2xl font-bold text-center mb-8">
             Follow Us on Instagram
