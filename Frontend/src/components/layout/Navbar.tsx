@@ -153,7 +153,9 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="mr-3"
               />
               <div className="flex flex-col">
-                <span className="block text-xl">{title}</span>
+                <span className="block text-xl">
+                  {isSmallScreen ? "BAP | Beta Tau Chapter" : title}
+                </span>
                 <span className="block text-sm text-[#AF272F]">
                   Arizona State University
                 </span>
@@ -214,27 +216,28 @@ const Navbar: React.FC<NavbarProps> = ({
               : "none",
         }}
       >
-        {/* Close (X) button - appears with the menu */}
-        <button
-          onClick={toggleMenu}
-          className="absolute top-8 right-8 text-black focus:outline-none"
-          aria-label="Close menu"
-        >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        {/* Close (X) button - only visible on small screens */}
+        {isSmallScreen && (
+          <button
+            onClick={toggleMenu}
+            className="absolute top-6 right-6 text-black focus:outline-none p-1"
+            aria-label="Close menu"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
         <div className="flex flex-col space-y-8 p-4 items-center pt-20">
           <ul className="space-y-8 text-center text-xl">
             {links.map((link) => (
