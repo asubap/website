@@ -36,15 +36,15 @@ export default function AboutPage() {
         outlineColor="#AF272F"
       />
 
-      <main className="flex-grow mt-24 mb-12 px-4 py-4sm:px-8 lg:px-24">
-        <section className="pt-8">
-          <h1 className="text-4xl font-bold font-arial text-[#AF272F] mb-4">
+      <main className="flex-grow mt-16 sm:mt-20 md:mt-24 mb-8 sm:mb-12 px-8 sm:px-16 lg:px-24">
+        <section className="pt-4 sm:pt-8">
+          <h1 className="text-3xl sm:text-4xl font-bold font-arial text-[#AF272F] mb-4">
             About Us
           </h1>
 
           {/* Introduction */}
-          <div className="mb-10">
-            <p className="text-gray-800 font-pt-serif text-md">
+          <div className="mb-6 sm:mb-10">
+            <p className="text-gray-800 font-pt-serif text-base sm:text-md">
               Founded in 1919, Beta Alpha Psi is an honors organization for
               financial information students and professionals. There are over
               300 chapters on college and university campuses, with over 300,000
@@ -73,22 +73,22 @@ export default function AboutPage() {
           </div>
 
           {/* First Row: Vision/Mission and Video */}
-          <div className="grid md:grid-cols-2 gap-10 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mb-8 md:mb-12">
             {/* Vision & Mission (Left Column) */}
-            <div>
-              <h2 className="text-2xl font-bold font-arial text-[#AF272F] mb-4">
+            <div className="order-2 md:order-1">
+              <h2 className="text-xl sm:text-2xl font-bold font-arial text-[#AF272F] mb-3 sm:mb-4 mt-6 md:mt-0">
                 Vision
               </h2>
-              <p className="text-gray-800 mb-6 font-pt-serif text-md">
+              <p className="text-gray-800 mb-4 sm:mb-6 font-pt-serif text-base sm:text-md">
                 Beta Alpha Psi will shape the financial and business information
                 professions by developing members into ethical, professional,
                 and confident leaders.
               </p>
 
-              <h2 className="text-2xl font-bold font-arial text-[#AF272F] mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold font-arial text-[#AF272F] mb-3 sm:mb-4">
                 Mission
               </h2>
-              <p className="text-gray-800 font-pt-serif text-md">
+              <p className="text-gray-800 font-pt-serif text-base sm:text-md">
                 The mission of Beta Alpha Psi, the premier international honor
                 and service organization for financial and business information
                 students and professionals, is to inspire and support excellence
@@ -101,7 +101,7 @@ export default function AboutPage() {
             </div>
 
             {/* Vimeo Video (Right Column) */}
-            <div className="bg-gray-100 rounded-lg overflow-hidden">
+            <div className="bg-gray-100 rounded-lg overflow-hidden order-1 md:order-2">
               <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
                 <iframe
                   src="https://player.vimeo.com/video/84151038?h=ecba82566f&color=AF272F&title=0&byline=0&portrait=0"
@@ -122,9 +122,9 @@ export default function AboutPage() {
           </div>
 
           {/* Second Row: Map and Chapter Info */}
-          <div className="grid md:grid-cols-2 gap-10 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mb-8 md:mb-12">
             {/* Map (Left Column) */}
-            <div>
+            <div className="md:pr-4">
               <img
                 src={BAPMap}
                 alt="Beta Alpha Psi Chapter Map with ASU Beta Tau Chapter highlighted"
@@ -134,35 +134,35 @@ export default function AboutPage() {
 
             {/* Beta Tau Chapter Info (Right Column) */}
             <div>
-              <p className="text-gray-800 mb-4 font-pt-serif text-md">
+              <p className="text-gray-800 mb-4 font-pt-serif text-base sm:text-md mt-4 md:mt-0">
                 The Beta Tau chapter at Arizona State University was established
                 in 2005 as the 65th chapter of Beta Alpha Psi. With over 900
                 alumni, the Beta Tau chapter was created a vast alumni network
                 among a variety of accounting firms, Fortune 500 companies and
                 small businesses across the US and the world.
               </p>
-              <p className="text-gray-800 mb-4 font-pt-serif text-md">
+              <p className="text-gray-800 mb-4 font-pt-serif text-base sm:text-md">
                 The Beta Tau chapter holds a mixture of different service and
                 professional events throughout the semester to prepare our
                 members for a future in the accounting, finance, and information
                 systems industries. Examples of events include:
               </p>
 
-              <ul className="list-disc pl-6 mb-4 space-y-4">
-                <li className="text-gray-800 font-pt-serif text-md">
+              <ul className="list-disc pl-4 sm:pl-6 mb-4 space-y-3 sm:space-y-4">
+                <li className="text-gray-800 font-pt-serif text-base sm:text-md">
                   <span className="font-bold">Meet the Firms:</span> A privately
                   held event where BAP members have a chance to directly meet
                   with recruiters from several firms before W.P. Carey's Meet
                   the Firms, giving BAP members a more personal and earlier
                   exposure before all other ASU students.
                 </li>
-                <li className="text-gray-800 font-pt-serif text-md">
+                <li className="text-gray-800 font-pt-serif text-base sm:text-md">
                   <span className="font-bold">Professional Panels:</span> Firm
                   presentations where BAP members can learn more about different
                   professional topics, services firms provide, firm culture, as
                   well as job/internship opportunities.
                 </li>
-                <li className="text-gray-800 font-pt-serif text-md">
+                <li className="text-gray-800 font-pt-serif text-base sm:text-md">
                   <span className="font-bold">Jumpstart Service Event:</span> A
                   signature event where the Beta Tau chapter hosts local high
                   schools at ASU to teach them about a career opportunities at
