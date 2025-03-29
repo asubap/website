@@ -13,18 +13,6 @@ export default function AboutPage() {
     { name: "Log In", href: "/login" },
   ];
 
-  // Define social links for Footer
-  const socialLinks = [
-    {
-      name: "linkedin" as const,
-      href: "https://www.linkedin.com/company/bap-betatauchapter/",
-    },
-    {
-      name: "instagram" as const,
-      href: "https://www.instagram.com/asubap/",
-    },
-  ];
-
   // Load Vimeo embed script
   useEffect(() => {
     const script = document.createElement("script");
@@ -186,11 +174,7 @@ export default function AboutPage() {
         </section>
       </main>
 
-      <Footer
-        backgroundColor="#AF272F"
-        socialLinks={socialLinks}
-        navLinks={navLinks}
-      />
+      <Footer backgroundColor="#AF272F" />
     </div>
   );
 }

@@ -55,7 +55,7 @@ export const ProcessFlow = () => {
             <div key={index} className="flex flex-1 items-start">
               <ProcessStep {...step} />
               {index < steps.length - 1 && (
-                <div className="flex mt-80">
+                <div className="flex mt-20">
                   <ProcessArrow />
                 </div>
               )}

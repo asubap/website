@@ -59,7 +59,7 @@ export default function WhoWeAre() {
         </div>
 
         {/* Instagram Embed */}
-        <div className="flex justify-center" ref={containerRef}>
+        <div className="flex justify-end" ref={containerRef}>
           <blockquote
             className="instagram-media"
             data-instgrm-permalink="https://www.instagram.com/asubap/?utm_source=ig_embed&amp;utm_campaign=loading"

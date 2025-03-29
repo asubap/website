@@ -2,16 +2,6 @@ import { Link } from "react-router-dom";
 
 interface FooterProps {
   backgroundColor: string;
-  socialLinks: {
-    name: "linkedin" | "instagram";
-    href: string;
-    onClick?: () => void;
-  }[];
-  navLinks: {
-    name: string;
-    href: string;
-    onClick?: () => void;
-  }[];
 }
 
 const socialIcons = {
@@ -39,11 +29,24 @@ const socialIcons = {
   ),
 };
 
-const Footer: React.FC<FooterProps> = ({
-  backgroundColor,
-  socialLinks,
-  navLinks,
-}) => {
+// Static navigation and social links
+const staticNavLinks = [
+  { name: "About Us", href: "/about" },
+  { name: "Our Sponsors", href: "/sponsors" },
+  { name: "Events", href: "/events" },
+  { name: "Membership", href: "/membership" },
+  { name: "Log In", href: "/login" },
+];
+
+const staticSocialLinks = [
+  {
+    name: "linkedin",
+    href: "https://www.linkedin.com/company/beta-alpha-psi-beta-tau",
+  },
+  { name: "instagram", href: "https://www.instagram.com/asubap" },
+];
+
+const Footer: React.FC<FooterProps> = ({ backgroundColor }) => {
   return (
     <footer style={{ backgroundColor }} className="text-white w-full">
       <div className="pt-4 pb-4 px-8 sm:px-16 lg:px-24">
@@ -52,27 +55,25 @@ const Footer: React.FC<FooterProps> = ({
           <div className="flex items-center justify-between">
             {/* Social Links */}
             <div className="flex items-center space-x-4">
-              {socialLinks.map((link) => (
+              {staticSocialLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
                   target="_blank"
                   className="hover:opacity-80 transition-opacity"
-                  onClick={link.onClick}
                 >
-                  {socialIcons[link.name]}
+                  {socialIcons[link.name as keyof typeof socialIcons]}
                 </Link>
               ))}
             </div>
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-6">
-              {navLinks.map((link) => (
+              {staticNavLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
                   className="text-white hover:opacity-80 transition-opacity"
-                  onClick={link.onClick}
                 >
                   {link.name}
                 </Link>
