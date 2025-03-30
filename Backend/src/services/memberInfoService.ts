@@ -4,9 +4,9 @@ import extractEmail from "../utils/extractEmail";
 
 export class MemberInfoService {
     private supabase: SupabaseClient;
-    token: string = "eyJhbGciOiJIUzI1NiIsImtpZCI6InEvSXoxMWpvWFdJd1ZqVkMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3B0Y2hydGJveXpiZ2d1Zm91aHh5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiMDA0NzYyZC0xN2JiLTRhNjQtYWQzZS02ZDY0YzgxMjBiZmEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzQzMzcwMDk2LCJpYXQiOjE3NDMzNjY0OTYsImVtYWlsIjoiYWFiaGlsYXNAYXN1LmVkdSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZ29vZ2xlIiwicHJvdmlkZXJzIjpbImdvb2dsZSJdfSwidXNlcl9tZXRhZGF0YSI6eyJhdmF0YXJfdXJsIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTHlzSGFXNms1Y05GNUVaWVMwTDJHZ2xVV19XdUJyY2JETF9DbTlVSi1JVWhFdzhzVT1zOTYtYyIsImN1c3RvbV9jbGFpbXMiOnsiaGQiOiJhc3UuZWR1In0sImVtYWlsIjoiYWFiaGlsYXNAYXN1LmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmdWxsX25hbWUiOiJBYmhhdmUgQWJoaWxhc2giLCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYW1lIjoiQWJoYXZlIEFiaGlsYXNoIiwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTHlzSGFXNms1Y05GNUVaWVMwTDJHZ2xVV19XdUJyY2JETF9DbTlVSi1JVWhFdzhzVT1zOTYtYyIsInByb3ZpZGVyX2lkIjoiMTA5OTQxOTE0Njc4OTgxNjkzNzE5Iiwic3ViIjoiMTA5OTQxOTE0Njc4OTgxNjkzNzE5In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoib2F1dGgiLCJ0aW1lc3RhbXAiOjE3NDMzNjY0OTZ9XSwic2Vzc2lvbl9pZCI6IjE0NGJhNmJkLWRkMWEtNDBkYi04YWRkLWVkNWM0MTI1ZTAwYSIsImlzX2Fub255bW91cyI6ZmFsc2V9.eOyVwc3iMiJ3RgjRkEPTWpV-RI4uE24uRb-Sd0PxvGk"
+    
     constructor() {
-        this.supabase = createSupabaseClient(this.token);
+        this.supabase = createSupabaseClient();
     }
 
     /**
@@ -45,8 +45,6 @@ export class MemberInfoService {
             .ilike('search_text', `%${search_query}%`)
 
         if (error) throw error;
-
-        console.log(data);
 
 
 

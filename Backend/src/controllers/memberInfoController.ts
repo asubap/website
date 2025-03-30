@@ -68,7 +68,6 @@ export class MemberInfoController {
 
             // search for query related to the member info table
             const memberInfo = await this.memberInfoService.search(search_query);
-            console.log(memberInfo);
 
 
             res.status(200).json(memberInfo);
