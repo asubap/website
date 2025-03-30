@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import userRoleRoutes from "./roles";
-import authRoutes from "./auth";
+import memberInfoRoutes from "./memberInfo";
 
 const router = Router();
 
@@ -9,6 +9,6 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 router.use("/roles", userRoleRoutes);
-router.use("/auth", authRoutes);
+router.use("/member-info", memberInfoRoutes);
 
 export default router;
