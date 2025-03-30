@@ -1,11 +1,11 @@
-import Navbar from "../../components/layout/Navbar";
+
 import Footer from "../../components/layout/Footer";
-import { useAuth } from "../../context/auth/authProvider";
+
 import { useEffect, useState } from "react";
 import { supabase } from "../../context/auth/supabaseClient";
 
 export default function AuthHome() {
-    const { user } = useAuth();
+    
     const [userDetails, setUserDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     
