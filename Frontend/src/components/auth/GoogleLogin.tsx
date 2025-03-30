@@ -4,14 +4,13 @@ import { useAuth } from "../../context/auth/authProvider";
 
 const GoogleLogin = () => {
     const { user, setUser } = useAuth();
+    const redirectTo = import.meta.env.VITE_ENV_STATE === 'development' ? 'http://localhost:5173/auth/Home' : `https://frontend-iota-gules-58.vercel.app/auth/Home`;
 
     const handleGoogleLogin = async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/Home`
-                }
+                options: {redirectTo: redirectTo}
             });
             
             if (error) throw error;
