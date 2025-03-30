@@ -6,13 +6,13 @@ import LogInPage from "./pages/login/LoginPage";
 import { AuthProvider } from "./context/auth/authProvider";
 import AuthHome from "./pages/homepage/AuthHome";
 import { useAuth } from "./context/auth/authProvider";
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 function App() {
   // Protected route example
   const ProtectedRoute = () => {
     const {loading} = useAuth();
     if (loading) return <p>Loading...</p>;
-    return <Outlet/>;
+    return user ? <Outlet/> : <Navigate to="/login" replace/>;
   }
   return (
     <>
