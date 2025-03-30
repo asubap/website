@@ -1,13 +1,13 @@
 import { supabase } from "../../context/auth/supabaseClient";
 import { useAuth } from "../../context/auth/authProvider";
-import { useState } from "react";
+
 
 const GoogleLogin = () => {
     const { user, setUser } = useAuth();
 
     const handleGoogleLogin = async () => {
         try {
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/auth/Home`
