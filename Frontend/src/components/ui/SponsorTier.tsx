@@ -16,7 +16,9 @@ const SponsorTier: React.FC<SponsorTierProps> = ({ tier, children }) => {
 
   return (
     <section className="mb-16 w-full max-w-7xl mx-auto px-4">
-      <h2 className={`text-4xl font-bold ${tierColors[tier]} text-center mb-8`}>
+      <h2
+        className={`text-4xl font-bold font-arial ${tierColors[tier]} text-center mb-8`}
+      >
         {tier}
       </h2>
       <div className="flex flex-wrap justify-center items-center gap-4">
