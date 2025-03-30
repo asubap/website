@@ -6,7 +6,7 @@ import LogInPage from "./pages/login/LoginPage";
 import { AuthProvider } from "./context/auth/authProvider";
 import AuthHome from "./pages/homepage/AuthHome";
 import { useAuth } from "./context/auth/authProvider";
-import { Navigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 function App() {
   // Protected route example
   const ProtectedRoute = () => {
