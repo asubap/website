@@ -110,6 +110,12 @@ export class MemberInfoController {
     }
 
 
+    /**
+     * Edit member bio
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async editMemberBio(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -136,6 +142,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Edit member internship
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async editMemberInternship(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -162,6 +174,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Delete member
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async deleteMember(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -189,6 +207,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Add member
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async addMember(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -216,6 +240,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Edit member first name
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async editMemberFirstName(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -243,6 +273,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Edit member last name
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async editMemberLastName(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -270,6 +306,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Edit member year
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async editMemberYear(req: Request, res: Response) {
         try {
             const token = extractToken(req);
@@ -297,6 +339,12 @@ export class MemberInfoController {
         }
     }
 
+    /**
+     * Edit member major
+     * @param req 
+     * @param res 
+     * @returns the updated member info
+     */
     async editMemberMajor(req: Request, res: Response) {
         try {
             const token = extractToken(req);
