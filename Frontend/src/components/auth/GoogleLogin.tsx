@@ -10,7 +10,7 @@ const GoogleLogin = () => {
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}`
+                    redirectTo: `${window.location.origin}/auth/Home`
                 }
             });
             
@@ -18,7 +18,9 @@ const GoogleLogin = () => {
             
             // Get the session after successful login
             const { data: { session } } = await supabase.auth.getSession();
+            console.log(session);
             if (session) {
+                console.log(user);
                 setUser(session.access_token);
             }
         } catch (error) {
