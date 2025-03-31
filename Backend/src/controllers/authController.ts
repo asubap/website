@@ -4,7 +4,7 @@ import { db } from "../config/db";
 class AuthController {
     signInWithGoogle = async (req: Request, res: Response): Promise<void> => {
         try {
-            const { data, error } = await db.auth.signInWithOAuth({
+            const { data, error } = await db().auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: 'http://localhost:3000/auth/callback'

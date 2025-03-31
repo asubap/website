@@ -1,6 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import { createSupabaseClient } from '../config/db';
+import { db } from '../config/db';
 
 dotenv.config();
 
@@ -11,7 +11,7 @@ export default class UserRoleService {
      * Constructor for the UserRoleService
      */
     constructor() {
-        this.supabase = createSupabaseClient();
+        this.supabase = db();
     }
 
     /**
@@ -20,7 +20,7 @@ export default class UserRoleService {
      */
     setToken(token: string) {
         if (!token) return;
-        this.supabase = createSupabaseClient(token);
+        this.supabase = db(token);
     }
 
     /**
