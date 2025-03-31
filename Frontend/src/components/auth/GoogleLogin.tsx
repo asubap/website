@@ -1,24 +1,25 @@
 import { supabase } from "../../context/auth/supabaseClient";
 import { useAuth } from "../../context/auth/authProvider";
-import { useState } from "react";
+
 
 const GoogleLogin = () => {
     const { user, setUser } = useAuth();
+    const redirectTo = import.meta.env.VITE_ENV_STATE === 'development' ? 'http://localhost:5173/auth/Home' : `https://frontend-iota-gules-58.vercel.app/auth/Home`;
 
     const handleGoogleLogin = async () => {
         try {
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}`
-                }
+                options: {redirectTo: redirectTo}
             });
             
             if (error) throw error;
             
             // Get the session after successful login
             const { data: { session } } = await supabase.auth.getSession();
+            console.log(session);
             if (session) {
+                console.log(user);
                 setUser(session.access_token);
             }
         } catch (error) {
@@ -38,7 +39,6 @@ const GoogleLogin = () => {
 }
 
 export default GoogleLogin;
-
 
 
 

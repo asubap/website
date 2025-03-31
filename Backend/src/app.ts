@@ -1,25 +1,22 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import protectedRouter from './routes/protected';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import routes from './routes';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors({
-    origin: process.env.FRONTEND_URL, 
-    credentials: true,
-}));
+app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Public route
-app.get('/', (req, res) => {
-  res.send('Hello, Backend!');
-});
-
-// Protected route example
-app.use('/api/protected', protectedRouter);
+// Mount all routes
+app.use('/', routes);
 
 export default app;
