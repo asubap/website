@@ -46,26 +46,7 @@ const LogInPage = () => {
           </div>
         </main>
 
-        <Footer
-          backgroundColor="#AF272F"
-          socialLinks={[
-            {
-              name: "linkedin" as const,
-              href: "https://www.linkedin.com/company/bap-betatauchapter/",
-            },
-            {
-              name: "instagram" as const,
-              href: "https://www.instagram.com/asubap/",
-            },
-          ]}
-          navLinks={[
-            { name: "About Us", href: "/about" },
-            { name: "Our Sponsors", href: "/sponsors" },
-            { name: "Events", href: "/events" },
-            { name: "Membership", href: "/membership" },
-            { name: "Log In", href: "/login" },
-          ]}
-        />
+        <Footer backgroundColor="#AF272F" />
       </div>
     </div>
   );
