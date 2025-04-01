@@ -133,7 +133,7 @@ const Navbar: React.FC<NavbarProps> = ({
       <div
         style={{
           backgroundColor: backgroundColor || "#FFFFFF",
-          borderBottom: outlineColor ? `2px solid ${outlineColor}` : "none",
+          borderBottom: outlineColor ? `3px solid ${outlineColor}` : "none",
         }}
         className={`text-black transition-transform duration-300 transform ${
           isNavbarVisible ? "translate-y-0" : "-translate-y-full"

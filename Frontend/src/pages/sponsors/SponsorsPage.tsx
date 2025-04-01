@@ -161,10 +161,10 @@ export default function SponsorsPage() {
       />
 
       <main className="flex-grow container mx-auto px-4 mt-24 flex flex-col items-center">
-        <h1 className="text-5xl font-arial font-bold text-bapred text-center mb-12 pt-4 sm:pt-8">
+        <h1 className="text-5xl font-arial font-bold text-bapred text-center pt-4 sm:pt-8">
           Our Sponsors
         </h1>
-        <p className="text-center text-bapgray text-xl mb-16 max-w-3xl mx-auto">
+        <p className="text-center text-bapgray text-xl pt-4 pb-4 px-8 sm:px-16 lg:px-24">
           We would like to thank all of our sponsors for their generous support
           of Beta Alpha Psi. Their contributions help us provide valuable
           professional development opportunities for our members.
