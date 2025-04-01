@@ -7,6 +7,9 @@ import { AuthProvider } from "./context/auth/authProvider";
 import AuthHome from "./pages/homepage/AuthHome";
 import { useAuth } from "./context/auth/authProvider";
 import { Navigate, Outlet } from "react-router-dom";
+
+import SponsorHome from "./pages/sponsor/SponsorHome";
+
 function App() {
   // Protected route example
   const ProtectedRoute = () => {
@@ -25,6 +28,9 @@ function App() {
           <Route element = {<ProtectedRoute/>}>
             <Route path="/auth/Home" element={<AuthHome />} />
           </Route>
+
+          {/* sponsor routes, not yet auth for testing purposes */}
+          <Route path="/sponsor" element={<SponsorHome />} />
         </Routes>
       </Router>
     </AuthProvider>
