@@ -22,21 +22,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session) {
         // Fetch user role
         const token = session.access_token;
-        const response = await fetch("https://asubap-backend.vercel.app/roles", {
+        fetch("https://asubap-backend.vercel.app/roles", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ user_email: session.user.email }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setRole(data[0].role);
-        } else {
-          console.error("Failed to fetch role:", response.status);
-        }
+        }).then((response) => response.json())
+          .then((data) => setRole(data[0].role))
+          .catch((error) => console.error("Error fetching role:", error));
       }
     };
 

@@ -9,6 +9,7 @@ export default {
       colors: {
         bapgray: "#818181",
         bapred: "#AF272F",
+        bapreddark: "#921F26",
         baptan: "#C5C19D",
       },
       fontFamily: {
