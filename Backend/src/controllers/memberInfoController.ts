@@ -97,9 +97,9 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_email, bio, internship, first_name, last_name, year, major } = req.body;
+            const { user_email, bio, internship, first_name, last_name, year, major, contact_me } = req.body;
 
-            if (!user_email || !bio || !internship || !first_name || !last_name || !year || !major) {
+            if (!user_email || !bio || !internship || !first_name || !last_name || !year || !major || !contact_me) {
                 res.status(400).json({ error: 'User email and all fields are required' });
                 return;
             }
@@ -107,7 +107,7 @@ export class MemberInfoController {
             const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member info
-            const memberInfo = await this.memberInfoService.editMemberInfo(user_id, bio, internship, first_name, last_name, year, major);
+            const memberInfo = await this.memberInfoService.editMemberInfo(user_id, bio, internship, first_name, last_name, year, major, contact_me);
 
             res.status(200).json(memberInfo);
         } catch (error) {

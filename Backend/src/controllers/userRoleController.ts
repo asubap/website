@@ -20,7 +20,6 @@ export default class UserRoleController {
     async getUserRoles(req: Request, res: Response) {
         try {
             const token = extractToken(req);
-            console.log(token);
             if (!token) {
                 res.status(401).json({ error: 'No authorization token provided' });
                 return;
@@ -35,7 +34,6 @@ export default class UserRoleController {
             }
 
             const user_id = await this.userRoleService.getUserID(user_email);
-            console.log(user_id);
 
             const roles = await this.userRoleService.getUserRoles(user_id);
             res.json(roles);
