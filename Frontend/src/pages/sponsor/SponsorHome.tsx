@@ -16,7 +16,7 @@ const SponsorHome = () => {
 
     const [sponsorProfileUrl, setSponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
     const [sponsorName, setSponsorName] = useState("Google");
-    const [sponsorObjective, setSponsorObjective] = useState(["Hiring", "We are looking for vibe coders."]);
+    const [sponsorObjective, setSponsorObjective] = useState("We are looking for vibe coders.");
     const [sponsorDescription, setSponsorDescription] = useState("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec blandit dapibus dolor, id malesuada sapien lacinia non. Aliquam eget mattis tellus. Praesent in elit et velit fringilla feugiat. Donec mauris velit, finibus quis quam vel, rhoncus eleifend odio. Integer a pharetra sem. Duis aliquam felis nec nulla porttitor luctus. Phasellus sed euismod enim, sit amet dignissim nibh. Nulla tempor, felis non consequat imperdiet, nunc metus interdum odio, eget placerat ipsum velit a tortor. Nulla imperdiet mi eu condimentum pharetra. Fusce quam libero, pharetra nec enim nec, ultrices scelerisque est.");
 
     const [sponserOptions, setSponsorOptions] = useState([
@@ -53,7 +53,7 @@ const SponsorHome = () => {
                         </div>
                         {/* Add another column with h-full to balance grid */}
                         <div className="h-full w-full">
-                            <div className="flex flex-col gap-8 h-full">
+                            <div className="flex flex-col gap-12 h-full">
                                 {sponserOptions.map((option, index) => (
                                     <SponsorOption 
                                         key={index} 

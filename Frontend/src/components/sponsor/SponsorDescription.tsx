@@ -1,7 +1,7 @@
 interface SponsorDescriptionProps {
     profileUrl: string;
     name: string;
-    objective: string[];
+    objective: string;
     description: string;
 }
 
@@ -16,7 +16,7 @@ const SponsorDescription: React.FC<SponsorDescriptionProps> = ({ profileUrl, nam
                 <img src={profileUrl} alt="Sponsor Logo" className="w-24 h-24 border-bapred" />
                 <h1 className="text-4xl font-bold">{name}</h1>
             </div>
-            <p><span className="font-bold">{objective[0]}:</span> {objective[1]}</p>
+            <p><span className="font-bold">Hiring:</span> {objective}</p>
             <p><span className="font-bold">About:<br/></span>{description}</p>
             <div className="w-full flex justify-end">    
                 <button onClick={handleEditProfile} className="px-4 py-2 rounded bg-bapred text-white hover:bg-bapreddark transition-colors">Edit Profile</button>
