@@ -15,7 +15,7 @@ POST /api/roles
 **Request Body:**
 ```json
 {
-    "user_id": "string"
+    "user_email": "string"
 }
 ```
 **Response:**
@@ -34,7 +34,7 @@ POST /api/roles/assign-role
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "role": "string" // "e-board", "sponsor", or "general-member"
 }
 ```
@@ -46,7 +46,7 @@ POST /api/roles/remove-role
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "role": "string" // "e-board", "sponsor", or "general-member"
 }
 ```
@@ -69,7 +69,7 @@ POST /api/member-info/edit-member-info
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "bio": "string",
     "internship": "string",
     "first_name": "string",
@@ -98,7 +98,7 @@ POST /api/member-info/edit-member-bio
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "bio": "string"
 }
 ```
@@ -122,7 +122,7 @@ POST /api/member-info/edit-member-internship
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "internship": "string"
 }
 ```
@@ -146,7 +146,7 @@ POST /api/member-info/edit-member-first-name
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "first_name": "string"
 }
 ```
@@ -170,7 +170,7 @@ POST /api/member-info/edit-member-last-name
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "last_name": "string"
 }
 ```
@@ -194,7 +194,7 @@ POST /api/member-info/edit-member-year
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "year": "string"
 }
 ```
@@ -218,7 +218,7 @@ POST /api/member-info/edit-member-major
 **Request Body:**
 ```json
 {
-    "user_id": "string",
+    "user_email": "string",
     "major": "string"
 }
 ```
@@ -242,7 +242,7 @@ POST /api/member-info/delete-member
 **Request Body:**
 ```json
 {
-    "user_id": "string"
+    "user_email": "string"
 }
 ```
 **Response:**
@@ -265,7 +265,7 @@ POST /api/member-info/add-member
 **Request Body:**
 ```json
 {
-    "user_id": "string"
+    "user_email": "string"
 }
 ```
 **Response:**

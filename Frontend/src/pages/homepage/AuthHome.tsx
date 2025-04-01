@@ -1,6 +1,5 @@
-
 import Footer from "../../components/layout/Footer";
-
+import { useAuth } from "../../context/auth/authProvider";
 import { useEffect, useState } from "react";
 import { supabase } from "../../context/auth/supabaseClient";
 
@@ -8,9 +7,38 @@ export default function AuthHome() {
     
     const [userDetails, setUserDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const {user} = useAuth();
+    let token: string | undefined = "";
     
     // Define navigation links to pass to Navbar
-  
+    const getRoles = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token || "";
+        // Properly format the Authorization header with the Bearer token
+        const response = await fetch('http://localhost:3000/roles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                user_id: userDetails?.id  // The controller expects user_id, not user
+            }),
+        });
+        
+        // Handle the response
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Roles data:", data);
+          return data;
+        } else {
+          console.error("Failed to fetch roles:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    }
     
     useEffect(() => {
       async function getUserData() {
@@ -19,11 +47,13 @@ export default function AuthHome() {
           
           // Get the user session
           const { data: { session } } = await supabase.auth.getSession();
-          
+          token = session?.access_token || "";
           if (session) {
             // Get user details
             const { data: userData } = await supabase.auth.getUser();
             setUserDetails(userData.user);
+            console.log(session);
+            console.log(user)
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -70,6 +100,12 @@ export default function AuthHome() {
                   className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                 >
                   Sign Out
+                </button>
+                <button 
+                onClick={getRoles}
+                  className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                >
+                    Get Roles
                 </button>
               </div>
             )}

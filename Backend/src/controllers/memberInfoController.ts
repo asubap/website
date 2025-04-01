@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import { MemberInfoService } from "../services/memberInfoService";
 import extractToken from "../utils/extractToken";
-
+import UserRoleService from "../services/userRoleService";
 export class MemberInfoController {
     private memberInfoService: MemberInfoService;
+    private userRoleService: UserRoleService;
 
     constructor() {
         this.memberInfoService = new MemberInfoService();
+        this.userRoleService = new UserRoleService();
     }
 
     /**
@@ -26,12 +28,14 @@ export class MemberInfoController {
             this.memberInfoService.setToken(token as string);
 
             // get member user_id
-            const { user_id } = req.body;
+            const { user_email } = req.body;
 
-            if (!user_id) {
-                res.status(400).json({ error: 'User ID is required' });
+            if (!user_email) {
+                res.status(400).json({ error: 'User email is required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // get member info
             const memberInfo = await this.memberInfoService.getMemberInfo(user_id);
@@ -93,12 +97,14 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_id, bio, internship, first_name, last_name, year, major } = req.body;
+            const { user_email, bio, internship, first_name, last_name, year, major } = req.body;
 
-            if (!user_id || !bio || !internship || !first_name || !last_name || !year || !major) {
-                res.status(400).json({ error: 'User ID and all fields are required' });
+            if (!user_email || !bio || !internship || !first_name || !last_name || !year || !major) {
+                res.status(400).json({ error: 'User email and all fields are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member info
             const memberInfo = await this.memberInfoService.editMemberInfo(user_id, bio, internship, first_name, last_name, year, major);
@@ -126,12 +132,14 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_id, bio } = req.body;
+            const { user_email, bio } = req.body;
             
-            if (!user_id || !bio) {
-                res.status(400).json({ error: 'User ID and bio are required' });
+            if (!user_email || !bio) {
+                res.status(400).json({ error: 'User email and bio are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member bio
             const memberInfo = await this.memberInfoService.editMemberBio(user_id, bio);
@@ -158,12 +166,14 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_id, internship } = req.body;
-            
-            if (!user_id || !internship) {
-                res.status(400).json({ error: 'User ID and internship are required' });
+            const { user_email, internship } = req.body;
+
+            if (!user_email || !internship) {
+                res.status(400).json({ error: 'User email and internship are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member internship
             const memberInfo = await this.memberInfoService.editMemberInternship(user_id, internship);
@@ -191,12 +201,14 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_id } = req.body;
+            const { user_email } = req.body;
             
-            if (!user_id) {
-                res.status(400).json({ error: 'User ID is required' });
+            if (!user_email) {
+                res.status(400).json({ error: 'User email is required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // delete member
             const memberInfo = await this.memberInfoService.deleteMember(user_id);
@@ -224,12 +236,14 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_id } = req.body;
+            const { user_email } = req.body;
 
-            if (!user_id) {
-                res.status(400).json({ error: 'User ID is required' });
+            if (!user_email) {
+                res.status(400).json({ error: 'User email is required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // add member
             const memberInfo = await this.memberInfoService.addMember(user_id);
@@ -257,12 +271,14 @@ export class MemberInfoController {
 
             this.memberInfoService.setToken(token);
 
-            const { user_id, first_name } = req.body;
+            const { user_email, first_name } = req.body;
 
-            if (!user_id || !first_name) {
-                res.status(400).json({ error: 'User ID and first name are required' });
+            if (!user_email || !first_name) {
+                res.status(400).json({ error: 'User email and first name are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member first name
             const memberInfo = await this.memberInfoService.editMemberFirstName(user_id, first_name);
@@ -290,12 +306,14 @@ export class MemberInfoController {
             
             this.memberInfoService.setToken(token);
 
-            const { user_id, last_name } = req.body;
+            const { user_email, last_name } = req.body;
 
-            if (!user_id || !last_name) {
-                res.status(400).json({ error: 'User ID and last name are required' });
+            if (!user_email || !last_name) {
+                res.status(400).json({ error: 'User email and last name are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member last name
             const memberInfo = await this.memberInfoService.editMemberLastName(user_id, last_name);
@@ -323,12 +341,14 @@ export class MemberInfoController {
             
             this.memberInfoService.setToken(token);
 
-            const { user_id, year } = req.body;
+            const { user_email, year } = req.body;
 
-            if (!user_id || !year) {
-                res.status(400).json({ error: 'User ID and year are required' });
+            if (!user_email || !year) {
+                res.status(400).json({ error: 'User email and year are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member year
             const memberInfo = await this.memberInfoService.editMemberYear(user_id, year);
@@ -356,12 +376,14 @@ export class MemberInfoController {
             
             this.memberInfoService.setToken(token);
 
-            const { user_id, major } = req.body;
+            const { user_email, major } = req.body;
 
-            if (!user_id || !major) {
-                res.status(400).json({ error: 'User ID and major are required' });
+            if (!user_email || !major) {
+                res.status(400).json({ error: 'User email and major are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             // edit member major
             const memberInfo = await this.memberInfoService.editMemberMajor(user_id, major);

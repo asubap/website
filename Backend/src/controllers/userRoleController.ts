@@ -20,18 +20,22 @@ export default class UserRoleController {
     async getUserRoles(req: Request, res: Response) {
         try {
             const token = extractToken(req);
+            console.log(token);
             if (!token) {
                 res.status(401).json({ error: 'No authorization token provided' });
                 return;
             }
 
             this.userRoleService.setToken(token as string);
-            const { user_id } = req.body;
+            const { user_email } = req.body;
             
-            if (!user_id) {
-                res.status(400).json({ error: 'User ID is required' });
+            if (!user_email) {
+                res.status(400).json({ error: 'User email is required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
+            console.log(user_id);
 
             const roles = await this.userRoleService.getUserRoles(user_id);
             res.json(roles);
@@ -56,12 +60,14 @@ export default class UserRoleController {
             }
 
             this.userRoleService.setToken(token as string);
-            const { user_id, role } = req.body;
+            const { user_email, role } = req.body;
 
-            if (!user_id || !role) {
-                res.status(400).json({ error: 'User ID and role are required' });
+            if (!user_email || !role) {
+                res.status(400).json({ error: 'User email and role are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             const result = await this.userRoleService.assignRole(user_id, role);
 
@@ -92,12 +98,14 @@ export default class UserRoleController {
             }
 
             this.userRoleService.setToken(token as string);
-            const { user_id, role } = req.body;
+            const { user_email, role } = req.body;
 
-            if (!user_id || !role) {
-                res.status(400).json({ error: 'User ID and role are required' });
+            if (!user_email || !role) {
+                res.status(400).json({ error: 'User email and role are required' });
                 return;
             }
+
+            const user_id = await this.userRoleService.getUserID(user_email);
 
             const result = await this.userRoleService.removeRole(user_id, role);
 
@@ -115,23 +123,43 @@ export default class UserRoleController {
     }
 
     /**
-     * Get the session token
+     * Get the session token or Supabase login URL
      * @param req - The request object
      * @param res - The response object
      */
     async getSession(req: Request, res: Response) {
         try {
             const token = extractToken(req);
+            
+            // If no token, return Supabase login URL
             if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
+                const supabaseUrl = process.env.VITE_SUPABASE_URL;
+                const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+                if (!supabaseUrl || !supabaseKey) {
+                    res.status(500).json({ error: 'Supabase configuration missing' });
+                    return;
+                }
+
+                const loginUrl = `${supabaseUrl}/auth/v1/authorize?` +
+                    `provider=google` +
+                    `&redirect_to=${encodeURIComponent(process.env.FRONTEND_URL || 'http://localhost:3000')}`;
+                
+                res.json({ 
+                    loginUrl,
+                    message: 'Please login with Google via Supabase'
+                });
                 return;
             }
 
-            // Return the token for verification
-            res.json({ token });
+            // If token exists, return it
+            res.json({ 
+                token,
+                message: 'Successfully authenticated'
+            });
         } catch (error) {
-            console.error('Error getting session:', error);
-            res.status(500).json({ error: 'Failed to get session' });
+            console.error('Error handling session:', error);
+            res.status(500).json({ error: 'Failed to handle session' });
             return;
         }
     }
