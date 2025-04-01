@@ -9,6 +9,10 @@ import { useAuth } from "./context/auth/authProvider";
 import { Navigate, Outlet } from "react-router-dom";
 import AboutPage from "./pages/about/AboutPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
+
+import SponsorHome from "./pages/sponsor/SponsorHome";
+import SponsorEdit from "./pages/sponsor/SponsorEdit";
+
 function App() {
   // Protected route example
   const ProtectedRoute = () => {
@@ -29,6 +33,9 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/auth/Home" element={<AuthHome />} />
             </Route>
+            {/* sponsor routes, not yet auth for testing purposes */}
+            <Route path="/sponsor" element={<SponsorHome />} />
+            <Route path="/sponsor/edit" element={<SponsorEdit />} />
           </Routes>
         </Router>
       </AuthProvider>
