@@ -33,6 +33,8 @@ export class MemberInfoService {
         return member_info;
     }
 
+   
+
     /**
      * Search for a member
      * @param search_query 
