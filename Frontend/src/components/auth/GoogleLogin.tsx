@@ -1,9 +1,7 @@
 import { supabase } from "../../context/auth/supabaseClient";
-import { useAuth } from "../../context/auth/authProvider";
 
 
 const GoogleLogin = () => {
-    const { user, setUser } = useAuth();
     const redirectTo = import.meta.env.VITE_ENV_STATE === 'development' ? 'http://localhost:5173/auth/Home' : `https://frontend-iota-gules-58.vercel.app/auth/Home`;
 
     const handleGoogleLogin = async () => {
@@ -14,14 +12,6 @@ const GoogleLogin = () => {
             });
             
             if (error) throw error;
-            
-            // Get the session after successful login
-            const { data: { session } } = await supabase.auth.getSession();
-            console.log(session);
-            if (session) {
-                console.log(user);
-                setUser(session.access_token);
-            }
         } catch (error) {
             console.error('Error logging in with Google:', error);
         }
