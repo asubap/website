@@ -1,69 +1,16 @@
 import Footer from "../../components/layout/Footer";
-import { useAuth } from "../../context/auth/authProvider";
-import { useEffect, useState } from "react";
 import { supabase } from "../../context/auth/supabaseClient";
+import { useAuth } from "../../context/auth/authProvider";
 
-export default function AuthHome() {
-    
-    const [userDetails, setUserDetails] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const {user} = useAuth();
-    let token: string | undefined = "";
+export default function AuthHome() {    
+    const { session } = useAuth();
+    const user = session?.user;
+    const { roles } = useAuth(); // Call hooks at the top level
     
     // Define navigation links to pass to Navbar
     const getRoles = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        token = session?.access_token || "";
-        // Properly format the Authorization header with the Bearer token
-        const response = await fetch('http://localhost:3000/roles', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ 
-                user_id: userDetails?.id  // The controller expects user_id, not user
-            }),
-        });
-        
-        // Handle the response
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Roles data:", data);
-          return data;
-        } else {
-          console.error("Failed to fetch roles:", response.status);
-        }
-      } catch (error) {
-        console.error("Error fetching roles:", error);
-      }
+      console.log("User roles:", roles);
     }
-    
-    useEffect(() => {
-      async function getUserData() {
-        try {
-          setLoading(true);
-          
-          // Get the user session
-          const { data: { session } } = await supabase.auth.getSession();
-          token = session?.access_token || "";
-          if (session) {
-            // Get user details
-            const { data: userData } = await supabase.auth.getUser();
-            setUserDetails(userData.user);
-            console.log(session);
-            console.log(user)
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-      
-      getUserData();
-    }, []);
 
     const handleSignOut = async () => {
       await supabase.auth.signOut();
@@ -77,21 +24,19 @@ export default function AuthHome() {
           <main className="flex-grow p-6">
             <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
             
-            {loading ? (
-              <p>Loading user information...</p>
-            ) : !userDetails ? (
+            {!user ? (
               <p>No user information found. Please log in.</p>
             ) : (
               <div className="bg-white p-6 rounded-lg shadow-md">
-                <p className="mb-2"><strong>Email:</strong> {userDetails.email}</p>
-                <p className="mb-2"><strong>Name:</strong> {userDetails.user_metadata?.full_name || "Not provided"}</p>
-                <p className="mb-2"><strong>User ID:</strong> {userDetails.id}</p>
+                <p className="mb-2"><strong>Email:</strong> {user.email}</p>
+                <p className="mb-2"><strong>Name:</strong> {user.user_metadata?.full_name || "Not provided"}</p>
+                <p className="mb-2"><strong>User ID:</strong> {user.id}</p>
                 
                 {/* Display additional user details */}
                 <div className="mt-4">
                   <h2 className="text-xl font-semibold mb-2">Additional Information</h2>
                   <pre className="bg-gray-100 p-4 rounded overflow-auto max-w-full">
-                    {JSON.stringify(userDetails, null, 2)}
+                    {JSON.stringify(user, null, 2)}
                   </pre>
                 </div>
                 
