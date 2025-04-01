@@ -5,11 +5,11 @@ import { useAuth } from "../../context/auth/authProvider";
 export default function AuthHome() {    
     const { session } = useAuth();
     const user = session?.user;
-    const { roles } = useAuth(); // Call hooks at the top level
+    const { role } = useAuth(); // Call hooks at the top level
     
     // Define navigation links to pass to Navbar
-    const getRoles = async () => {
-      console.log("User roles:", roles);
+    const getRole = async () => {
+      console.log("User role:", role);
     }
 
     const handleSignOut = async () => {
@@ -47,10 +47,10 @@ export default function AuthHome() {
                   Sign Out
                 </button>
                 <button 
-                onClick={getRoles}
+                onClick={getRole}
                   className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                 >
-                    Get Roles
+                    Get Role
                 </button>
               </div>
             )}

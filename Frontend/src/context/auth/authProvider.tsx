@@ -3,16 +3,16 @@ import { supabase } from "./supabaseClient.ts";
 
 interface AuthContextType {
   session: any;
-  roles: any;
+  role: any;
   setSession: (user: any) => void;
-  setRoles: (roles: any) => void;
+  setRole: (role: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null);
-  const [roles, setRoles] = useState<any>(null);
+  const [role, setRole] = useState<any>(null);
 
   useEffect(() => {
     // Check session on mount
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session) {
-        // Fetch user roles
+        // Fetch user role
         const token = session.access_token;
         const response = await fetch("https://asubap-backend.vercel.app/roles", {
           method: "POST",
@@ -33,9 +33,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (response.ok) {
           const data = await response.json();
-          setRoles(data);
+          setRole(data[0].role);
         } else {
-          console.error("Failed to fetch roles:", response.status);
+          console.error("Failed to fetch role:", response.status);
         }
       }
     };
@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: JSON.stringify({ user_email: session.user.email }),
         })
           .then((response) => response.json())
-          .then((data) => setRoles(data))
-          .catch((error) => console.error("Error fetching roles:", error));
+          .then((data) => setRole(data))
+          .catch((error) => console.error("Error fetching role:", error));
       }
     });
 
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, roles, setSession, setRoles }}>
+    <AuthContext.Provider value={{ session, role, setSession, setRole }}>
       {children}
     </AuthContext.Provider>
   );
