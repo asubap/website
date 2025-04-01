@@ -9,6 +9,7 @@ import { useAuth } from "./context/auth/authProvider";
 import { Navigate, Outlet } from "react-router-dom";
 
 import SponsorHome from "./pages/sponsor/SponsorHome";
+import SponsorEdit from "./pages/sponsor/SponsorEdit";
 
 function App() {
   // Protected route example
@@ -31,6 +32,7 @@ function App() {
 
           {/* sponsor routes, not yet auth for testing purposes */}
           <Route path="/sponsor" element={<SponsorHome />} />
+          <Route path="/sponsor/edit" element={<SponsorEdit />} />
         </Routes>
       </Router>
     </AuthProvider>
