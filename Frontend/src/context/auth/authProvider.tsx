@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: JSON.stringify({ user_email: session.user.email }),
         })
           .then((response) => response.json())
-          .then((data) => setRole(data))
+          .then((data) => setRole(data[0].role))
           .catch((error) => console.error("Error fetching role:", error));
       }
     });
