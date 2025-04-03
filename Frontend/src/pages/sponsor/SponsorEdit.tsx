@@ -13,7 +13,7 @@ const SponsorEdit = () => {
         { name: "Log In", href: "/login" },
       ];
 
-    const [sponserOptions, setSponsorOptions] = useState([
+    const [sponserOptions] = useState([
         { header: "Edit Profile", description: "Edit your profile information.", buttonText: "Edit", onClick: () => console.log("Edit Profile") },
         { header: "View Applications", description: "View applications from members.", buttonText: "View", onClick: () => console.log("View Applications") },
         { header: "Post Event", description: "Post an event for members to see.", buttonText: "Post", onClick: () => console.log("Post Event") },
