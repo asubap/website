@@ -14,12 +14,12 @@ const SponsorHome = () => {
         { name: "Log In", href: "/login" },
       ];
 
-    const [sponsorProfileUrl, setSponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
-    const [sponsorName, setSponsorName] = useState("Google");
-    const [sponsorObjective, setSponsorObjective] = useState("We are looking for vibe coders.");
-    const [sponsorDescription, setSponsorDescription] = useState("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec blandit dapibus dolor, id malesuada sapien lacinia non. Aliquam eget mattis tellus. Praesent in elit et velit fringilla feugiat. Donec mauris velit, finibus quis quam vel, rhoncus eleifend odio. Integer a pharetra sem. Duis aliquam felis nec nulla porttitor luctus. Phasellus sed euismod enim, sit amet dignissim nibh. Nulla tempor, felis non consequat imperdiet, nunc metus interdum odio, eget placerat ipsum velit a tortor. Nulla imperdiet mi eu condimentum pharetra. Fusce quam libero, pharetra nec enim nec, ultrices scelerisque est.");
+    const [sponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
+    const [sponsorName] = useState("Google");
+    const [sponsorObjective] = useState("We are looking for vibe coders.");
+    const [sponsorDescription] = useState("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec blandit dapibus dolor, id malesuada sapien lacinia non. Aliquam eget mattis tellus. Praesent in elit et velit fringilla feugiat. Donec mauris velit, finibus quis quam vel, rhoncus eleifend odio. Integer a pharetra sem. Duis aliquam felis nec nulla porttitor luctus. Phasellus sed euismod enim, sit amet dignissim nibh. Nulla tempor, felis non consequat imperdiet, nunc metus interdum odio, eget placerat ipsum velit a tortor. Nulla imperdiet mi eu condimentum pharetra. Fusce quam libero, pharetra nec enim nec, ultrices scelerisque est.");
 
-    const [sponserOptions, setSponsorOptions] = useState([
+    const [sponserOptions] = useState([
         { header: "Edit Profile", description: "Edit your profile information.", buttonText: "Edit", onClick: () => console.log("Edit Profile") },
         { header: "View Applications", description: "View applications from members.", buttonText: "View", onClick: () => console.log("View Applications") },
         { header: "Post Event", description: "Post an event for members to see.", buttonText: "Post", onClick: () => console.log("Post Event") },
