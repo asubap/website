@@ -16,7 +16,7 @@ const LogInPage = () => {
     return (
         <div className="flex flex-col min-h-screen">
             {/* Add padding-top to account for fixed navbar */}
-            <div className="flex flex-col flex-grow pt-24">
+            <div className="flex flex-col flex-grow pt-[72px]">
                 <Navbar
                     links={navLinks}
                     title="Beta Alpha Psi | Beta Tau Chapter"
