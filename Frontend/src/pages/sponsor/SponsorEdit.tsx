@@ -13,7 +13,7 @@ const SponsorEdit = () => {
         { name: "Log In", href: "/login" },
       ];
 
-    const [sponserOptions] = useState([
+    const [sponserOptions, setSponsorOptions] = useState([
         { header: "Edit Profile", description: "Edit your profile information.", buttonText: "Edit", onClick: () => console.log("Edit Profile") },
         { header: "View Applications", description: "View applications from members.", buttonText: "View", onClick: () => console.log("View Applications") },
         { header: "Post Event", description: "Post an event for members to see.", buttonText: "Post", onClick: () => console.log("Post Event") },
@@ -57,7 +57,7 @@ const SponsorEdit = () => {
                                     />
                                     <button 
                                         type="submit" 
-                                        className="ml-auto bg-[#AF272F] text-white px-6 py-2 rounded-md hover:bg-[#8e1f25] transition-colors"
+                                        className="ml-auto bg-bapred text-white px-6 py-2 rounded-md hover:bg-bapreddark transition-colors"
                                     >
                                         Apply Changes
                                     </button>

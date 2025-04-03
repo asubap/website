@@ -5,8 +5,9 @@ import Homepage from "./pages/homepage/HomePage";
 import LogInPage from "./pages/login/LogInPage";
 import { AuthProvider } from "./context/auth/authProvider";
 import AuthHome from "./pages/homepage/AuthHome";
-import { useAuth } from "./context/auth/authProvider";
 import { Navigate, Outlet } from "react-router-dom";
+
+import { useAuth, AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
 
@@ -16,10 +17,11 @@ import SponsorEdit from "./pages/sponsor/SponsorEdit";
 function App() {
   // Protected route example
   const ProtectedRoute = () => {
-    const { user, loading } = useAuth();
-    if (loading) return <p>Loading...</p>;
-    return user ? <Outlet /> : <Navigate to="/login" replace />;
-  };
+    const session = useAuth();
+    
+    return session ? <Outlet/> : <Navigate to="/login" replace/>;
+  }
+
   return (
     <>
       <AuthProvider>

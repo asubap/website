@@ -2,30 +2,58 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabaseClient.ts";
 
 interface AuthContextType {
-  user: any;
-  loading: boolean;
-  setUser: (user: any) => void;
+  session: any;
+  role: any;
+  setSession: (user: any) => void;
+  setRole: (role: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
+  const [role, setRole] = useState<any>(null);
 
   useEffect(() => {
     // Check session on mount
     const fetchUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setLoading(false);
+      setSession(session);
+      if (session) {
+        // Fetch user role
+        const token = session.access_token;
+        fetch("https://asubap-backend.vercel.app/roles", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_email: session.user.email }),
+        }).then((response) => response.json())
+          .then((data) => setRole(data[0].role))
+          .catch((error) => console.error("Error fetching role:", error));
+      }
     };
 
     fetchUser();
 
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user || null);
+      setSession(session);
+      if (session) {
+        const token = session.access_token;
+        fetch("https://asubap-backend.vercel.app/roles", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_email: session.user.email }),
+        })
+          .then((response) => response.json())
+          .then((data) => setRole(data[0].role))
+          .catch((error) => console.error("Error fetching role:", error));
+      }
     });
 
     return () => {
@@ -34,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser }}>
+    <AuthContext.Provider value={{ session, role, setSession, setRole }}>
       {children}
     </AuthContext.Provider>
   );
