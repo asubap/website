@@ -1,6 +1,5 @@
 import { supabase } from "../../context/auth/supabaseClient";
 
-
 const GoogleLogin = () => {
     const redirectTo = import.meta.env.VITE_ENV_STATE === 'development' ? 'http://localhost:5173/auth/Home' : `https://frontend-iota-gules-58.vercel.app/auth/Home`;
 
@@ -29,6 +28,3 @@ const GoogleLogin = () => {
 }
 
 export default GoogleLogin;
-
-
-
