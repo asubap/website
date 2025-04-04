@@ -20,19 +20,22 @@ const Admin = () => {
     const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
 
     useEffect(() => {
-        const fetchOfficers = async () => {
+        const fetchAdmins = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               // Fetch user role
               const token = session.access_token;
-              fetch("https://asubap-backend.vercel.app/api/roles/officers", {
+              fetch("https://asubap-backend.vercel.app/roles/e-board", {
                 method: "GET",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${token}`,
                 },
               }).then((response) => response.json())
-                .then((data) => setAdminEmails(data))
+                .then((data) => {
+                    const emails = data.map((item: any) => item.email);
+                    setAdminEmails(emails);
+                })
                 .catch((error) => console.error("Error fetching role:", error));
             }
           };
@@ -42,19 +45,22 @@ const Admin = () => {
 
             if (session) {
               const token = session.access_token;
-              fetch("https://asubap-backend.vercel.app/api/roles/sponsors", {
+              fetch("https://asubap-backend.vercel.app/roles/sponsors", {
                 method: "GET",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${token}`,
                 },
               }).then((response) => response.json())
-                .then((data) => setSponsorEmails(data))
+                .then((data) => {
+                    const emails = data.map((item: any) => item.email);
+                    setSponsorEmails(emails);
+                })
                 .catch((error) => console.error("Error fetching role:", error));
             }
           };
       
-          fetchOfficers();
+          fetchAdmins();
       
           fetchSponsors();
           
