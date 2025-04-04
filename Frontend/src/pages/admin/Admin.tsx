@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
+
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 
-import EmailList from "../../components/admin/EmailList";
-import { useEffect, useState } from "react";
+import { supabase } from "../../context/auth/supabaseClient";
 
+import EmailList from "../../components/admin/EmailList";
 const Admin = () => {
     const navLinks = [
         { name: "About Us", href: "/about" },
@@ -13,16 +15,49 @@ const Admin = () => {
         { name: "Log In", href: "/login" },
       ];
 
-    const [adminEmails] = useState<string[]>(["admin1@gmail.com", "admin2@gmail.com", "admin3@gmail.com", "admin4@gmail.com", "admin5@gmail.com"]);
+    const [adminEmails, setAdminEmails] = useState<string[]>([]);
 
-    const [sponsorEmails] = useState<string[]>(["sponsor1@gmail.com", "sponsor2@gmail.com", "sponsor3@gmail.com", "sponsor4@gmail.com", "sponsor5@gmail.com"]);
-
-    useEffect(() => {
-        // TODO: Fetch admin emails from the database
-    }, []);
+    const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
 
     useEffect(() => {
-        // TODO: Fetch sponsor emails from the database
+        const fetchOfficers = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              // Fetch user role
+              const token = session.access_token;
+              fetch("https://asubap-backend.vercel.app/api/roles/officers", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }).then((response) => response.json())
+                .then((data) => setAdminEmails(data))
+                .catch((error) => console.error("Error fetching role:", error));
+            }
+          };
+
+          const fetchSponsors = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (session) {
+              const token = session.access_token;
+              fetch("https://asubap-backend.vercel.app/api/roles/sponsors", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }).then((response) => response.json())
+                .then((data) => setSponsorEmails(data))
+                .catch((error) => console.error("Error fetching role:", error));
+            }
+          };
+      
+          fetchOfficers();
+      
+          fetchSponsors();
+          
     }, []);
 
     const handleAdminSubmit = (e: React.FormEvent) => {
@@ -48,7 +83,7 @@ const Admin = () => {
             <div className="flex flex-col flex-grow pt-24">
                 <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
                     <h1 className="text-4xl font-bold font-arial text-left w-full px-32 mb-6">Admin Dashboard</h1>
-                    <div className="grid grid-cols-2 gap-6 w-full px-32">
+                    <div className="grid grid-cols-2 gap-12 w-full px-32">
                         <div className="">
                             <div className="flex items-center">
                                 <h2 className="text-2xl font-semibold">Events</h2>
