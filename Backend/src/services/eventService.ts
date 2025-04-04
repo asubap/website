@@ -101,7 +101,6 @@ export class EventService {
     return { before: beforeData, after: afterData };
   }
 
-  // ✅ NEW: Verifies if a user is within 1000 meters of an event address
   async verifyLocationAttendance(
     eventId: string,
     userId: string,
@@ -146,7 +145,6 @@ export class EventService {
     return "Check-in confirmed!";
   }
 
-  // 🔍 Helper: Uses Google Maps API to geocode an address
   private async geocodeAddress(address: string): Promise<{ lat: number; lon: number }> {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
