@@ -44,6 +44,83 @@ export default class UserRoleController {
         }
     }
 
+
+    async getSponsors(req: Request, res: Response) {
+        const token = extractToken(req);
+        if (!token) {
+            res.status(401).json({ error: 'No authorization token provided' });
+            return;
+        }
+
+        this.userRoleService.setToken(token as string);
+        const roles = await this.userRoleService.getSponsors();
+        
+        if (!roles) {
+            res.status(404).json({ error: 'No sponsors found' });
+            return;
+        }
+
+        // Extract just the user_ids from the roles array
+        const userIds = roles.map(role => role.user_id);
+        const emails = await this.userRoleService.getEmail(userIds);
+        
+        res.json(emails);
+    }
+
+    /**
+     * Get all general members
+     * @param req - The request object
+     * @param res - The response object
+     */
+    async getGeneralMembers(req: Request, res: Response) {
+        const token = extractToken(req);
+        if (!token) {
+            res.status(401).json({ error: 'No authorization token provided' });
+            return;
+        }
+
+        this.userRoleService.setToken(token as string);
+        const roles = await this.userRoleService.getGeneralMembers();
+
+        if (!roles) {
+            res.status(404).json({ error: 'No general members found' });
+            return;
+        }
+
+        // Extract just the user_ids from the roles array
+        const userIds = roles.map(role => role.user_id);
+        const emails = await this.userRoleService.getEmail(userIds);
+
+        res.json(emails);
+    }
+
+    /**
+     * Get all officers
+     * @param req - The request object
+     * @param res - The response object
+     */
+    async getOfficers(req: Request, res: Response) {
+        const token = extractToken(req);
+        
+        if (!token) {
+            res.status(401).json({ error: 'No authorization token provided' });
+            return;
+        }
+
+        this.userRoleService.setToken(token as string);
+        const roles = await this.userRoleService.getOfficers();
+
+        if (!roles) {
+            res.status(404).json({ error: 'No officers found' });
+            return;
+        }
+
+        // Extract just the user_ids from the roles array
+        const userIds = roles.map(role => role.user_id);
+        const emails = await this.userRoleService.getEmail(userIds);
+
+        res.json(emails);
+    }
     /**
      * Assign a role to a user
      * @param req - The request object

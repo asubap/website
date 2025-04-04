@@ -2,6 +2,11 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { db } from "../config/db";
 import extractEmail from "../utils/extractEmail";
 
+interface MemberInfo {
+    user_id: string;
+    // Add other properties as needed
+}
+
 export class MemberInfoService {
     private supabase: SupabaseClient;
     
@@ -52,7 +57,7 @@ export class MemberInfoService {
 
         // Get email for each member
         const membersWithEmail = await Promise.all(
-            data.map(async (member) => {
+            data.map(async (member: MemberInfo) => {
                 const email = await extractEmail(member.user_id);
                 return {
                     ...member,

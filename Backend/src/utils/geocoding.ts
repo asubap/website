@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,6 +11,15 @@ interface Coordinates {
     lon: number;
 }
 
+interface GeoapifyResponse {
+    features: Array<{
+        properties: {
+            lat: number;
+            lon: number;
+        };
+    }>;
+}
+
 /**
  * Geocode an address to get coordinates
  * @param address - The address to geocode
@@ -19,8 +28,8 @@ interface Coordinates {
 export async function geocodeAddress(address: string): Promise<Coordinates> {
     try {
         const url = `${BASE_URL}?text=${encodeURIComponent(address)}&apiKey=${API_KEY}`;
-        const response = await fetch(url);
-        const data = await response.json() as any;
+        const response = await axios.get<GeoapifyResponse>(url);
+        const data = response.data;
 
         if (data.features && data.features.length > 0) {
             const { lat, lon } = data.features[0].properties;
