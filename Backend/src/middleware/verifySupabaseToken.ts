@@ -6,29 +6,43 @@ const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET as string;
 export interface SupabaseJwtPayload {
   aud: string;
   exp: number;
-  sub: string;
+  sub: string; // user ID
   role?: string;
   email?: string;
-  // other properties from the token
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email?: string;
+        role?: string;
+      };
+    }
+  }
 }
 
 export const verifySupabaseToken = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    res.status(401).json({ error: 'Missing Authorization header' });
-    return;
+    return res.status(401).json({ error: 'Missing Authorization header' });
   }
 
   const token = authHeader.split(' ')[1];
   if (!token) {
-    res.status(401).json({ error: 'Missing token' });
-    return;
+    return res.status(401).json({ error: 'Missing token' });
   }
 
   try {
     const payload = jwt.verify(token, SUPABASE_JWT_SECRET) as SupabaseJwtPayload;
-    // Attach payload to request for later use (e.g., role-based checks)
-    (req as any).user = payload;
+
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+    };
+
     next();
   } catch (err) {
     console.error('Token verification failed:', err);

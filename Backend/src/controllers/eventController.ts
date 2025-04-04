@@ -216,4 +216,27 @@ export class EventController {
             res.status(500).json({ error: 'Failed to get events' });
         }
     }
+
+    async verifyAttendance(req: Request, res: Response) {
+        const { latitude, longitude, accuracy } = req.body;
+        const eventId = req.params.eventId;
+        const user = req.user; // requires Supabase auth middleware
+      
+        if (!user || !user.id) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+      
+        if (!latitude || !longitude || accuracy > 1000) {
+          return res.status(422).json({ error: "Location data invalid or too inaccurate" });
+        }
+      
+        try {
+          const result = await this.eventService.verifyLocationAttendance(eventId, user.id, latitude, longitude);
+          res.json({ message: result });
+        } catch (err) {
+          console.error(err);
+          res.status(500).json({ error: "Server error verifying attendance" });
+        }
+      }
+          
 }

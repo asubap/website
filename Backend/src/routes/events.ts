@@ -10,6 +10,8 @@ eventRoutes
 .get('/', controller.getEvents.bind(controller)) // get all events
 .post('/', controller.getEventsByName.bind(controller)) // get all events
 .post('/get-events-by-date', controller.getEventsByDate.bind(controller)) // get all events by date
+.post('/checkin/:eventId', controller.verifyAttendance.bind(controller))
+
 
 
 // admin routes
