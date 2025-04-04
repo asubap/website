@@ -132,6 +132,9 @@ export class EventController {
         if (description && description.trim() !== '') {
             updateFields.description = description;
         }
+        if (time && time.trim() !== '') {
+            updateFields.time = time;
+        }
         
         // If there's nothing to update, respond accordingly
         if (Object.keys(updateFields).length === 0) {
