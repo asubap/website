@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { MemberInfoService } from "../services/memberInfoService";
 import extractToken from "../utils/extractToken";
 import UserRoleService from "../services/userRoleService";
-import { EventService } from "services/eventService";
+import { EventService } from "../services/eventService";
 import { geocodeAddress } from "../utils/geocoding";
 
 export class EventController {
