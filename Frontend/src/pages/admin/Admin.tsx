@@ -38,42 +38,52 @@ const Admin = () => {
                 })
                 .catch((error) => console.error("Error fetching role:", error));
             }
-          };
+        };
 
-          const fetchSponsors = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+        const fetchSponsors = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
 
-            if (session) {
-              const token = session.access_token;
-              fetch("https://asubap-backend.vercel.app/roles/sponsors", {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              }).then((response) => response.json())
-                .then((data) => {
-                    const emails = data.map((item: any) => item.email);
-                    setSponsorEmails(emails);
-                })
-                .catch((error) => console.error("Error fetching role:", error));
-            }
-          };
-      
-          fetchAdmins();
-      
-          fetchSponsors();
-          
+        if (session) {
+            const token = session.access_token;
+            fetch("https://asubap-backend.vercel.app/roles/sponsors", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            }).then((response) => response.json())
+            .then((data) => {
+                const emails = data.map((item: any) => item.email);
+                setSponsorEmails(emails);
+            })
+            .catch((error) => console.error("Error fetching role:", error));
+        }
+        };
+    
+        fetchAdmins();
+    
+        fetchSponsors();
+        
     }, []);
 
-    const handleAdminSubmit = (e: React.FormEvent) => {
+    const handleRoleSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
         // TODO: Add admin email to the database
         e.preventDefault();
-    }
 
-    const handleSponsorSubmit = (e: React.FormEvent) => {
-        // TODO: Add sponsor email to the database
-        e.preventDefault();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            // Fetch user role
+            const token = session.access_token;
+            fetch("https://asubap-backend.vercel.app/roles/assign-role", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ user_email: (e.target as HTMLFormElement).email.value, role: role }),})
+                .then( () => window.location.reload())
+                .catch((error) => console.error("Error fetching role:", error));
+        }   
     }
 
     return (
@@ -102,11 +112,12 @@ const Admin = () => {
 
                         <div className="">
                             <h2 className="text-2xl font-semibold mb-2">Admin Users</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={handleAdminSubmit}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "e-board")}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter admin email.." 
                                     className="w-3/4 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+                                    name="email"
                                 />
                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
                                     + Add Admin
@@ -128,11 +139,12 @@ const Admin = () => {
                         
                         <div className="">
                             <h2 className="text-2xl font-semibold mb-2">Sponsors</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={handleSponsorSubmit}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter sponsor email.." 
                                     className="w-3/4 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+                                    name="email"
                                 />
                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
                                     + Add Sponsor
