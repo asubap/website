@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import userRoleRoutes from "./roles";
 import memberInfoRoutes from "./memberInfo";
-
+import eventRoutes from "./events";
+import announcementsRoutes from "./announcements";
 const router = Router();
 
 router.get("/", (req: Request, res: Response) => {
@@ -10,5 +11,7 @@ router.get("/", (req: Request, res: Response) => {
 
 router.use("/roles", userRoleRoutes);
 router.use("/member-info", memberInfoRoutes);
+router.use("/events", eventRoutes);
+router.use("/announcements", announcementsRoutes);
 
 export default router;
