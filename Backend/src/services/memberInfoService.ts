@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { db } from "../config/db";
+import { createSupabaseClient } from "../config/db";
 import extractEmail from "../utils/extractEmail";
 
 interface MemberInfo {
@@ -11,7 +11,7 @@ export class MemberInfoService {
     private supabase: SupabaseClient;
     
     constructor() {
-        this.supabase = db();
+        this.supabase = createSupabaseClient();
     }
 
     /**
@@ -20,7 +20,7 @@ export class MemberInfoService {
      */
     setToken(token: string) {
         if (!token) return;
-        this.supabase = db(token);
+        this.supabase = createSupabaseClient(token);
     }
 
     /**

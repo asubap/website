@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session) {
         // Fetch user role
         const token = session.access_token;
-        fetch("https://asubap-backend.vercel.app/roles", {
+        fetch("http://localhost:3000/roles", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       if (session) {
         const token = session.access_token;
-        fetch("https://asubap-backend.vercel.app/roles", {
+        fetch("http://localhost:3000/roles", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -21,17 +21,26 @@ export class EventController {
      * @returns 
      */
     async getEvents(req: Request, res: Response) {
-        const token = extractToken(req);
+        try {
+            console.log('Getting events...');
+            const token = extractToken(req);
+            console.log('Token:', token ? 'Present' : 'Missing');
 
-        if (!token) {
-            res.status(401).json({ error: 'No authorization token provided' });
-            return;
+            if (!token) {
+                res.status(401).json({ error: 'No authorization token provided' });
+                return;
+            }
+
+            this.eventService.setToken(token as string);
+            console.log('Token set in service');
+
+            const events = await this.eventService.getEvents();
+            console.log('Events retrieved:', events);
+            res.json(events);
+        } catch (error) {
+            console.error('Error getting events:', error);
+            res.status(500).json({ error: 'Failed to get events' });
         }
-
-        this.eventService.setToken(token as string);
-
-        const events = await this.eventService.getEvents();
-        res.json(events);
     }
 
     /**
@@ -218,25 +227,61 @@ export class EventController {
     }
 
     async verifyAttendance(req: Request, res: Response) {
-        const { latitude, longitude, accuracy } = req.body;
-        const eventId = req.params.eventId;
-        const user = req.user; // requires Supabase auth middleware
-      
-        if (!user || !user.id) {
-          return res.status(401).json({ error: "Unauthorized" });
-        }
-      
-        if (!latitude || !longitude || accuracy > 1000) {
-          return res.status(422).json({ error: "Location data invalid or too inaccurate" });
-        }
-      
         try {
-          const result = await this.eventService.verifyLocationAttendance(eventId, user.id, latitude, longitude);
-          res.json({ message: result });
-        } catch (err) {
-          console.error(err);
-          res.status(500).json({ error: "Server error verifying attendance" });
+            const { latitude, longitude, accuracy } = req.body;
+            const eventId = req.params.eventId;
+            const user = (req as any).user;
+            
+            console.log('Verifying attendance for:', { user, eventId, location: { latitude, longitude, accuracy } });
+            
+            if (!user?.id) {
+                console.error('No user ID found in request');
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const token = extractToken(req);
+            if (!token) {
+                console.error('No token found in request');
+                return res.status(401).json({ error: 'No authorization token provided' });
+            }
+            
+            if (!latitude || !longitude || accuracy > 5000) {
+                console.error('Invalid location data:', { latitude, longitude, accuracy });
+                return res.status(422).json({ 
+                    error: `Location data invalid or too inaccurate (accuracy: ${Math.round(accuracy)}m, maximum threshold is 5 km)` 
+                });
+            }
+
+            this.eventService.setToken(token);
+            
+            const result = await this.eventService.verifyLocationAttendance(
+                eventId,
+                user.id,
+                latitude,
+                longitude
+            );
+            
+            console.log('Attendance verification result:', result);
+            res.json({ message: result });
+        } catch (error: any) {
+            console.error('Check-in error:', error);
+            
+            // Handle specific error cases
+            if (error.message?.includes('too far')) {
+                return res.status(422).json({ error: error.message });
+            }
+            if (error.message?.includes('already checked in')) {
+                return res.status(409).json({ error: error.message });
+            }
+            if (error.message?.includes('Event not found')) {
+                return res.status(404).json({ error: error.message });
+            }
+            
+            res.status(500).json({ 
+                error: error.message || 'Server error',
+                details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
+            });
         }
-      }
-          
+    }
+
 }

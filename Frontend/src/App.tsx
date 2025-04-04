@@ -8,6 +8,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 import { useAuth, AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
+import EventsPage from "./pages/events/EventsPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
 
 import SponsorHome from "./pages/sponsor/SponsorHome";
@@ -33,6 +34,7 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/auth/Home" element={<AuthHome />} />
+              <Route path="/auth/events" element={<EventsPage />} />
             </Route>
             {/* sponsor routes, not yet auth for testing purposes */}
             <Route path="/sponsor" element={<SponsorHome />} />
