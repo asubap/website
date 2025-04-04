@@ -3,11 +3,10 @@ import dotenv from "dotenv";
 import { Server } from "http";
 dotenv.config();
 
-
 const startServer = async (): Promise<Server> => {
   try {
     const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-    
+
     return new Promise((resolve) => {
       const server = app.listen(PORT, () => {
         console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -15,7 +14,7 @@ const startServer = async (): Promise<Server> => {
       });
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 };

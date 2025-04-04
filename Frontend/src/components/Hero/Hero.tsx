@@ -52,6 +52,7 @@ export default function Hero() {
           style={{
             transform: "translate3d(0, 0, 0)",
             backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
           }}
         />
         <div
@@ -59,20 +60,27 @@ export default function Hero() {
           style={{
             transform: "translate3d(0, 0, 0)",
             backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
           }}
         ></div>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center text-white">
-        <h1 className="text-5xl font-bold mb-4">BETA ALPHA PSI</h1>
-        <h2 className="text-3xl mb-2">Beta Tau Chapter</h2>
-        <h3 className="text-2xl mb-8">Arizona State University</h3>
+      <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-8 sm:px-16 lg:px-24 text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 font-arial">
+          BETA ALPHA PSI
+        </h1>
+        <h2 className="text-xl sm:text-2xl md:text-3xl mb-1 sm:mb-2 font-bold font-pt-serif">
+          Beta Tau Chapter
+        </h2>
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold font-pt-serif">
+          Arizona State University
+        </h3>
 
         <img
           src={BAPLogo}
           alt="Beta Alpha Psi Logo"
-          className="w-48 h-48 object-contain mt-8"
+          className="w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 object-contain mt-3 sm:mt-4"
           loading="eager"
         />
       </div>
@@ -81,14 +89,19 @@ export default function Hero() {
       {isVisible && (
         <button
           onClick={scrollToNextSection}
-          className="absolute bottom-8 right-12 animate-bounce cursor-pointer z-20"
+          className="absolute bottom-4 sm:bottom-6 md:bottom-8 right-8 sm:right-16 md:right-24 animate-bounce cursor-pointer z-20"
           aria-label="Scroll to next section"
           style={{
             transform: "translate3d(0, 0, 0)",
             backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            MozBackfaceVisibility: "hidden",
           }}
         >
-          <ChevronDown size={40} className="text-white" />
+          <ChevronDown
+            size={32}
+            className="text-white sm:w-[36px] sm:h-[36px] md:w-[40px] md:h-[40px]"
+          />
         </button>
       )}
     </div>

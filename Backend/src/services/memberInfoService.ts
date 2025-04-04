@@ -33,6 +33,8 @@ export class MemberInfoService {
         return member_info;
     }
 
+   
+
     /**
      * Search for a member
      * @param search_query 
@@ -73,10 +75,10 @@ export class MemberInfoService {
      * @param major - The major of the member
      * @returns the updated member info
      */
-    async editMemberInfo(user_id: string, bio: string, internship: string, first_name: string, last_name: string, year: string, major: string) {
+    async editMemberInfo(user_id: string, bio: string, internship: string, first_name: string, last_name: string, year: string, major: string, contact_me: boolean) {
         const { data, error } = await this.supabase
             .from('member_info')
-            .update({ bio, internship, first_name, last_name, year, major })
+            .update({ bio, internship, first_name, last_name, year, major, contact_me })
             .eq('user_id', user_id)
             .select();
 

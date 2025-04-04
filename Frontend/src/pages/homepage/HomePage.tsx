@@ -2,8 +2,6 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import Hero from "../../components/Hero/Hero";
 import WhoWeAre from "../../components/Hero/WhoWeAre";
-import InstagramEmbed from "../../components/ui/InstagramEmbed";
-import ApplyButton from "../../components/ui/ApplyButton";
 
 export default function Homepage() {
   // Define navigation links to pass to Navbar
@@ -13,18 +11,6 @@ export default function Homepage() {
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
     { name: "Log In", href: "/login" },
-  ];
-
-  // Define social links for Footer
-  const socialLinks = [
-    {
-      name: "linkedin" as const,
-      href: "https://www.linkedin.com/company/bap-betatauchapter/",
-    },
-    {
-      name: "instagram" as const,
-      href: "https://www.instagram.com/asubap/",
-    },
   ];
 
   return (
@@ -40,14 +26,8 @@ export default function Homepage() {
         <main className="flex-grow">
           <Hero />
           <WhoWeAre />
-          <InstagramEmbed />
-          <ApplyButton />
         </main>
-        <Footer
-          backgroundColor="#AF272F"
-          socialLinks={socialLinks}
-          navLinks={navLinks}
-        />
+        <Footer backgroundColor="#AF272F" />
       </div>
     </div>
   );

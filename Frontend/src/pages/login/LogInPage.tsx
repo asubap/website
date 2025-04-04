@@ -16,7 +16,7 @@ const LogInPage = () => {
     return (
         <div className="flex flex-col min-h-screen">
             {/* Add padding-top to account for fixed navbar */}
-            <div className="flex flex-col flex-grow pt-24">
+            <div className="flex flex-col flex-grow pt-[72px]">
                 <Navbar
                     links={navLinks}
                     title="Beta Alpha Psi | Beta Tau Chapter"
@@ -49,23 +49,7 @@ const LogInPage = () => {
 
 
                 
-                <Footer 
-                backgroundColor="#AF272F" 
-                socialLinks={[    
-                  {
-                    name: "linkedin" as const,
-                    href: "https://www.linkedin.com/company/bap-betatauchapter/",
-                  },
-                  {
-                    name: "instagram" as const,
-                    href: "https://www.instagram.com/asubap/",
-                  },]} 
-                navLinks={[    
-                    { name: "About Us", href: "/about" },
-                    { name: "Our Sponsors", href: "/sponsors" },
-                    { name: "Events", href: "/events" },
-                    { name: "Membership", href: "/membership" },
-                    { name: "Log In", href: "/login" },]} />
+                <Footer backgroundColor="#AF272F" />
             </div>
         </div>
     )

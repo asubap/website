@@ -24,6 +24,37 @@ export default class UserRoleService {
     }
 
     /**
+     * Get the email from the user ID
+     * @param user_id - The ID of the user
+     * @returns The email of the user
+     */
+    async getEmail(user_id: string) {
+        const { data: email, error } = await this.supabase
+            .from('user_email_map')
+            .select('email')
+            .eq('user_id', user_id)
+
+        if (error) throw error;
+        return email;
+    }
+
+    /**
+     * Get the user ID from the email
+     * @param email - The email of the user
+     * @returns The user ID of the user
+     */
+    async getUserID(email: string) {
+        const { data: user_id, error } = await this.supabase
+            .from('user_email_map')
+            .select('user_id')
+            .eq('email', email)
+            .single();
+
+        if (error) throw error;
+        return user_id.user_id;
+    }
+
+    /**
      * Get the roles of a user
      * @param user_id - The ID of the user
      * @returns The roles of the user
@@ -44,6 +75,11 @@ export default class UserRoleService {
         }));
     }
 
+    /**
+     * Convert a role to an ID
+     * @param role - The role to convert
+     * @returns The ID of the role
+     */
     private convertRoleToId(role: string): number {
         switch (role) {
             case 'e-board':
@@ -57,6 +93,11 @@ export default class UserRoleService {
         }
     }
 
+    /**
+     * Convert an ID to a role
+     * @param roleId - The ID of the role
+     * @returns The role of the ID
+     */
     private convertIdToRole(roleId: number): string {
         switch (roleId) {
             case 1:
@@ -70,6 +111,12 @@ export default class UserRoleService {
         }
     }
 
+    /**
+     * Assign a role to a user
+     * @param user_id - The ID of the user
+     * @param role - The role to assign
+     * @returns Whether the role was assigned
+     */
     async assignRole(user_id: string, role: string) {
         const roleNumber = this.convertRoleToId(role);
         
@@ -96,6 +143,12 @@ export default class UserRoleService {
         return true;
     }
 
+    /**
+     * Remove a role from a user
+     * @param user_id - The ID of the user
+     * @param role - The role to remove
+     * @returns Whether the role was removed
+     */
     async removeRole(user_id: string, role: string) {
         const roleNumber = this.convertRoleToId(role);
 

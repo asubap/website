@@ -5,7 +5,7 @@ const memberInfoRoutes = Router();
 
 const controller = new MemberInfoController();
 memberInfoRoutes
-.post('/', controller.getMemberInfo.bind(controller)) // get all members
+.post('/', controller.getMemberInfo.bind(controller)) // get member info
 .post('/search', controller.search.bind(controller)) // search for a member
 .post('/edit-member-info', controller.editMemberInfo.bind(controller)) // edit member info
 .post('/edit-member-bio', controller.editMemberBio.bind(controller)) // edits member bio info
