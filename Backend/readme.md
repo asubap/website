@@ -10,7 +10,7 @@ Authorization: Bearer <your_token>
 
 ### Get User Roles
 ```http
-POST /api/roles
+POST /roles
 ```
 **Request Body:**
 ```json
@@ -29,7 +29,7 @@ POST /api/roles
 
 ### Get All Sponsors
 ```http
-GET /api/roles/sponsors
+GET /roles/sponsors
 ```
 **Response:**
 ```json
@@ -42,7 +42,7 @@ GET /api/roles/sponsors
 
 ### Get All General Members
 ```http
-GET /api/roles/general-members
+GET /roles/general-members
 ```
 **Response:**
 ```json
@@ -53,9 +53,9 @@ GET /api/roles/general-members
 ]
 ```
 
-### Get All Officers
+### Get All E-board
 ```http
-GET /api/roles/officers
+GET /roles/e-board
 ```
 **Response:**
 ```json
@@ -68,7 +68,7 @@ GET /api/roles/officers
 
 ### Assign Role
 ```http
-POST /api/roles/assign-role
+POST /roles/assign-role
 ```
 **Request Body:**
 ```json
@@ -80,7 +80,7 @@ POST /api/roles/assign-role
 
 ### Remove Role
 ```http
-POST /api/roles/remove-role
+POST /roles/remove-role
 ```
 **Request Body:**
 ```json
@@ -92,7 +92,7 @@ POST /api/roles/remove-role
 
 ### Get Session Token
 ```http
-GET /api/roles/session
+GET /roles/session
 ```
 **Response:**
 ```json
@@ -100,183 +100,11 @@ GET /api/roles/session
     "token": "string"
 }
 ```
+## Member Info routes
 
-### Edit Complete Member Info
+### Get Member Info
 ```http
-POST /api/member-info/edit-member-info
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Edit Member Bio
-```http
-POST /api/member-info/edit-member-bio
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "bio": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Edit Member Internship
-```http
-POST /api/member-info/edit-member-internship
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "internship": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Edit Member First Name
-```http
-POST /api/member-info/edit-member-first-name
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "first_name": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Edit Member Last Name
-```http
-POST /api/member-info/edit-member-last-name
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "last_name": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Edit Member Year
-```http
-POST /api/member-info/edit-member-year
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "year": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Edit Member Major
-```http
-POST /api/member-info/edit-member-major
-```
-**Request Body:**
-```json
-{
-    "user_email": "string",
-    "major": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Delete Member
-```http
-POST /api/member-info/delete-member
+POST /member-info/
 ```
 **Request Body:**
 ```json
@@ -297,9 +125,88 @@ POST /api/member-info/delete-member
 }
 ```
 
+### Search Members
+```http
+POST /member-info/search/
+```
+**Request Body:**
+```json
+{
+    "search_query": "string"
+}
+```
+**Response:**
+```json
+[
+    {
+        "user_id": "string",
+        "bio": "string",
+        "internship": "string",
+        "first_name": "string",
+        "last_name": "string",
+        "year": "string",
+        "major": "string",
+        "user_email": "string"
+    }
+]
+```
+
+### Edit Complete Member Info
+```http
+POST /member-info/edit-member-info/
+```
+**Request Body:**
+```json
+{
+    "user_email": "string",
+    "bio": "string" || "", // leave this empty ("") if not being changed
+    "internship": "string" || "", // leave this empty ("") if not being changed
+    "first_name": "string" || "", // leave this empty ("") if not being changed
+    "last_name": "string" || "", // leave this empty ("") if not being changed
+    "year": "string" || "", // leave this empty ("") if not being changed
+    "major": "string" || "", // leave this empty ("") if not being changed
+    "contact_me": "string" || "" // leave this empty ("") if not being changed
+}
+```
+**Response:**
+```json
+{
+    "user_id": "string",
+    "bio": "string",
+    "internship": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "year": "string",
+    "major": "string",
+    "contact_me": "string"
+}
+```
+### Delete Member
+```http
+POST /member-info/delete-member/
+```
+**Request Body:**
+```json
+{
+    "user_email": "string"
+}
+```
+**Response:**
+```json
+{
+    "user_id": "string",
+    "bio": "string" || null,
+    "internship": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "year": "string",
+    "major": "string"
+}
+```
+
 ### Add Member
 ```http
-POST /api/member-info/add-member
+POST /member-info/add-member/
 ```
 **Request Body:**
 ```json
@@ -324,17 +231,22 @@ POST /api/member-info/add-member
 
 ### Get All Events
 ```http
-GET /api/events
+GET /events
 ```
 **Authentication**: Required (Bearer Token)
 **Response**: Array of event objects
 ```json
 [
     {
-        "id": "string",
+        "id": 1,
+        "created_at": "2025-04-04T06:45:47+00:00",
         "name": "string",
         "date": "YYYY-MM-DD",
         "location": "string",
+        "location_lat": 33.419,
+        "location_long": -111.935,
+        "attending_users": null,
+        "created_by_id": "string",
         "description": "string",
         "time": "HH:MM:SS"
     }
@@ -343,7 +255,7 @@ GET /api/events
 
 ### Get Events by Name
 ```http
-POST /api/events
+POST /events
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -356,7 +268,7 @@ POST /api/events
 
 ### Get Events by Date
 ```http
-POST /api/events/get-events-by-date
+POST /events/get-events-by-date
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -369,7 +281,7 @@ POST /api/events/get-events-by-date
 
 ### Add Event
 ```http
-POST /api/events/add-event
+POST /events/add-event
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -387,7 +299,7 @@ POST /api/events/add-event
 
 ### Edit Event
 ```http
-POST /api/events/edit-event
+POST /events/edit-event
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -406,7 +318,7 @@ POST /api/events/edit-event
 
 ### Delete Event
 ```http
-POST /api/events/delete-event
+POST /events/delete-event
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -421,7 +333,7 @@ POST /api/events/delete-event
 
 ### Get All Announcements
 ```http
-GET /api/announcements
+GET /announcements
 ```
 **Authentication**: Required (Bearer Token)
 **Response**: Array of announcement objects
@@ -438,7 +350,7 @@ GET /api/announcements
 
 ### Get Announcements by Name
 ```http
-POST /api/announcements
+POST /announcements
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -451,14 +363,14 @@ POST /api/announcements
 
 ### Add Announcement
 ```http
-POST /api/announcements/add-announcement
+POST /announcements/add-announcement
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
 ```json
 {
     "user_email": "string",
-    "announcements_name": "string",
+    "announcement_name": "string",
     "description": "string"
 }
 ```
@@ -466,7 +378,7 @@ POST /api/announcements/add-announcement
 
 ### Edit Announcement
 ```http
-POST /api/announcements/edit-announcement
+POST /announcements/edit-announcement
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**
@@ -482,7 +394,7 @@ POST /api/announcements/edit-announcement
 
 ### Delete Announcement
 ```http
-POST /api/announcements/delete-announcement
+POST /announcements/delete-announcement
 ```
 **Authentication**: Required (Bearer Token)
 **Request Body:**

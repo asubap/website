@@ -80,10 +80,10 @@ export class MemberInfoService {
      * @param major - The major of the member
      * @returns the updated member info
      */
-    async editMemberInfo(user_id: string, bio: string, internship: string, first_name: string, last_name: string, year: string, major: string, contact_me: boolean) {
+    async editMemberInfo(user_id: string, updateFields: Record<string, string>) {
         const { data, error } = await this.supabase
             .from('member_info')
-            .update({ bio, internship, first_name, last_name, year, major, contact_me })
+            .update(updateFields)
             .eq('user_id', user_id)
             .select();
 
