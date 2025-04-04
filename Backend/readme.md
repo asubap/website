@@ -27,6 +27,45 @@ POST /api/roles
 ]
 ```
 
+### Get All Sponsors
+```http
+GET /api/roles/sponsors
+```
+**Response:**
+```json
+[
+    {
+        "email": "string"
+    }
+]
+```
+
+### Get All General Members
+```http
+GET /api/roles/general-members
+```
+**Response:**
+```json
+[
+    {
+        "email": "string"
+    }
+]
+```
+
+### Get All Officers
+```http
+GET /api/roles/officers
+```
+**Response:**
+```json
+[
+    {
+        "email": "string"
+    }
+]
+```
+
 ### Assign Role
 ```http
 POST /api/roles/assign-role
