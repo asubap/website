@@ -245,11 +245,15 @@ export class EventController {
                 return res.status(401).json({ error: 'No authorization token provided' });
             }
             
-            if (!latitude || !longitude || accuracy > 5000) {
-                console.error('Invalid location data:', { latitude, longitude, accuracy });
-                return res.status(422).json({ 
-                    error: `Location data invalid or too inaccurate (accuracy: ${Math.round(accuracy)}m, maximum threshold is 5 km)` 
-                });
+            // Check if location data exists
+            if (!latitude || !longitude) {
+                console.error('Missing location data');
+                return res.status(422).json({ error: 'Location data is required' });
+            }
+
+            // Only warn about accuracy but don't block the request
+            if (accuracy > 100) {
+                console.warn('Low accuracy location data:', { accuracy });
             }
 
             this.eventService.setToken(token);

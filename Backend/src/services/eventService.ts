@@ -116,7 +116,7 @@ export class EventService {
       console.log('Looking up event:', eventId);
       const { data: event, error } = await this.supabase
         .from("events")
-        .select("id, location, location_lat, location_long")
+        .select("id, location, location_lat, location_long, attending_users")
         .eq("id", eventId)
         .single();
 
@@ -131,6 +131,12 @@ export class EventService {
       }
 
       console.log('Event found:', event);
+
+      // Check if user is already in attendance
+      if (event.attending_users && event.attending_users.includes(userId)) {
+        throw new Error("You have already checked in to this event");
+      }
+
       let { location_lat, location_long } = event;
 
       // Lazy geocode if coordinates are missing
@@ -173,19 +179,39 @@ export class EventService {
         throw new Error(`You are too far from the event location (${Math.round(distance/1000)}km away, maximum distance is 5 km)`);
       }
 
-      console.log('Recording attendance for user:', userId);
+      // Get current attending_users array
+      const { data: currentEvent, error: fetchError } = await this.supabase
+        .from("events")
+        .select("attending_users")
+        .eq("id", eventId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching current attendance:', fetchError);
+        throw new Error('Failed to fetch current attendance');
+      }
+
+      // Create new array with user added
+      const currentAttendees = currentEvent?.attending_users || [];
+      if (!currentAttendees.includes(userId)) {
+        currentAttendees.push(userId);
+      }
+
+      // Update the event with new array
       const { error: attendanceError } = await this.supabase
-        .from("attendance")
-        .insert({ user_id: userId, event_id: eventId });
+        .from("events")
+        .update({
+          attending_users: currentAttendees
+        })
+        .eq("id", eventId);
 
       if (attendanceError) {
         console.error('Error recording attendance:', attendanceError);
-        if (attendanceError.code === '23505') { // Unique violation
-          throw new Error("You have already checked in to this event");
-        }
-        throw attendanceError;
+        throw new Error(`Failed to record attendance: ${attendanceError.message}`);
       }
 
+      console.log('Attendance recorded successfully for user:', userId);
+      console.log('Updated attending_users:', currentAttendees);
       return "Check-in confirmed!";
     } catch (error) {
       console.error('verifyLocationAttendance error:', error);
