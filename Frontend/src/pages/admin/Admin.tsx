@@ -1,22 +1,53 @@
 import { useEffect, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-
 import { supabase } from "../../context/auth/supabaseClient";
-
 import EmailList from "../../components/admin/EmailList";
+import { useAuth } from "../../context/auth/authProvider";
+
 const Admin = () => {
+    const navigate = useNavigate();
+    const { role } = useAuth();
+    const [showRoleMenu, setShowRoleMenu] = useState(false);
+    
+    const handleSignOut = async () => {
+        try {
+            // Sign out from Supabase
+            await supabase.auth.signOut();
+            // Navigate to home page using React Router
+            
+            navigate("/login", { replace: true });
+            window.location.reload();
+            
+        } catch (error) {
+            console.error("Error during sign out:", error);
+        }
+    };
+
+    const handleRoleClick = (selectedRole: string) => { 
+      setShowRoleMenu(false);
+      if (selectedRole === "e-board") {
+        navigate("/admin");
+      }
+      else if (selectedRole === "sponsor") {
+        navigate("/sponsor");
+      }
+      else if (selectedRole === "general-member") {
+        navigate("/");
+      }
+    };
+
+    const toggleRoleMenu = () => {
+      setShowRoleMenu(!showRoleMenu);
+    };
+
     const navLinks = [
-        { name: "About Us", href: "/about" },
-        { name: "Our Sponsors", href: "/sponsors" },
-        { name: "Events", href: "/events" },
-        { name: "Membership", href: "/membership" },
-        { name: "Log In", href: "/login" },
-      ];
+       { name: "Switch Roles", href: "#", onClick: toggleRoleMenu },
+       { name: "Log Out", href: "#", onClick: handleSignOut },
+    ];
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
-
     const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
 
     useEffect(() => {
@@ -89,11 +120,29 @@ const Admin = () => {
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar
-                    links={navLinks}
-                    title="Beta Alpha Psi | Beta Tau Chapter"
-                    backgroundColor="#FFFFFF"
-                    outlineColor="#AF272F"
-                />
+                links={navLinks}
+                title="Beta Alpha Psi | Beta Tau Chapter"
+                backgroundColor="#FFFFFF"
+                outlineColor="#AF272F"
+            />
+
+            {/* Role selection dropdown */}
+            {showRoleMenu && (
+                <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
+                    <h3 className="text-lg font-semibold mb-2">Select Role</h3>
+                    <div className="flex flex-col gap-2">
+                        {role ? role.map((item: string, i: number) => (
+                            <button 
+                                key={i}
+                                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
+                                onClick={() => handleRoleClick(item)}
+                            >
+                                {item}
+                            </button>
+                        )) : <p>No roles available</p>}
+                    </div>
+                </div>
+            )}
 
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-24">

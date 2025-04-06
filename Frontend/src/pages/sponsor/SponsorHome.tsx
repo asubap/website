@@ -7,11 +7,8 @@ import SponsorOption from "../../components/sponsor/SponsorOption";
 
 const SponsorHome = () => {
     const navLinks = [
-        { name: "About Us", href: "/about" },
-        { name: "Our Sponsors", href: "/sponsors" },
-        { name: "Events", href: "/events" },
-        { name: "Membership", href: "/membership" },
-        { name: "Log In", href: "/login" },
+       
+        { name: "Log Out", href: "/login" },
       ];
 
     const [sponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
