@@ -30,9 +30,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           },
           body: JSON.stringify({ user_email: session.user.email }),
         }).then((response) => response.json())
-          .then((data) => setRole(data[0].role))
+          .then((data) => {
+            console.log(data);
+            // Check if data.role is an array and map over it to extract role values
+            if (Array.isArray(data)) {
+              const roles = data.map(item => item.role);
+              setRole(roles);
+            } 
+          })
           .catch((error) => console.error("Error fetching role:", error));
       }
+      
     };
 
     fetchUser();
@@ -51,9 +59,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: JSON.stringify({ user_email: session.user.email }),
         })
           .then((response) => response.json())
-          .then((data) => setRole(data[0].role))
+          .then((data) => {
+            console.log(data);
+            // Check if data.role is an array and map over it to extract role values
+            if (Array.isArray(data)) {
+              const roles = data.map(item => item.role);
+              setRole(roles);
+            } 
+          })
           .catch((error) => console.error("Error fetching role:", error));
       }
+      console.log(role)
     });
 
     return () => {

@@ -12,6 +12,7 @@ import SponsorsPage from "./pages/sponsors/SponsorsPage";
 
 import SponsorHome from "./pages/sponsor/SponsorHome";
 import SponsorEdit from "./pages/sponsor/SponsorEdit";
+import Admin from "./pages/admin/Admin";
 
 function App() {
   // Protected route example
@@ -33,6 +34,8 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/auth/Home" element={<AuthHome />} />
+              <Route path="/admin" element={<Admin/>} />
+              <Route path="/sponsor" element={<SponsorHome />} />
             </Route>
             {/* sponsor routes, not yet auth for testing purposes */}
             <Route path="/sponsor" element={<SponsorHome />} />
