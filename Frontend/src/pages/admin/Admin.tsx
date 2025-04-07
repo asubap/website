@@ -10,20 +10,12 @@ const Admin = () => {
     const navigate = useNavigate();
     const { role } = useAuth();
     const [showRoleMenu, setShowRoleMenu] = useState(false);
+    const navLinks = [
+        
+        { name: "Event", href: "#" },
+      ];
     
-    const handleSignOut = async () => {
-        try {
-            // Sign out from Supabase
-            await supabase.auth.signOut();
-            // Navigate to home page using React Router
-            
-            navigate("/login", { replace: true });
-            window.location.reload();
-            
-        } catch (error) {
-            console.error("Error during sign out:", error);
-        }
-    };
+   
 
     const handleRoleClick = (selectedRole: string) => { 
       setShowRoleMenu(false);
@@ -42,10 +34,7 @@ const Admin = () => {
       setShowRoleMenu(!showRoleMenu);
     };
 
-    const navLinks = [
-       { name: "Switch Roles", href: "#", onClick: toggleRoleMenu },
-       { name: "Log Out", href: "#", onClick: handleSignOut },
-    ];
+   
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
     const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
@@ -121,6 +110,7 @@ const Admin = () => {
         <div className="flex flex-col min-h-screen">
             <Navbar
                 links={navLinks}
+                isLogged={true}
                 title="Beta Alpha Psi | Beta Tau Chapter"
                 backgroundColor="#FFFFFF"
                 outlineColor="#AF272F"

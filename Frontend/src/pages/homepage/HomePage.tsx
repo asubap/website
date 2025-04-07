@@ -19,6 +19,7 @@ export default function Homepage() {
       <div>
         <Navbar
           links={navLinks}
+          isLogged={false}
           title="Beta Alpha Psi | Beta Tau Chapter"
           backgroundColor="#FFFFFF"
           outlineColor="#AF272F"
