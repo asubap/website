@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient.ts";
 interface AuthContextType {
   session: any;
   role: any;
+  loading: boolean;
   setSession: (user: any) => void;
   setRole: (role: any) => void;
 }
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null);
   const [role, setRole] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Check session on mount
@@ -38,9 +40,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setRole(roles);
             } 
           })
-          .catch((error) => console.error("Error fetching role:", error));
+          .catch((error) => console.error("Error fetching role:", error))
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
       }
-      
     };
 
     fetchUser();
@@ -67,9 +71,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setRole(roles);
             } 
           })
-          .catch((error) => console.error("Error fetching role:", error));
+          .catch((error) => console.error("Error fetching role:", error))
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
       }
-      console.log(role)
+      console.log(role);
     });
 
     return () => {
@@ -78,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, role, setSession, setRole }}>
+    <AuthContext.Provider value={{ session, role, loading, setSession, setRole }}>
       {children}
     </AuthContext.Provider>
   );

@@ -28,7 +28,7 @@ export default function AuthHome() {
         navigate("/sponsor");
       }
       else if (role === "general-member") {
-        console.log("General member");
+        navigate("/member");
       }
       else {
         console.log("Invalid role");
