@@ -18,6 +18,7 @@ const LogInPage = () => {
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-[72px]">
                 <Navbar
+                    isLogged = {false}
                     links={navLinks}
                     title="Beta Alpha Psi | Beta Tau Chapter"
                     backgroundColor="#FFFFFF"
