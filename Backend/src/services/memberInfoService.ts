@@ -38,6 +38,16 @@ export class MemberInfoService {
         return member_info;
     }
 
+    /**
+     * Get all member info
+     * @returns information about all members
+     */
+    async getAllMemberInfo() {
+        const { data, error } = await this.supabase.from('member_info').select('*');
+        if (error) throw error;
+        return data;
+    }
+
    
 
     /**
