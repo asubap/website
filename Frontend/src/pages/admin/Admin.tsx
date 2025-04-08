@@ -6,6 +6,9 @@ import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
 import { useAuth } from "../../context/auth/authProvider";
 
+import { Event } from "../../types";
+import { EventListShort } from "../../components/event/EventListShort";
+
 const Admin = () => {
     const navigate = useNavigate();
     const { role } = useAuth();
@@ -30,12 +33,26 @@ const Admin = () => {
       }
     };
 
+    const isPastDate = (dateString: string): boolean => {
+        // Parse the input date string into a Date object
+        const inputDate = new Date(dateString);
+      
+        // Get the current date and reset its time to midnight
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0); // Set time to 00:00:00 for accurate comparison
+      
+        // Compare the input date with the current date
+        return inputDate < currentDate;
+      };
+
    
 
    
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
     const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
+    const [pastEvents, setPastEvents] = useState<Event[]>([]);
+    const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
 
     useEffect(() => {
         const fetchAdmins = async () => {
@@ -77,10 +94,32 @@ const Admin = () => {
             .catch((error) => console.error("Error fetching role:", error));
         }
         };
+
+        const fetchEvents = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const token = session.access_token;
+                fetch("https://asubap-backend.vercel.app/events", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }).then((response) => response.json())
+                .then((data) => {
+                    setPastEvents(data.filter((event: Event) => isPastDate(event.date)));
+                    setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.date)));
+                })
+                .catch((error) => console.error("Error fetching events:", error));
+            }
+        };
+        
     
         fetchAdmins();
     
         fetchSponsors();
+
+        fetchEvents();
         
     }, []);
 
@@ -140,10 +179,10 @@ const Admin = () => {
                         <div className="">
                             <div className="flex items-center">
                                 <h2 className="text-2xl font-semibold">Events</h2>
-                                <button className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">+ New Event</button>
+                                <button className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" onClick={() => navigate("/admin/create-event")}>+ New Event</button>
                             </div>
                             <div>
-                                place for event cards
+                                <EventListShort events={upcomingEvents} />
                             </div>
                         </div>
 
@@ -168,7 +207,7 @@ const Admin = () => {
                                 <h2 className="text-2xl font-semibold">Past Events</h2>
                             </div>
                             <div>
-                                place for past event cards
+                                <EventListShort events={pastEvents} />
                             </div>
                         </div>
                         

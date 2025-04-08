@@ -155,7 +155,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
 
-    <nav className="fixed top-0 left-0 right-0 z-50">
+    <nav className="fixed top-0 left-0 right-0 z-50 font-arial">
       <div
         style={{
           backgroundColor: backgroundColor || "#FFFFFF",
@@ -171,7 +171,7 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={handleLogoClick}
             style={{ cursor: "pointer" }}
           >
-            <Link to="/" className="font-semibold text-xl flex items-center">
+            <Link to="/" className="font-medium text-xl flex items-center">
               <img
                 src={BAPLogo}
                 alt="BAP Logo"
@@ -213,7 +213,7 @@ const Navbar: React.FC<NavbarProps> = ({
             )}
             {showRoleMenu && (
                 <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
-                    <h3 className="text-lg font-semibold mb-2">Select Role</h3>
+                    <h3 className="text-lg font-medium mb-2">Select Role</h3>
                     <div className="flex flex-col gap-2">
                         {role ? role.map((item: string, i: number) => (
                             <button 
@@ -327,7 +327,7 @@ const Navbar: React.FC<NavbarProps> = ({
             <li>
             {showRoleMenu && (
                 <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
-                    <h3 className="text-lg font-semibold mb-2">Select Role</h3>
+                    <h3 className="text-lg font-medium mb-2">Select Role</h3>
                     <div className="flex flex-col gap-2">
                         {role ? role.map((item: string, i: number) => (
                             <button 
