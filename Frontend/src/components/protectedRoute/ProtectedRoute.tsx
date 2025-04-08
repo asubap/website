@@ -4,7 +4,6 @@ import { useAuth } from "../../context/auth/authProvider";
 const ProtectedRoute = () => {
   const { session, loading, role } = useAuth();
   const location = useLocation();
-  console.log(role);
 
   // Function to check if user has permission for current route
   const hasPermission = () => {

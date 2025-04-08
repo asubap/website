@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: JSON.stringify({ user_email: session.user.email }),
         }).then((response) => response.json())
           .then((data) => {
-            console.log(data);
             // Check if data.role is an array and map over it to extract role values
             if (Array.isArray(data)) {
               const roles = data.map(item => item.role);
@@ -64,7 +63,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log(data);
             // Check if data.role is an array and map over it to extract role values
             if (Array.isArray(data)) {
               const roles = data.map(item => item.role);
@@ -76,7 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setLoading(false);
       }
-      console.log(role);
     });
 
     return () => {

@@ -9,18 +9,15 @@ export default function AuthHome() {
     const { session } = useAuth();
     const user = session?.user;
     const { role } = useAuth(); // Call hooks at the top level
-    console.log(role)
     const navigate = useNavigate();
 
     
     const handleSignOut = async () => {
-      console.log(role);
       await supabase.auth.signOut();
       window.location.href = "/";
     };
 
     const handleRoleClick = (role: String) => { 
-      console.log(role);
       if (role === "e-board") {
         navigate("/admin");
       }
