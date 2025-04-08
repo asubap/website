@@ -1,9 +1,9 @@
 import { supabase } from "../../context/auth/supabaseClient";
 import { useAuth } from "../../context/auth/authProvider";
 
-import Admin from "../admin/Admin";
-import SponsorHome from "../sponsor/SponsorHome";
-import { ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
+
+
+
 import { useNavigate } from "react-router-dom";
 export default function AuthHome() {    
     const { session } = useAuth();
