@@ -11,6 +11,31 @@ export class MemberInfoController {
         this.userRoleService = new UserRoleService();
     }
 
+
+    /**
+     * Get all member info
+     * @param req 
+     * @param res 
+     * @returns information about all members
+     */
+    async getAllMemberInfo(req: Request, res: Response) {
+        try {
+            const token = extractToken(req);
+            if (!token) {
+                res.status(401).json({ error: 'No authorization token provided' });
+                return;
+            }
+
+            this.memberInfoService.setToken(token);
+
+            const memberInfo = await this.memberInfoService.getAllMemberInfo();
+
+            res.status(200).json(memberInfo);
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
     /**
      * Get member info
      * @param req 
@@ -88,26 +113,55 @@ export class MemberInfoController {
      * @returns the updated member info
      */
     async editMemberInfo(req: Request, res: Response) {
+        const { user_email, bio, internship, first_name, last_name, year, major, contact_me } = req.body;
+
+        const token = extractToken(req);
+        if (!token) {
+            res.status(401).json({ error: 'No authorization token provided' });
+            return;
+        }
+
+        this.memberInfoService.setToken(token);
+
+        if (!user_email) {
+            res.status(400).json({ error: 'User email is required' });
+            return;
+        }
+
+        // Build an update object only with non-empty fields
+        const updateFields: Record<string, string> = {};
+        if (bio && bio.trim() !== '') {
+            updateFields.bio = bio;
+        }
+        if (internship && internship.trim() !== '') {
+            updateFields.internship = internship;
+        }
+        if (first_name && first_name.trim() !== '') {
+            updateFields.first_name = first_name;
+        }
+        if (last_name && last_name.trim() !== '') {
+            updateFields.last_name = last_name;
+        }
+        if (year && year.trim() !== '') {
+            updateFields.year = year;
+        }
+        if (major && major.trim() !== '') {
+            updateFields.major = major;
+        }
+        if (contact_me && contact_me.trim() !== '') {
+            updateFields.contact_me = contact_me;
+        }
+        
+        // If there's nothing to update, respond accordingly
+        if (Object.keys(updateFields).length === 0) {
+            res.status(400).json({ error: 'No valid update fields provided.' });
+            return;
+        }
+
         try {
-            const token = extractToken(req);
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-
-            this.memberInfoService.setToken(token);
-
-            const { user_email, bio, internship, first_name, last_name, year, major, contact_me } = req.body;
-
-            if (!user_email || !bio || !internship || !first_name || !last_name || !year || !major || !contact_me) {
-                res.status(400).json({ error: 'User email and all fields are required' });
-                return;
-            }
-
             const user_id = await this.userRoleService.getUserID(user_email);
-
             // edit member info
-            const memberInfo = await this.memberInfoService.editMemberInfo(user_id, bio, internship, first_name, last_name, year, major, contact_me);
+            const memberInfo = await this.memberInfoService.editMemberInfo(user_id, updateFields);
 
             res.status(200).json(memberInfo);
         } catch (error) {
@@ -115,74 +169,6 @@ export class MemberInfoController {
         }
     }
 
-
-    /**
-     * Edit member bio
-     * @param req 
-     * @param res 
-     * @returns the updated member info
-     */
-    async editMemberBio(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-
-            this.memberInfoService.setToken(token);
-
-            const { user_email, bio } = req.body;
-            
-            if (!user_email || !bio) {
-                res.status(400).json({ error: 'User email and bio are required' });
-                return;
-            }
-
-            const user_id = await this.userRoleService.getUserID(user_email);
-
-            // edit member bio
-            const memberInfo = await this.memberInfoService.editMemberBio(user_id, bio);
-
-            res.status(200).json(memberInfo);
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    /**
-     * Edit member internship
-     * @param req 
-     * @param res 
-     * @returns the updated member info
-     */
-    async editMemberInternship(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-
-            this.memberInfoService.setToken(token);
-
-            const { user_email, internship } = req.body;
-
-            if (!user_email || !internship) {
-                res.status(400).json({ error: 'User email and internship are required' });
-                return;
-            }
-
-            const user_id = await this.userRoleService.getUserID(user_email);
-
-            // edit member internship
-            const memberInfo = await this.memberInfoService.editMemberInternship(user_id, internship);
-
-            res.status(200).json(memberInfo);
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
 
     /**
      * Delete member
@@ -247,146 +233,6 @@ export class MemberInfoController {
 
             // add member
             const memberInfo = await this.memberInfoService.addMember(user_id);
-
-            res.status(200).json(memberInfo);
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    /**
-     * Edit member first name
-     * @param req 
-     * @param res 
-     * @returns the updated member info
-     */
-    async editMemberFirstName(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-
-            this.memberInfoService.setToken(token);
-
-            const { user_email, first_name } = req.body;
-
-            if (!user_email || !first_name) {
-                res.status(400).json({ error: 'User email and first name are required' });
-                return;
-            }
-
-            const user_id = await this.userRoleService.getUserID(user_email);
-
-            // edit member first name
-            const memberInfo = await this.memberInfoService.editMemberFirstName(user_id, first_name);
-
-            res.status(200).json(memberInfo);
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    /**
-     * Edit member last name
-     * @param req 
-     * @param res 
-     * @returns the updated member info
-     */
-    async editMemberLastName(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-            
-            this.memberInfoService.setToken(token);
-
-            const { user_email, last_name } = req.body;
-
-            if (!user_email || !last_name) {
-                res.status(400).json({ error: 'User email and last name are required' });
-                return;
-            }
-
-            const user_id = await this.userRoleService.getUserID(user_email);
-
-            // edit member last name
-            const memberInfo = await this.memberInfoService.editMemberLastName(user_id, last_name);
-
-            res.status(200).json(memberInfo);
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    /**
-     * Edit member year
-     * @param req 
-     * @param res 
-     * @returns the updated member info
-     */
-    async editMemberYear(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-            
-            this.memberInfoService.setToken(token);
-
-            const { user_email, year } = req.body;
-
-            if (!user_email || !year) {
-                res.status(400).json({ error: 'User email and year are required' });
-                return;
-            }
-
-            const user_id = await this.userRoleService.getUserID(user_email);
-
-            // edit member year
-            const memberInfo = await this.memberInfoService.editMemberYear(user_id, year);
-
-            res.status(200).json(memberInfo);
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    /**
-     * Edit member major
-     * @param req 
-     * @param res 
-     * @returns the updated member info
-     */
-    async editMemberMajor(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-
-            if (!token) {
-                res.status(401).json({ error: 'No authorization token provided' });
-                return;
-            }
-            
-            this.memberInfoService.setToken(token);
-
-            const { user_email, major } = req.body;
-
-            if (!user_email || !major) {
-                res.status(400).json({ error: 'User email and major are required' });
-                return;
-            }
-
-            const user_id = await this.userRoleService.getUserID(user_email);
-
-            // edit member major
-            const memberInfo = await this.memberInfoService.editMemberMajor(user_id, major);
 
             res.status(200).json(memberInfo);
         } catch (error) {

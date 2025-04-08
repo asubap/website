@@ -14,7 +14,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.3",
+    "@supabase/supabase-js": "^2.49.4",
     "@types/axios": "^0.14.4",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
@@ -30,11 +30,11 @@
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2",
     "ts-node": "^10.9.2",
-    "vercel": "^41.4.1"
+    "vercel": "^41.5.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
+    "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
     "tsconfig-paths": "^4.2.0"
   }

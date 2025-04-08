@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BAPLogo from "../../assets/BAP_Logo.png";
+import LogOut from "../logOut/LogOut";
+import { useAuth } from "../../context/auth/authProvider";
 
 interface NavbarProps {
   links: { name: string; href: string; onClick?: () => void }[];
   title: string;
+  isLogged : boolean;
   backgroundColor?: string;
   outlineColor?: string;
   onClick?: () => void;
@@ -16,6 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({
   backgroundColor,
   outlineColor,
   onClick,
+  isLogged
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -23,6 +27,11 @@ const Navbar: React.FC<NavbarProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
   const lastToggleTime = useRef(0);
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const {role} = useAuth();
+  const navigate = useNavigate();
+
+  
 
   // Check screen size
   useEffect(() => {
@@ -41,6 +50,22 @@ const Navbar: React.FC<NavbarProps> = ({
       window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
+  const toggleRoleMenu = () =>{
+    setShowRoleMenu(!showRoleMenu);
+  }
+
+  const handleRoleClick = (selectedRole: string) => {
+    setShowRoleMenu(false);
+      if (selectedRole === "e-board") {
+        navigate("/admin");
+      }
+      else if (selectedRole === "sponsor") {
+        navigate("/sponsor");
+      }
+      else if (selectedRole === "general-member") {
+        navigate("/member");
+      }
+  }
 
   // Use useCallback to prevent unnecessary re-renders
   const toggleMenu = useCallback((): void => {
@@ -129,7 +154,8 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50">
+
+    <nav className="fixed top-0 left-0 right-0 z-50 font-arial">
       <div
         style={{
           backgroundColor: backgroundColor || "#FFFFFF",
@@ -145,7 +171,7 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={handleLogoClick}
             style={{ cursor: "pointer" }}
           >
-            <Link to="/" className="font-semibold text-xl flex items-center">
+            <Link to="/" className="font-medium text-xl flex items-center">
               <img
                 src={BAPLogo}
                 alt="BAP Logo"
@@ -173,6 +199,37 @@ const Navbar: React.FC<NavbarProps> = ({
                 {link.name}
               </Link>
             ))}
+            {/* Conditional rendering of Log Out link */} 
+            {isLogged && (
+              <>
+                <LogOut/>
+                <Link
+                  to={'#'}
+                  onClick={toggleRoleMenu}
+                >
+                  Switch Roles
+                </Link>
+              </>
+            )}
+            {showRoleMenu && (
+                <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
+                    <h3 className="text-lg font-medium mb-2">Select Role</h3>
+                    <div className="flex flex-col gap-2">
+                        {role ? role.map((item: string, i: number) => (
+                            <button 
+                                key={i}
+                                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
+                                onClick={() => handleRoleClick(item)}
+                            >
+                                {item}
+                            </button>
+                        )) : <p>No roles available</p>}
+                    </div>
+                </div>
+            )}
+            
+            
+          
           </div>
           {/* Hamburger button - always visible on mobile */}
           <div className="md:hidden">
@@ -251,6 +308,42 @@ const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               </li>
             ))}
+            
+            {isLogged && (
+              <>
+              <li>
+                <LogOut/>
+                </li>
+                <li>
+                <Link
+                  to={'#'}
+                  onClick={toggleRoleMenu}
+                >
+                  Switch Roles
+                </Link>
+              </li>
+              </>
+            )}
+            <li>
+            {showRoleMenu && (
+                <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
+                    <h3 className="text-lg font-medium mb-2">Select Role</h3>
+                    <div className="flex flex-col gap-2">
+                        {role ? role.map((item: string, i: number) => (
+                            <button 
+                                key={i}
+                                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
+                                onClick={() => handleRoleClick(item)}
+                            >
+                                {item}
+                            </button>
+                        )) : <p>No roles available</p>}
+                    </div>
+                </div>
+            )}
+            </li>
+
+            
           </ul>
         </div>
       </div>
