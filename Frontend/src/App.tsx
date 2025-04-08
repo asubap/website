@@ -4,9 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Homepage from "./pages/homepage/HomePage";
 import LogInPage from "./pages/login/LogInPage";
 import AuthHome from "./pages/homepage/AuthHome";
-import { Navigate, Outlet } from "react-router-dom";
 import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
-import { useAuth, AuthProvider } from "./context/auth/authProvider";
+import { AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
 
