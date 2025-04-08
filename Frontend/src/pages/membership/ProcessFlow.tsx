@@ -43,6 +43,7 @@ export const ProcessFlow = () => {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <Navbar
+        isLogged = {false}
         links={navLinks}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"

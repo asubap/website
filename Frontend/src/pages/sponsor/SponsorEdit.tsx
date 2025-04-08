@@ -27,6 +27,7 @@ const SponsorEdit = () => {
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar
+                    isLogged={true}
                     links={navLinks}
                     title="Beta Alpha Psi | Beta Tau Chapter"
                     backgroundColor="#FFFFFF"

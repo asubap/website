@@ -7,11 +7,8 @@ import SponsorOption from "../../components/sponsor/SponsorOption";
 
 const SponsorHome = () => {
     const navLinks = [
-        { name: "About Us", href: "/about" },
-        { name: "Our Sponsors", href: "/sponsors" },
-        { name: "Events", href: "/events" },
-        { name: "Membership", href: "/membership" },
-        { name: "Log In", href: "/login" },
+       
+        { name: "Events", href: "/" },
       ];
 
     const [sponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
@@ -28,6 +25,7 @@ const SponsorHome = () => {
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar
+                    isLogged={true}
                     links={navLinks}
                     title="Beta Alpha Psi | Beta Tau Chapter"
                     backgroundColor="#FFFFFF"
