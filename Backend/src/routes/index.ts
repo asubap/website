@@ -6,7 +6,7 @@ import announcementsRoutes from "./announcements";
 const router = Router();
 
 router.get("/", (req: Request, res: Response) => {
-    res.json({ message: "Hello, TypeScript + Express!" });
+  res.json({ message: "Hello, TypeScript + Express!" });
 });
 
 router.use("/roles", userRoleRoutes);
