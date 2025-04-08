@@ -30,7 +30,7 @@ export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged = {false}
+        isLogged={false}
         links={navLinks}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
