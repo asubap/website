@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
+import { useAuth } from "../../context/auth/authProvider";
 
 interface EventCardProps {
   eventId: string;
@@ -21,6 +22,17 @@ export const EventCard: React.FC<EventCardProps> = ({
   date,
   time
 }) => {
+  const { session, role, loading } = useAuth();
+
+  useEffect(() => {
+    console.log('Auth state:', {
+      session: !!session,
+      role,
+      loading,
+      roleType: typeof role
+    });
+  }, [session, role, loading]);
+
   const formatDateTime = (date?: string, time?: string | null) => {
     if (!date) return null;
     const eventDate = new Date(date);
@@ -32,6 +44,20 @@ export const EventCard: React.FC<EventCardProps> = ({
     });
     return time ? `${formattedDate} at ${time}` : formattedDate;
   };
+
+  // Role checking logic - Check for string role names
+  const isMember = Array.isArray(role) && role.includes("general-member"); // Role ID 3
+  const isSponsor = Array.isArray(role) && role.includes("sponsor");      // Role ID 2
+  const isLoggedIn = !!session;
+
+  // Debug log for role checks
+  console.log('Role checks (updated):', {
+    rawRole: role,
+    isMember,
+    isSponsor,
+    isLoggedIn,
+    shouldShowButtons: !isPast && isLoggedIn && !loading
+  });
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
@@ -56,14 +82,18 @@ export const EventCard: React.FC<EventCardProps> = ({
         {description || 'No description available'}
       </p>
       
-      {!isPast && (
+      {!isPast && isLoggedIn && !loading && (
         <div className="flex justify-end space-x-4">
-          <div className="w-40">
-            <EventRSVP eventId={eventId} />
-          </div>
-          <div className="w-40">
-            <EventCheckIn eventId={eventId} />
-          </div>
+          {(isMember || isSponsor) && (
+            <div className="w-40">
+              <EventRSVP eventId={eventId} />
+            </div>
+          )}
+          {isMember && (
+            <div className="w-40">
+              <EventCheckIn eventId={eventId} />
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -8,14 +8,11 @@ import AuthHome from "./pages/homepage/AuthHome";
 import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 import { AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
-import AuthEventsPage from "./pages/events/AuthEventsPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
-
 import SponsorHome from "./pages/sponsor/SponsorHome";
 import SponsorEdit from "./pages/sponsor/SponsorEdit";
 import Admin from "./pages/admin/Admin";
 import CreateEvent from "./pages/admin/CreateEvent";
-
 import MemberView from "./pages/member/MemberView";
 
 function App() {
@@ -39,7 +36,6 @@ function App() {
               <Route path="/member" element={<MemberView/>}/>
               <Route path="/sponsor/edit" element={<SponsorEdit />} />
               <Route path="/admin/create-event" element={<CreateEvent />} />
-              <Route path="/auth/events" element={<AuthEventsPage />} />
             </Route>
           </Routes>
         </Router>

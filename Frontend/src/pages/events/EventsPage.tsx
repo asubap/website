@@ -1,22 +1,47 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { PublicEventCard } from "../../components/event/PublicEventCard";
+import { EventCard } from "../../components/event/EventCard";
+import { useAuth } from "../../context/auth/authProvider";
 
 interface Event {
   id: string;
   name: string;
   description: string | null;
   date: string;
+  time: string | null;
+  location: string | null;
+  rsvp_users?: string[];
+  attending_users?: string[];
 }
 
 const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const { session } = useAuth();
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch("http://localhost:3000/events/public");
+        // Choose endpoint based on authentication status
+        const endpoint = session?.access_token 
+          ? "http://localhost:3000/events"
+          : "http://localhost:3000/events/public";
+        
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json'
+        };
+
+        // Add authorization header if authenticated
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'GET',
+          headers,
+          credentials: session ? 'include' : undefined
+        });
+        
         const data = await res.json();
         
         // Sort events by date
@@ -31,29 +56,37 @@ const EventsPage: React.FC = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [session]); // Re-fetch when session changes
 
+  // Define standard navigation links
   const navLinks = [
     { name: "About Us", href: "/about" },
     { name: "Our Sponsors", href: "/sponsors" },
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
+    // Log In link will be handled by Navbar if not logged in
   ];
 
   // Split events into upcoming and past
   const today = new Date();
-  const upcomingEvents = events.filter(event => new Date(event.date) >= today);
-  const pastEvents = events.filter(event => new Date(event.date) < today);
+  today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+  
+  const upcomingEvents = events
+    .filter(event => new Date(event.date) >= today)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+  const pastEvents = events
+    .filter(event => new Date(event.date) < today)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks}
+        links={navLinks} // Pass only standard links
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={false}
+        isLogged={!!session} // Let Navbar know the auth state
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
@@ -62,10 +95,15 @@ const EventsPage: React.FC = () => {
             <div className="space-y-4">
               {upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => (
-                  <PublicEventCard
+                  <EventCard
                     key={event.id}
+                    eventId={event.id.toString()}
                     title={event.name}
                     description={event.description}
+                    location={event.location}
+                    date={event.date}
+                    time={event.time}
+                    isPast={false}
                   />
                 ))
               ) : (
@@ -79,10 +117,15 @@ const EventsPage: React.FC = () => {
             <div className="space-y-4">
               {pastEvents.length > 0 ? (
                 pastEvents.map((event) => (
-                  <PublicEventCard
+                  <EventCard
                     key={event.id}
+                    eventId={event.id.toString()}
                     title={event.name}
                     description={event.description}
+                    location={event.location}
+                    date={event.date}
+                    time={event.time}
+                    isPast={true}
                   />
                 ))
               ) : (
