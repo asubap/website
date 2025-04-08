@@ -78,13 +78,18 @@ export class EventController {
             return;
         }
 
+        console.log(user_email, name, date, location, description, time);
+
 
         const { lat, lon } = await geocodeAddress(location);
+        console.log(lat, lon);
         const user_id = await this.userRoleService.getUserID(user_email);
+        console.log(user_id);
 
         try {
             const event = await this.eventService.addEvent(user_id, name, date, location, description, lat, lon, time);
-            res.json(event);
+            // res.json(event);
+            res.json("Event added successfully");
             return;
         } catch (error) {
             res.status(500).json({ error: 'Failed to add event' });
@@ -176,11 +181,7 @@ export class EventController {
         try {
             const event_id = await this.eventService.getEventID(event_name);
             const event = await this.eventService.deleteEvent(event_id);
-            if (event) {
-                res.json("Event deleted successfully");
-            } else {
-                res.status(500).json({ error: 'Failed to delete event' });
-            }
+            res.json("Event deleted successfully");
         } catch (error) {
             if (error instanceof Error && error.message.includes('No event found')) {
                 res.status(404).json({ error: error.message });
