@@ -1,37 +1,56 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { PublicEventCard } from "../../components/event/PublicEventCard";
+import { EventCard } from "../../components/event/EventCard";
+import { useAuth } from "../../context/auth/authProvider";
+import { useNavigate } from "react-router-dom";
 
 interface Event {
   id: string;
   name: string;
   description: string | null;
   date: string;
+  time: string | null;
+  location: string | null;
+  rsvp_users?: string[];
+  attending_users?: string[];
 }
 
-const EventsPage: React.FC = () => {
+const AuthEventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const { session } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch("http://localhost:3000/events/public");
+        const res = await fetch("http://localhost:3000/events", {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (res.status === 401) {
+          navigate('/login');
+          return;
+        }
+        
         const data = await res.json();
-        
-        // Sort events by date
-        const sortedEvents = data.sort((a: Event, b: Event) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        
-        setEvents(sortedEvents);
+        setEvents(data);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
     };
-
-    fetchEvents();
-  }, []);
+    
+    if (session?.access_token) {
+      fetchEvents();
+    } else {
+      navigate('/login');
+    }
+  }, [session, navigate]);
 
   const navLinks = [
     { name: "About Us", href: "/about" },
@@ -43,8 +62,15 @@ const EventsPage: React.FC = () => {
 
   // Split events into upcoming and past
   const today = new Date();
-  const upcomingEvents = events.filter(event => new Date(event.date) >= today);
-  const pastEvents = events.filter(event => new Date(event.date) < today);
+  today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+  
+  const upcomingEvents = events
+    .filter(event => new Date(event.date) >= today)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+  const pastEvents = events
+    .filter(event => new Date(event.date) < today)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -53,7 +79,7 @@ const EventsPage: React.FC = () => {
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={false}
+        isLogged={!!session}
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
@@ -62,10 +88,15 @@ const EventsPage: React.FC = () => {
             <div className="space-y-4">
               {upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => (
-                  <PublicEventCard
+                  <EventCard
                     key={event.id}
+                    eventId={event.id.toString()}
                     title={event.name}
                     description={event.description}
+                    location={event.location}
+                    date={event.date}
+                    time={event.time}
+                    isPast={false}
                   />
                 ))
               ) : (
@@ -79,10 +110,15 @@ const EventsPage: React.FC = () => {
             <div className="space-y-4">
               {pastEvents.length > 0 ? (
                 pastEvents.map((event) => (
-                  <PublicEventCard
+                  <EventCard
                     key={event.id}
+                    eventId={event.id.toString()}
                     title={event.name}
                     description={event.description}
+                    location={event.location}
+                    date={event.date}
+                    time={event.time}
+                    isPast={true}
                   />
                 ))
               ) : (
@@ -97,4 +133,4 @@ const EventsPage: React.FC = () => {
   );
 };
 
-export default EventsPage;
+export default AuthEventsPage;

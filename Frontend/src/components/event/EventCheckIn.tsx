@@ -75,10 +75,10 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({ eventId }) => {
   };
 
   return (
-    <div className="p-4 border rounded-xl shadow-md mt-4">
+    <div>
       <button
         onClick={checkIn}
-        className={`px-4 py-2 text-white rounded-lg w-full ${
+        className={`px-4 py-2 text-white rounded-lg w-full text-sm ${
           status === "sending" || status === "locating"
             ? "bg-gray-400"
             : status === "success"
@@ -97,10 +97,10 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({ eventId }) => {
           ? "✓ Checked In"
           : status === "error"
           ? "Try Again"
-          : "Confirm Attendance"}
+          : "Check In"}
       </button>
       {message && (
-        <p className={`mt-2 text-sm ${
+        <p className={`mt-1 text-xs ${
           status === "success" ? "text-green-600" : "text-red-600"
         }`}>
           {message}

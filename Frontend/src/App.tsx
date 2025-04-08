@@ -2,12 +2,13 @@ import "./App.css";
 import { ProcessFlow } from "./pages/membership/ProcessFlow";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Homepage from "./pages/homepage/HomePage";
+import EventsPage from "./pages/events/EventsPage";
 import LogInPage from "./pages/login/LogInPage";
 import AuthHome from "./pages/homepage/AuthHome";
 import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 import { AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
-import EventsPage from "./pages/events/EventsPage";
+import AuthEventsPage from "./pages/events/AuthEventsPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
 
 import SponsorHome from "./pages/sponsor/SponsorHome";
@@ -28,7 +29,8 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/sponsors" element={<SponsorsPage />} />
             <Route path="/" element={<Homepage />} />
-            
+            <Route path="/events" element={<EventsPage />} />
+
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/auth/Home" element={<AuthHome />} />
@@ -37,7 +39,7 @@ function App() {
               <Route path="/member" element={<MemberView/>}/>
               <Route path="/sponsor/edit" element={<SponsorEdit />} />
               <Route path="/admin/create-event" element={<CreateEvent />} />
-              <Route path="/auth/events" element={<EventsPage />} />
+              <Route path="/auth/events" element={<AuthEventsPage />} />
             </Route>
           </Routes>
         </Router>

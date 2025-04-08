@@ -1,47 +1,71 @@
 import React from "react";
 import EventCheckIn from "./EventCheckIn";
+import EventRSVP from "./EventRSVP";
 
 interface EventCardProps {
+  eventId: string;
   title: string;
   description: string | null;
-  eventId: string;
-  isPast?: boolean;
+  isPast: boolean;
+  location?: string | null;
+  date?: string;
+  time?: string | null;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
+  eventId,
   title,
   description,
-  eventId,
-  isPast = false,
+  isPast,
+  location,
+  date,
+  time
 }) => {
+  const formatDateTime = (date?: string, time?: string | null) => {
+    if (!date) return null;
+    const eventDate = new Date(date);
+    const formattedDate = eventDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    return time ? `${formattedDate} at ${time}` : formattedDate;
+  };
+
   return (
-    <div className="p-6 rounded-[14.54px] border-[1.53px] border-black">
-      <div className="text-black text-[32px] font-bold mb-2">{title}</div>
-      <div className="text-black text-base mb-6">
-        <span>Description - </span>
-        <span>{description || 'No description available'}</span>
-      </div>
-      <div className="flex flex-col gap-4">
-        {!isPast ? (
-          <>
-            <div className="flex gap-4 justify-end">
-              <button className="border text-[#AF272F] text-base px-8 py-2 rounded-[10px] border-solid border-[#AF272F]">
-                View
-              </button>
-              <button className="bg-[#AF272F] text-white text-base px-8 py-2 rounded-[10px]">
-                Edit
-              </button>
-            </div>
-            <EventCheckIn eventId={eventId} />
-          </>
-        ) : (
-          <div className="flex justify-end">
-            <button className="bg-[#AF272F] text-white text-base px-8 py-2 rounded-[10px]">
-              Archive
-            </button>
+    <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
+      <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">{title}</h3>
+      
+      <div className="space-y-2 mb-4">
+        {location && (
+          <div>
+            <span className="font-semibold text-gray-700">Location: </span>
+            <span className="text-gray-600">{location}</span>
+          </div>
+        )}
+        {date && (
+          <div>
+            <span className="font-semibold text-gray-700">Date/Time: </span>
+            <span className="text-gray-600">{formatDateTime(date, time)}</span>
           </div>
         )}
       </div>
+
+      <p className="text-gray-600 text-sm mb-4">
+        {description || 'No description available'}
+      </p>
+      
+      {!isPast && (
+        <div className="flex justify-end space-x-4">
+          <div className="w-40">
+            <EventRSVP eventId={eventId} />
+          </div>
+          <div className="w-40">
+            <EventCheckIn eventId={eventId} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

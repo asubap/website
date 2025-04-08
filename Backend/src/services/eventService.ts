@@ -231,4 +231,64 @@ export class EventService {
       throw new Error("Failed to geocode event address");
     }
   }
+
+  async getPublicEvents() {
+    console.log('EventService: Getting public events from Supabase...');
+    const { data, error } = await this.supabase
+      .from("events")
+      .select("id, name, description, date")
+      .order('date', { ascending: true });
+    
+    if (error) {
+      console.error('EventService: Error fetching public events:', error);
+      throw error;
+    }
+    console.log('EventService: Public events fetched successfully:', data);
+    return data;
+  }
+
+  async rsvpForEvent(eventId: string, userId: string) {
+    try {
+      console.log('Processing RSVP for event:', eventId, 'user:', userId);
+
+      // Get current rsvp_users array
+      const { data: event, error: fetchError } = await this.supabase
+        .from("events")
+        .select("rsvp_users")
+        .eq("id", eventId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching event RSVPs:', fetchError);
+        throw new Error('Failed to fetch event RSVPs');
+      }
+
+      // Create new array with user added
+      const currentRsvps = event?.rsvp_users || [];
+      if (currentRsvps.includes(userId)) {
+        throw new Error('You have already RSVP\'d for this event');
+      }
+
+      currentRsvps.push(userId);
+
+      // Update the event with new array
+      const { error: rsvpError } = await this.supabase
+        .from("events")
+        .update({
+          rsvp_users: currentRsvps
+        })
+        .eq("id", eventId);
+
+      if (rsvpError) {
+        console.error('Error recording RSVP:', rsvpError);
+        throw new Error(`Failed to record RSVP: ${rsvpError.message}`);
+      }
+
+      console.log('RSVP recorded successfully for user:', userId);
+      return "RSVP confirmed!";
+    } catch (error) {
+      console.error('rsvpForEvent error:', error);
+      throw error;
+    }
+  }
 }
