@@ -78,13 +78,10 @@ export class EventController {
             return;
         }
 
-        console.log(user_email, name, date, location, description, time);
 
 
         const { lat, lon } = await geocodeAddress(location);
-        console.log(lat, lon);
         const user_id = await this.userRoleService.getUserID(user_email);
-        console.log(user_id);
 
         try {
             const event = await this.eventService.addEvent(user_id, name, date, location, description, lat, lon, time);
