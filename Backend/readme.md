@@ -266,7 +266,8 @@ GET /events
         "attending_users": null,
         "created_by_id": "string",
         "description": "string",
-        "time": "HH:MM:SS"
+        "time": "HH:MM:SS",
+        "sponsors": ["sponsor1", "sponsor2"]
     }
 ]
 ```
@@ -310,7 +311,8 @@ POST /events/add-event
     "date": "YYYY-MM-DD",
     "location": "string",
     "description": "string",
-    "time": "HH:MM:SS"
+    "time": "HH:MM:SS",
+    "sponsors": ["sponsor1", "sponsor2"]
 }
 ```
 **Response**: Created event object
@@ -329,7 +331,8 @@ POST /events/edit-event
     "date": "YYYY-MM-DD",    // Optional which means "" if you don't want to update
     "location": "string",    // Optional which means "" if you don't want to update
     "description": "string", // Optional which means "" if you don't want to update
-    "time": "HH:MM:SS"      // Optional which means "" if you don't want to update
+    "time": "HH:MM:SS",      // Optional which means "" if you don't want to update
+    "sponsors": ["sponsor1", "sponsor2"] // Optional which means "" if you don't want to update
 }
 ```
 **Response**: Updated event object

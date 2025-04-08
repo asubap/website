@@ -32,7 +32,7 @@ export class EventService {
         return data;
     }
 
-    async addEvent(user_id: string, name: string, date: string, location: string, description: string, lat: number, long: number, time: string) {
+    async addEvent(user_id: string, name: string, date: string, location: string, description: string, lat: number, long: number, time: string, sponsors: string[]) {
         const { data, error } = await this.supabase
             .from('events')
             .insert(
@@ -44,7 +44,8 @@ export class EventService {
                     location_lat: lat,
                     location_long: long,
                     description: description,
-                    created_by_id: user_id  
+                    created_by_id: user_id,
+                    sponsors: sponsors
                 });
 
         if (error) console.log(error);

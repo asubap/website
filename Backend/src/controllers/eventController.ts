@@ -71,9 +71,9 @@ export class EventController {
 
         this.eventService.setToken(token as string);
 
-        const { user_email, name, date, location, description, time} = req.body;
+        const { user_email, name, date, location, description, time, sponsors} = req.body;
 
-        if (!user_email || !name || !date || !location || !description || !time) {
+        if (!user_email || !name || !date || !location || !description || !time || !sponsors) {
             res.status(400).json({ error: 'Missing required fields' });
             return;
         }
@@ -84,7 +84,7 @@ export class EventController {
         const user_id = await this.userRoleService.getUserID(user_email);
 
         try {
-            const event = await this.eventService.addEvent(user_id, name, date, location, description, lat, lon, time);
+            const event = await this.eventService.addEvent(user_id, name, date, location, description, lat, lon, time, sponsors);
             // res.json(event);
             res.json("Event added successfully");
             return;
@@ -100,7 +100,7 @@ export class EventController {
      * @returns 
      */
     async editEvent(req: Request, res: Response) {
-        const { user_email, event_name, name, date, location, description, time } = req.body;
+        const { user_email, event_name, name, date, location, description, time, sponsors} = req.body;
 
         const token = extractToken(req);
         
@@ -137,6 +137,9 @@ export class EventController {
         if (time && time.trim() !== '') {
             updateFields.time = time;
         }
+        if (sponsors && sponsors.length > 0) {
+            updateFields.sponsors = sponsors;
+        }
         
         // If there's nothing to update, respond accordingly
         if (Object.keys(updateFields).length === 0) {
@@ -147,11 +150,7 @@ export class EventController {
         try {
             const event_id = await this.eventService.getEventID(event_name);
             const updatedEvent = await this.eventService.editEvent(event_id, updateFields);
-            if (updatedEvent) {
-                res.json("Event updated successfully");
-            } else {
-                res.status(500).json({ error: 'Failed to update event' });
-            }
+            res.json("Event updated successfully");
         } catch (error) {
             console.error('Error updating event:', error);
             res.status(500).json({ error: 'Server error.' });
