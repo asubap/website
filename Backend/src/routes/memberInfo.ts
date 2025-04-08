@@ -6,6 +6,7 @@ const memberInfoRoutes = Router();
 const controller = new MemberInfoController();
 memberInfoRoutes
 // general routes
+.get('/', controller.getAllMemberInfo.bind(controller)) // get all member info
 .post('/', controller.getMemberInfo.bind(controller)) // get member info
 .post('/search', controller.search.bind(controller)) // search for a member
 

@@ -102,6 +102,24 @@ GET /roles/session
 ```
 ## Member Info routes
 
+### Get All Members
+```http
+GET /member-info/
+```
+**Response:**
+```json
+{
+    "user_id": "string",
+    "bio": "string",
+    "internship": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "year": "string",
+    "major": "string"
+}
+```
+
+
 ### Get Member Info
 ```http
 POST /member-info/

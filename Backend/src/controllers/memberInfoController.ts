@@ -11,6 +11,31 @@ export class MemberInfoController {
         this.userRoleService = new UserRoleService();
     }
 
+
+    /**
+     * Get all member info
+     * @param req 
+     * @param res 
+     * @returns information about all members
+     */
+    async getAllMemberInfo(req: Request, res: Response) {
+        try {
+            const token = extractToken(req);
+            if (!token) {
+                res.status(401).json({ error: 'No authorization token provided' });
+                return;
+            }
+
+            this.memberInfoService.setToken(token);
+
+            const memberInfo = await this.memberInfoService.getAllMemberInfo();
+
+            res.status(200).json(memberInfo);
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
     /**
      * Get member info
      * @param req 
