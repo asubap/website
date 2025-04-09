@@ -22,9 +22,11 @@ export class EventController {
      */
     async getEvents(req: Request, res: Response) {
         try {
+
             console.log('Getting events...');
             const token = extractToken(req);
             console.log('Token:', token ? 'Present' : 'Missing');
+
 
             if (!token) {
                 res.status(401).json({ error: 'No authorization token provided' });
@@ -32,6 +34,7 @@ export class EventController {
             }
 
             this.eventService.setToken(token as string);
+
             console.log('Token set in service');
 
             const events = await this.eventService.getEvents();
@@ -40,6 +43,7 @@ export class EventController {
         } catch (error) {
             console.error('Error getting events:', error);
             res.status(500).json({ error: 'Failed to get events' });
+
         }
     }
 
@@ -49,7 +53,7 @@ export class EventController {
      * @param res 
      * @returns 
      */
-    async getEventsByName(req: Request, res: Response) {
+    async getEventByID(req: Request, res: Response) {
         const token = extractToken(req);
 
         if (!token) {
@@ -59,9 +63,14 @@ export class EventController {
 
         this.eventService.setToken(token as string);
 
-        const { name } = req.body;
-        const events = await this.eventService.getEventsByName(name);
-        res.json(events);
+        try {
+            const { event_id } = req.body;
+            const event = await this.eventService.getEventByID(event_id);
+            res.json(event);
+        } catch (error) {
+            console.error('Error fetching event:', error);
+            res.status(500).json({ error: 'Failed to fetch event' });
+        }
     }
 
     /**
@@ -109,7 +118,7 @@ export class EventController {
      * @returns 
      */
     async editEvent(req: Request, res: Response) {
-        const { user_email, event_name, name, date, location, description, time, sponsors} = req.body;
+        const { event_id, name, date, location, description, time, sponsors} = req.body;
 
         const token = extractToken(req);
         
@@ -121,8 +130,8 @@ export class EventController {
         this.eventService.setToken(token as string);
         
         // Check for required fields
-        if (!user_email || !event_name) {
-            res.status(400).json({ error: 'user_email and event_name are required.' });
+        if (!event_id) {
+            res.status(400).json({ error: 'event_id is required.' });
             return;
         }
         
@@ -157,7 +166,6 @@ export class EventController {
         }
         
         try {
-            const event_id = await this.eventService.getEventID(event_name);
             const updatedEvent = await this.eventService.editEvent(event_id, updateFields);
             res.json("Event updated successfully");
         } catch (error) {
@@ -182,9 +190,8 @@ export class EventController {
 
         this.eventService.setToken(token as string);
 
-        const { event_name } = req.body;
+        const { event_id } = req.body;
         try {
-            const event_id = await this.eventService.getEventID(event_name);
             const event = await this.eventService.deleteEvent(event_id);
             res.json("Event deleted successfully");
         } catch (error) {
@@ -195,6 +202,7 @@ export class EventController {
             }
         }
     }
+
 
     // return all events (past and present given a date)
     async getEventsByDate(req: Request, res: Response) {
@@ -321,5 +329,6 @@ export class EventController {
             res.status(500).json({ error: 'Failed to get events' });
         }
     }
+
 
 }

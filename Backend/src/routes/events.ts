@@ -6,6 +6,7 @@ const eventRoutes = Router();
 
 const controller = new EventController();
 eventRoutes
+
 // public routes
 .get('/public', controller.getPublicEvents.bind(controller)) // get all events for public view
 .get('/', verifySupabaseToken, controller.getEvents.bind(controller)) // get all events (authenticated)
@@ -14,6 +15,8 @@ eventRoutes
 
 // checkin route
 .post('/checkin/:eventId', verifySupabaseToken, controller.verifyAttendance.bind(controller) as RequestHandler)
+// get all events
+
 
 // rsvp route
 .post('/rsvp/:eventId', verifySupabaseToken, controller.rsvpForEvent.bind(controller) as RequestHandler)

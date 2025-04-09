@@ -8,7 +8,7 @@ const controller = new announcementsController();
 announcementsRoutes
 // general routes
 .get('/', controller.getannouncements.bind(controller)) // get all announcementss
-.post('/', controller.getannouncementsByName.bind(controller)) // get all announcementss
+.post('/', controller.getannouncementByID.bind(controller)) // get all announcementss
 
 // admin routes
 .post('/add-announcement', controller.addannouncements.bind(controller)) // add an announcements

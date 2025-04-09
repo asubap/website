@@ -22,11 +22,16 @@ export class announcementsController {
 
         this.announcementsService.setToken(token as string);
 
-        const announcements = await this.announcementsService.getannouncements();
-        res.json(announcements);
+        try {
+            const announcements = await this.announcementsService.getannouncements();
+            res.json(announcements);
+        } catch (error) {
+            console.error('Error fetching announcements:', error);
+            res.status(500).json({ error: 'Failed to fetch announcements' });
+        }
     }
 
-    async getannouncementsByName(req: Request, res: Response) {
+    async getannouncementByID(req: Request, res: Response) {
         const token = extractToken(req);
 
         if (!token) {
@@ -35,10 +40,18 @@ export class announcementsController {
         }
 
         this.announcementsService.setToken(token as string);
-
-        const { announcement_name } = req.body;
-        const announcements = await this.announcementsService.getannouncementsByName(announcement_name);
-        res.json(announcements);
+        try {
+            const { announcement_id } = req.body;
+            const announcements = await this.announcementsService.getannouncementByID(announcement_id);
+            if (announcements.length === 0) {
+                res.status(404).json({ error: 'Announcement not found' });
+                return;
+            }
+            res.json(announcements);
+        } catch (error) {
+            console.error('Error fetching announcement:', error);
+            res.status(500).json({ error: 'Failed to fetch announcement' });
+        }
     }
 
     async addannouncements(req: Request, res: Response) {
@@ -51,10 +64,10 @@ export class announcementsController {
 
         this.announcementsService.setToken(token as string);
 
-        const { user_email, announcement_name, description} = req.body;
+        const { user_email, title, description} = req.body;
 
-        if (!user_email || !announcement_name || !description) {
-            res.status(400).json({ error: 'Missing required fields' });
+        if (!user_email || !title || !description) {
+            res.status(400).json({ error: 'Missing required fields: user_email, title, and description' });
             return;
         }
 
@@ -62,7 +75,7 @@ export class announcementsController {
         const user_id = await this.userRoleService.getUserID(user_email);
 
         try {
-            const announcements = await this.announcementsService.addannouncements(user_id, announcement_name, description);
+            const announcements = await this.announcementsService.addannouncements(user_id, title, description);
             res.json(announcements);
         } catch (error) {
             res.status(500).json({ error: 'Failed to add announcements' });
@@ -70,7 +83,7 @@ export class announcementsController {
     }
 
     async editannouncements(req: Request, res: Response) {
-        const { user_email, announcement_name, title, description } = req.body;
+        const { announcement_id, title, description } = req.body;
 
         const token = extractToken(req);
         
@@ -82,8 +95,8 @@ export class announcementsController {
         this.announcementsService.setToken(token as string);
         
         // Check for required fields
-        if (!user_email || !announcement_name) {
-            res.status(400).json({ error: 'user_email and announcement_name are required.' });
+        if (!announcement_id) {
+            res.status(400).json({ error: 'announcement_id is required.' });
             return;
         }
         
@@ -103,7 +116,6 @@ export class announcementsController {
         }
         
         try {
-            const announcement_id = await this.announcementsService.getannouncementID(announcement_name);
             const updatedAnnouncement = await this.announcementsService.editannouncements(announcement_id, updateFields);
             
             res.json(updatedAnnouncement);
@@ -123,11 +135,10 @@ export class announcementsController {
 
         this.announcementsService.setToken(token as string);
 
-        const { announcement_name } = req.body;
+        const { announcement_id } = req.body;
         try {
-            const announcement_id = await this.announcementsService.getannouncementID(announcement_name);
             const announcement = await this.announcementsService.deleteannouncements(announcement_id);
-            res.json(announcement);    
+            res.json("Announcement deleted successfully");
         } catch (error) {
             if (error instanceof Error && error.message.includes('No announcements found')) {
                 res.status(404).json({ error: error.message });

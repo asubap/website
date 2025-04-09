@@ -174,9 +174,9 @@ const Admin = () => {
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-24">
                 <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
-                    <h1 className="text-4xl font-bold font-arial text-left w-full px-32 mb-6">Admin Dashboard</h1>
-                    <div className="grid grid-cols-2 gap-12 w-full px-32">
-                        <div className="">
+                    <h1 className="text-4xl font-bold font-arial text-left w-full px-4 md:px-32 mb-6">Admin Dashboard</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-4 md:px-32">
+                        <div className="order-1 md:order-1">
                             <div className="flex items-center">
                                 <h2 className="text-2xl font-semibold">Events</h2>
                                 <button className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" onClick={() => navigate("/admin/create-event")}>+ New Event</button>
@@ -186,7 +186,7 @@ const Admin = () => {
                             </div>
                         </div>
 
-                        <div className="">
+                        <div className="order-3 md:order-2">
                             <h2 className="text-2xl font-semibold mb-2">Admin Users</h2>
                             <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "e-board")}>
                                 <input 
@@ -202,7 +202,7 @@ const Admin = () => {
                             <EmailList emails={adminEmails} />
                         </div>
                         
-                        <div className="">
+                        <div className="order-2 md:order-3">
                             <div className="flex items-center">
                                 <h2 className="text-2xl font-semibold">Past Events</h2>
                             </div>
@@ -213,7 +213,7 @@ const Admin = () => {
                         
                         
                         
-                        <div className="">
+                        <div className="order-4 md:order-4">
                             <h2 className="text-2xl font-semibold mb-2">Sponsors</h2>
                             <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")}>
                                 <input 

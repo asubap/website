@@ -28,62 +28,6 @@ export default class UserRoleService {
     }
 
     /**
-     * Get the email from the user ID
-     * @param user_id - The ID of the user or array of user IDs
-     * @returns The email(s) of the user(s)
-     */
-    async getEmail(user_id: string | string[]) {
-        if (Array.isArray(user_id)) {
-            const { data: emails, error } = await this.supabase
-                .from('user_email_map')
-                .select('email')
-                .in('user_id', user_id);
-
-            if (error) throw error;
-            return emails;
-        } else {
-            const { data: email, error } = await this.supabase
-                .from('user_email_map')
-                .select('email')
-                .eq('user_id', user_id);
-
-            if (error) throw error;
-            return email;
-        }
-    }
-
-    /**
-     * Get all officers
-     * @returns The officers
-     */
-     async getOfficers() {
-        const { data, error } = await this.supabase.from('user_roles').select('user_id').eq('role_id', 1);
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Get all sponsors
-     * @returns The sponsors
-     */
-    async getSponsors() {
-        const { data, error } = await this.supabase.from('user_roles').select('user_id').eq('role_id', 2);
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Get all general members
-     * @returns The general members
-     */
-    async getGeneralMembers() {
-        const { data, error } = await this.supabase.from('user_roles').select('user_id').eq('role_id', 3);
-        if (error) throw error;
-        return data;
-    }
-
-
-    /**
      * Get the user ID from the email
      * @param email - The email of the user
      * @returns The user ID of the user

@@ -25,6 +25,7 @@ export class EventService {
     return data;
   }
 
+
   async getEventsByName(name: string) {
     const { data, error } = await this.supabase
       .from("events")
@@ -33,6 +34,7 @@ export class EventService {
     if (error) throw error;
     return data;
   }
+
 
     async addEvent(user_id: string, name: string, date: string, location: string, description: string, lat: number, long: number, time: string, sponsors: string[]) {
         const { data, error } = await this.supabase
@@ -221,6 +223,7 @@ export class EventService {
       address
     )}&key=${apiKey}`;
 
+
     const res = await fetch(url);
     const data = await res.json() as { status: string; results: { geometry: { location: { lat: number; lng: number } } }[] };
 
@@ -243,6 +246,7 @@ export class EventService {
       console.error('EventService: Error fetching public events:', error);
       throw error;
     }
+
     console.log('EventService: Public events fetched successfully:', data);
     return data;
   }
@@ -292,3 +296,4 @@ export class EventService {
     }
   }
 }
+
