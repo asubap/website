@@ -10,7 +10,7 @@ const ViewEvent = () => {
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [showRoleMenu, setShowRoleMenu] = useState(false);
-    const [role, setRole] = useState<string[]>([]);
+    const [role] = useState<string[]>([]);
 
     const navLinks = [
         { name: "Event", href: "#" },
