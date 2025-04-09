@@ -51,7 +51,7 @@ const Admin = () => {
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
     const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
-    const [memberEmails, setMemberEmails] = useState<string[]>([]);
+   
     const [pastEvents, setPastEvents] = useState<Event[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
 
@@ -80,8 +80,8 @@ const Admin = () => {
                     setSponsorEmails(sponsors);
                     
                     // Process general members - use consistent property name
-                    const members = data.filter((item: any) => item.roles?.includes("general-member")).map((item: any) => item.user_email);
-                    setMemberEmails(members);
+                  
+                
                 })
                 .catch((error) => console.error("Error fetching member info:", error));
             }
