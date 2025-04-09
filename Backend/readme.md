@@ -91,7 +91,8 @@ GET /member-info/
     "member_status": "",
     "roles": [
         
-    ]
+    ],
+    "user_email": "xxxxxxx@asu.edu"
 }
 ```
 

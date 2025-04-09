@@ -43,6 +43,17 @@ export default class UserRoleService {
         return user_id.user_id;
     }
 
+    async getUserEmail(user_id: string) {
+        const { data: email, error } = await this.supabase
+            .from('user_email_map')
+            .select('email')
+            .eq('user_id', user_id)
+            .single();
+
+        if (error) throw error;
+        return email.email;
+    }
+
     /**
      * Get the roles of a user
      * @param user_id - The ID of the user

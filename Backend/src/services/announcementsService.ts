@@ -38,11 +38,11 @@ export class announcementsService {
                 {
                     title: title,
                     body: description,
-                    created_by: user_id
+                    created_by_user: user_id
                 });
 
         if (error) console.log(error);
-        return "Added announcement";
+        return data;
     }
 
     async editannouncements(announcement_id: string, updateData: Record<string, string>) {
