@@ -101,6 +101,7 @@ const Admin = () => {
                     },
                 }).then((response) => response.json())
                 .then((data) => {
+                    console.log("Events:", data);
                     setPastEvents(data.filter((event: Event) => isPastDate(event.date)));
                     setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.date)));
                 })

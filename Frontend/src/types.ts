@@ -4,11 +4,13 @@ export type Event = {
   created_by_id: string;
   date: string;
   description: string;
-  event_id: string;
+  id: number;
   location: string;
   location_lat: number;
   location_long: number;
   name: string;
+  rsvp_users: string[];
+  sponsors: string[];
   time: string;
 };
 
