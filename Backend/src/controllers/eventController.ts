@@ -65,7 +65,7 @@ export class EventController {
 
         try {
             const { event_id } = req.body;
-            const event = await this.eventService.getEventByID(event_id);
+            const event = await this.eventService.getEventID(event_id);
             res.json(event);
         } catch (error) {
             console.error('Error fetching event:', error);
