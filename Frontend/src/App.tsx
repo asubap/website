@@ -16,6 +16,7 @@ import CreateEvent from "./pages/admin/CreateEvent";
 import MemberView from "./pages/member/MemberView";
 import NetworkingPage from "./pages/networking/NetworkingPage";
 import NotFound from "./pages/notfound/NotFound";
+import ViewEvent from "./pages/events/ViewEvent";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
               <Route path="/sponsor/edit" element={<SponsorEdit />} />
               <Route path="/admin/create-event" element={<CreateEvent />} />
               <Route path="/networking" element={<NetworkingPage />} />
+              <Route path="/events/:eventId" element={<ViewEvent />} />
             </Route>
 
             {/* 404 catch-all route */}
