@@ -15,6 +15,8 @@ import Admin from "./pages/admin/Admin";
 import CreateEvent from "./pages/admin/CreateEvent";
 
 import MemberView from "./pages/member/MemberView";
+import NetworkingPage from "./pages/networking/NetworkingPage";
+import NotFound from "./pages/notfound/NotFound";
 
 function App() {
   return (
@@ -27,16 +29,20 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/sponsors" element={<SponsorsPage />} />
             <Route path="/" element={<Homepage />} />
-            
+
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/auth/Home" element={<AuthHome />} />
-              <Route path="/admin" element={<Admin/>} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="/sponsor" element={<SponsorHome />} />
-              <Route path="/member" element={<MemberView/>}/>
+              <Route path="/member" element={<MemberView />} />
               <Route path="/sponsor/edit" element={<SponsorEdit />} />
               <Route path="/admin/create-event" element={<CreateEvent />} />
+              <Route path="/networking" element={<NetworkingPage />} />
             </Route>
+
+            {/* 404 catch-all route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </AuthProvider>
