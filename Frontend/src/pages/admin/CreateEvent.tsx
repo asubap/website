@@ -45,7 +45,7 @@ const CreateEvent = () => {
             }).then((response) => response.json())
             .then((data) => {
                 console.log(data);
-                // window.location.href = "/admin";
+                window.location.href = "/admin";
             })
             .catch((error) => console.error("Error fetching events:", error));
         }
