@@ -2,18 +2,17 @@ import "./App.css";
 import { ProcessFlow } from "./pages/membership/ProcessFlow";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Homepage from "./pages/homepage/HomePage";
+import EventsPage from "./pages/events/EventsPage";
 import LogInPage from "./pages/login/LogInPage";
 import AuthHome from "./pages/homepage/AuthHome";
 import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 import { AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
-
 import SponsorHome from "./pages/sponsor/SponsorHome";
 import SponsorEdit from "./pages/sponsor/SponsorEdit";
 import Admin from "./pages/admin/Admin";
 import CreateEvent from "./pages/admin/CreateEvent";
-
 import MemberView from "./pages/member/MemberView";
 import NetworkingPage from "./pages/networking/NetworkingPage";
 import NotFound from "./pages/notfound/NotFound";
@@ -29,6 +28,9 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/sponsors" element={<SponsorsPage />} />
             <Route path="/" element={<Homepage />} />
+
+            <Route path="/events" element={<EventsPage />} />
+
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
