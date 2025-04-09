@@ -22,11 +22,11 @@ export class EventService {
         return data;
     }
 
-    async getEventsByName(name: string) {
+    async getEventByID(event_id: string) {
         const { data, error } = await this.supabase
             .from('events')
             .select('*')
-            .ilike('name', `%${name}%`);
+            .eq('id', event_id);
 
         if (error) throw error;
         return data;
@@ -62,19 +62,6 @@ export class EventService {
         return data;
     }
 
-    async getEventID(event_name: string) {
-        const { data, error } = await this.supabase
-            .from('events')
-            .select('id')
-            .eq('name', event_name);
-            
-        if (error) throw error;
-        if (!data || data.length === 0) {
-            throw new Error(`No event found with name: ${event_name}`);
-        }
-        return data[0].id;
-    }
-
     async deleteEvent(event_id: string) {
         const { data, error } = await this.supabase
             .from('events')
@@ -84,30 +71,5 @@ export class EventService {
         if (error) throw error;
         return data;
     }
-
-    // get events before the given date and after the given date and then
-    // order them as before and after the given date
-    async getEventsByDate(date: string) {
-        // Get events before the given date
-        const { data: beforeData, error: beforeError } = await this.supabase
-          .from('events')
-          .select('*')
-          .lt('date', date)
-          .order('date', { ascending: false });
-      
-        if (beforeError) throw beforeError;
-      
-        // Get events after the given date
-        const { data: afterData, error: afterError } = await this.supabase
-          .from('events')
-          .select('*')
-          .gt('date', date)
-          .order('date', { ascending: true });
-      
-        if (afterError) throw afterError;
-      
-        // Return an object with both sets of events
-        return { before: beforeData, after: afterData };
-      }
       
 }

@@ -21,11 +21,11 @@ export class announcementsService {
         return data;
     }
 
-    async getannouncementsByName(name: string) {
+    async getannouncementByID(announcement_id: string) {
         const { data, error } = await this.supabase
             .from('announcements')
             .select('*')
-            .ilike('title', `%${name}%`);
+            .eq('id', announcement_id);
 
         if (error) throw error;
         return data;
@@ -38,7 +38,7 @@ export class announcementsService {
                 {
                     title: title,
                     body: description,
-                    created_by_user: user_id
+                    created_by: user_id
                 });
 
         if (error) console.log(error);
@@ -53,19 +53,6 @@ export class announcementsService {
 
         if (error) throw error;
         return "Updated announcement";
-    }
-
-    async getannouncementID(announcement_title: string) {
-        const { data, error } = await this.supabase
-            .from('announcements')
-            .select('id')
-            .eq('title', announcement_title);
-            
-        if (error) throw error;
-        if (!data || data.length === 0) {
-            throw new Error(`No announcements found with title: ${announcement_title}`);
-        }
-        return data[0].id;
     }
 
     async deleteannouncements(announcement_id: string) {

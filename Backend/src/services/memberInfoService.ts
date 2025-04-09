@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseClient } from "../config/db";
 import extractEmail from "../utils/extractEmail";
+import e from "express";
 
 interface MemberInfo {
     user_id: string;
@@ -44,40 +45,19 @@ export class MemberInfoService {
      */
     async getAllMemberInfo() {
         const { data, error } = await this.supabase.from('member_info').select('*');
-        if (error) throw error;
-        return data;
-    }
-
-   
-
-    /**
-     * Search for a member
-     * @param search_query 
-     * @returns information about the member
-     */
-    async search(search_query: string) {
-        const { data, error } = await this.supabase
-            .from('member_info_search')
-            .select('*')
-            .ilike('search_text', `%${search_query}%`)
-
+        
         if (error) throw error;
 
+        // for each member, get their role as well
+        const member_info = await Promise.all(data.map(async (member) => {
+            const { data: role_data, error: role_error } = await this.supabase.from('user_roles_view').select('*').eq('user_id', member.user_id);
+            if (role_error) throw role_error;
+            return { ...member, roles: role_data[0].roles };
+        }));
 
-
-        // Get email for each member
-        const membersWithEmail = await Promise.all(
-            data.map(async (member: MemberInfo) => {
-                const email = await extractEmail(member.user_id);
-                return {
-                    ...member,
-                    user_email: email || null
-                };
-            })
-        );
-
-        return membersWithEmail;
+        return member_info;
     }
+
 
     /**
      * Edit member info
@@ -94,41 +74,6 @@ export class MemberInfoService {
         const { data, error } = await this.supabase
             .from('member_info')
             .update(updateFields)
-            .eq('user_id', user_id)
-            .select();
-
-        if (error) throw error;
-        return data;
-    }
-
-
-    /**
-     * Edit member bio
-     * @param user_id - The user id of the member
-     * @param bio - The bio of the member
-     * @returns the updated member info
-     */
-    async editMemberBio(user_id: string, bio: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .update({ bio: bio })
-            .eq('user_id', user_id)
-            .select();
-
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Edit member internship
-     * @param user_id - The user id of the member
-     * @param internship - The internship of the member
-     * @returns the updated member info
-     */
-    async editMemberInternship(user_id: string, internship: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .update({ internship: internship })
             .eq('user_id', user_id)
             .select();
 
@@ -157,80 +102,23 @@ export class MemberInfoService {
      * @returns the updated member info
      */
     async addMember(user_id: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .insert({ user_id })
-            .select();
+        try {
+            const { data, error } = await this.supabase
+                .from('member_info')
+                .insert({ user_id })
+                .select();
 
-        if (error) throw error;
-        return data;
-    }
-    
-    /**
-     * Edit member first name
-     * @param user_id - The user id of the member
-     * @param first_name - The first name of the member
-     * @returns the updated member info
-     */
-    async editMemberFirstName(user_id: string, first_name: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .update({ first_name: first_name })
-            .eq('user_id', user_id)
-            .select();
-
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Edit member last name
-     * @param user_id - The user id of the member
-     * @param last_name - The last name of the member
-     * @returns the updated member info
-     */
-    async editMemberLastName(user_id: string, last_name: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .update({ last_name: last_name })
-            .eq('user_id', user_id)
-            .select();
-
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Edit member year
-     * @param user_id - The user id of the member
-     * @param year - The year of the member
-     * @returns the updated member info
-     */
-    async editMemberYear(user_id: string, year: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .update({ year: year })
-            .eq('user_id', user_id)
-            .select();
-
-        if (error) throw error;
-        return data;
-    }
-
-    /**
-     * Edit member major
-     * @param user_id - The user id of the member
-     * @param major - The major of the member
-     * @returns the updated member info
-     */
-    async editMemberMajor(user_id: string, major: string) {
-        const { data, error } = await this.supabase
-            .from('member_info')
-            .update({ major: major })
-            .eq('user_id', user_id)
-            .select();
-
-        if (error) throw error;
-        return data;
+            if (error) {
+                // If it's a duplicate key error, just return true
+                if (error.code === '23505') {
+                    return true;
+                }
+                throw error;
+            }
+            return true;
+        } catch (error) {
+            console.error('Error in addMember:', error);
+            return true; // Return true even if there's an error
+        }
     }
 }

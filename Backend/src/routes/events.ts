@@ -8,8 +8,7 @@ const controller = new EventController();
 eventRoutes
 // general routes
 .get('/', controller.getEvents.bind(controller)) // get all events
-.post('/', controller.getEventsByName.bind(controller)) // get all events
-.post('/get-events-by-date', controller.getEventsByDate.bind(controller)) // get all events by date
+.post('/', controller.getEventByID.bind(controller)) // get all events
 
 
 // admin routes
