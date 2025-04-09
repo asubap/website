@@ -22,7 +22,11 @@ export class EventController {
      */
     async getEvents(req: Request, res: Response) {
         try {
+
+            console.log('Getting events...');
             const token = extractToken(req);
+            console.log('Token:', token ? 'Present' : 'Missing');
+
 
             if (!token) {
                 res.status(401).json({ error: 'No authorization token provided' });
@@ -31,11 +35,15 @@ export class EventController {
 
             this.eventService.setToken(token as string);
 
+            console.log('Token set in service');
+
             const events = await this.eventService.getEvents();
+            console.log('Events retrieved:', events);
             res.json(events);
         } catch (error) {
-            console.error('Error fetching events:', error);
-            res.status(500).json({ error: 'Failed to fetch events' });
+            console.error('Error getting events:', error);
+            res.status(500).json({ error: 'Failed to get events' });
+
         }
     }
 
@@ -194,4 +202,133 @@ export class EventController {
             }
         }
     }
+
+
+    // return all events (past and present given a date)
+    async getEventsByDate(req: Request, res: Response) {
+        const token = extractToken(req);
+
+        if (!token) {
+            res.status(401).json({ error: 'No authorization token provided' });
+            return;
+        }
+
+        this.eventService.setToken(token as string);
+
+        const { date } = req.body;
+        
+        try {
+            let events;
+            if (date) {
+                const formattedDate = new Date(date).toISOString().split('T')[0]; // YYYY-MM-DD
+                events = await this.eventService.getEventsByDate(formattedDate);
+            } else {
+                // get today's date in YYYY-MM-DD format
+                const today = new Date().toISOString().split('T')[0];
+                events = await this.eventService.getEventsByDate(today);
+            }
+            res.json(events);
+        } catch (error) {
+            console.error('Error getting events:', error);
+            res.status(500).json({ error: 'Failed to get events' });
+        }
+    }
+
+    async verifyAttendance(req: Request, res: Response) {
+        try {
+            const user = (req as any).user;
+            if (!user?.id) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { eventId } = req.params;
+            const { latitude, longitude, accuracy } = req.body;
+
+            console.log('Verifying attendance for:', { user, eventId, location: { latitude, longitude, accuracy } });
+            
+            if (!latitude || !longitude) {
+                console.error('Missing location data');
+                return res.status(422).json({ error: 'Location data is required' });
+            }
+
+            if (accuracy > 100) {
+                console.warn('Low accuracy location data:', { accuracy });
+            }
+
+            this.eventService.setToken(extractToken(req) as string);
+            
+            const result = await this.eventService.verifyLocationAttendance(
+                eventId,
+                user.id,
+                latitude,
+                longitude
+            );
+            
+            console.log('Attendance verification result:', result);
+            res.json({ message: result });
+        } catch (error: any) {
+            console.error('Check-in error:', error);
+            
+            if (error.message?.includes('too far')) {
+                return res.status(422).json({ error: error.message });
+            }
+            if (error.message?.includes('already checked in')) {
+                return res.status(409).json({ error: error.message });
+            }
+            if (error.message?.includes('Event not found')) {
+                return res.status(404).json({ error: error.message });
+            }
+            
+            res.status(500).json({ 
+                error: error.message || 'Server error',
+                details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
+            });
+        }
+    }
+
+    async rsvpForEvent(req: Request, res: Response) {
+        try {
+            const user = (req as any).user;
+            if (!user?.id) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { eventId } = req.params;
+            
+            try {
+                const result = await this.eventService.rsvpForEvent(eventId, user.id);
+                res.status(200).json({ message: result });
+            } catch (error) {
+                if (error instanceof Error && error.message === 'You have already RSVP\'d for this event') {
+                    res.status(400).json({ error: error.message });
+                } else {
+                    console.error('Error processing RSVP:', error);
+                    res.status(500).json({ error: 'Failed to process RSVP' });
+                }
+            }
+        } catch (error) {
+            console.error('Error in rsvpForEvent controller:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    /**
+     * Get public events (no auth required)
+     * @param req 
+     * @param res 
+     * @returns 
+     */
+    async getPublicEvents(req: Request, res: Response) {
+        try {
+            console.log('Getting public events...');
+            const events = await this.eventService.getPublicEvents();
+            console.log('Public events retrieved:', events);
+            res.json(events);
+        } catch (error) {
+            console.error('Error getting public events:', error);
+            res.status(500).json({ error: 'Failed to get events' });
+        }
+    }
+
+
 }
