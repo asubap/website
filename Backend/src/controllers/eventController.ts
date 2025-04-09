@@ -167,6 +167,10 @@ export class EventController {
         
         try {
             const updatedEvent = await this.eventService.editEvent(event_id, updateFields);
+            if (!updatedEvent) {
+                res.status(404).json({ error: 'Event not found.' });
+                return;
+            }
             res.json("Event updated successfully");
         } catch (error) {
             console.error('Error updating event:', error);

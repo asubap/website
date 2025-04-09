@@ -29,8 +29,13 @@ export class MemberInfoController {
             this.memberInfoService.setToken(token);
 
             const memberInfo = await this.memberInfoService.getAllMemberInfo();
+            // for the memberInfo, we need to convert the user_id to user_email
+            const memberInfoWithEmail = await Promise.all(memberInfo.map(async (member) => {
+                const user_email = await this.userRoleService.getUserEmail(member.user_id);
+                return { ...member, user_email };
+            }));
 
-            res.status(200).json(memberInfo);
+            res.status(200).json(memberInfoWithEmail);
         } catch (error) {
             res.status(500).json({ error: 'Internal server error' });
         }
@@ -136,6 +141,10 @@ export class MemberInfoController {
             const user_id = await this.userRoleService.getUserID(user_email);
             // edit member info
             const memberInfo = await this.memberInfoService.editMemberInfo(user_id, updateFields);
+            if (!memberInfo) {
+                res.status(404).json({ error: 'Member info not found.' });
+                return;
+            }
 
             res.status(200).json("Member info updated successfully");
         } catch (error) {
@@ -172,6 +181,10 @@ export class MemberInfoController {
 
             // delete member
             const memberInfo = await this.memberInfoService.deleteMember(user_id);
+            if (!memberInfo) {
+                res.status(404).json({ error: 'Member info not found.' });
+                return;
+            }
 
             res.status(200).json("Member deleted successfully");
         } catch (error) {
