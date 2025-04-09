@@ -51,6 +51,7 @@ const Admin = () => {
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
     const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
+    const [memberEmails, setMemberEmails] = useState<string[]>([]);
     const [pastEvents, setPastEvents] = useState<Event[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
 
@@ -60,7 +61,7 @@ const Admin = () => {
             if (session) {
               // Fetch user role
               const token = session.access_token;
-              fetch("https://asubap-backend.vercel.app/roles/e-board", {
+              fetch("https://asubap-backend.vercel.app/member-info", {
                 method: "GET",
                 headers: {
                   "Content-Type": "application/json",
@@ -68,32 +69,25 @@ const Admin = () => {
                 },
               }).then((response) => response.json())
                 .then((data) => {
-                    const emails = data.map((item: any) => item.email);
-                    setAdminEmails(emails);
+                    console.log("API response data:", data);
+                    // Process e-board members
+                    const admins = data.filter((item: any) => item.roles?.includes("e-board")).map((item: any) => item.user_email);
+                    setAdminEmails(admins);
+                    
+                    // Process sponsors
+                    const sponsors = data.filter((item: any) => item.roles?.includes("sponsor")).map((item: any) => item.user_email);
+                    console.log("Sponsor emails:", sponsors);
+                    setSponsorEmails(sponsors);
+                    
+                    // Process general members - use consistent property name
+                    const members = data.filter((item: any) => item.roles?.includes("general-member")).map((item: any) => item.user_email);
+                    setMemberEmails(members);
                 })
-                .catch((error) => console.error("Error fetching role:", error));
+                .catch((error) => console.error("Error fetching member info:", error));
             }
         };
 
-        const fetchSponsors = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-            const token = session.access_token;
-            fetch("https://asubap-backend.vercel.app/roles/sponsors", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            }).then((response) => response.json())
-            .then((data) => {
-                const emails = data.map((item: any) => item.email);
-                setSponsorEmails(emails);
-            })
-            .catch((error) => console.error("Error fetching role:", error));
-        }
-        };
+        fetchAdmins();
 
         const fetchEvents = async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -114,14 +108,13 @@ const Admin = () => {
             }
         };
         
-    
-        fetchAdmins();
-    
-        fetchSponsors();
-
         fetchEvents();
         
     }, []);
+
+    useEffect(() => {
+        console.log("Updated sponsorEmails state:", sponsorEmails);
+    }, [sponsorEmails, adminEmails]);
 
     const handleRoleSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
         // TODO: Add admin email to the database
