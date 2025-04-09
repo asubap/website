@@ -21,17 +21,22 @@ export class EventController {
      * @returns 
      */
     async getEvents(req: Request, res: Response) {
-        const token = extractToken(req);
+        try {
+            const token = extractToken(req);
 
-        if (!token) {
-            res.status(401).json({ error: 'No authorization token provided' });
-            return;
+            if (!token) {
+                res.status(401).json({ error: 'No authorization token provided' });
+                return;
+            }
+
+            this.eventService.setToken(token as string);
+
+            const events = await this.eventService.getEvents();
+            res.json(events);
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            res.status(500).json({ error: 'Failed to fetch events' });
         }
-
-        this.eventService.setToken(token as string);
-
-        const events = await this.eventService.getEvents();
-        res.json(events);
     }
 
     /**
@@ -40,7 +45,7 @@ export class EventController {
      * @param res 
      * @returns 
      */
-    async getEventsByName(req: Request, res: Response) {
+    async getEventByID(req: Request, res: Response) {
         const token = extractToken(req);
 
         if (!token) {
@@ -50,9 +55,14 @@ export class EventController {
 
         this.eventService.setToken(token as string);
 
-        const { name } = req.body;
-        const events = await this.eventService.getEventsByName(name);
-        res.json(events);
+        try {
+            const { event_id } = req.body;
+            const event = await this.eventService.getEventByID(event_id);
+            res.json(event);
+        } catch (error) {
+            console.error('Error fetching event:', error);
+            res.status(500).json({ error: 'Failed to fetch event' });
+        }
     }
 
     /**
@@ -100,7 +110,7 @@ export class EventController {
      * @returns 
      */
     async editEvent(req: Request, res: Response) {
-        const { user_email, event_name, name, date, location, description, time, sponsors} = req.body;
+        const { event_id, name, date, location, description, time, sponsors} = req.body;
 
         const token = extractToken(req);
         
@@ -112,8 +122,8 @@ export class EventController {
         this.eventService.setToken(token as string);
         
         // Check for required fields
-        if (!user_email || !event_name) {
-            res.status(400).json({ error: 'user_email and event_name are required.' });
+        if (!event_id) {
+            res.status(400).json({ error: 'event_id is required.' });
             return;
         }
         
@@ -148,7 +158,6 @@ export class EventController {
         }
         
         try {
-            const event_id = await this.eventService.getEventID(event_name);
             const updatedEvent = await this.eventService.editEvent(event_id, updateFields);
             res.json("Event updated successfully");
         } catch (error) {
@@ -173,9 +182,8 @@ export class EventController {
 
         this.eventService.setToken(token as string);
 
-        const { event_name } = req.body;
+        const { event_id } = req.body;
         try {
-            const event_id = await this.eventService.getEventID(event_name);
             const event = await this.eventService.deleteEvent(event_id);
             res.json("Event deleted successfully");
         } catch (error) {
@@ -184,36 +192,6 @@ export class EventController {
             } else {
                 res.status(500).json({ error: 'Failed to delete event' });
             }
-        }
-    }
-
-    // return all events (past and present given a date)
-    async getEventsByDate(req: Request, res: Response) {
-        const token = extractToken(req);
-
-        if (!token) {
-            res.status(401).json({ error: 'No authorization token provided' });
-            return;
-        }
-
-        this.eventService.setToken(token as string);
-
-        const { date } = req.body;
-        
-        try {
-            let events;
-            if (date) {
-                const formattedDate = new Date(date).toISOString().split('T')[0]; // YYYY-MM-DD
-                events = await this.eventService.getEventsByDate(formattedDate);
-            } else {
-                // get today's date in YYYY-MM-DD format
-                const today = new Date().toISOString().split('T')[0];
-                events = await this.eventService.getEventsByDate(today);
-            }
-            res.json(events);
-        } catch (error) {
-            console.error('Error getting events:', error);
-            res.status(500).json({ error: 'Failed to get events' });
         }
     }
 }

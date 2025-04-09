@@ -1,15 +1,17 @@
 import { Request, Response } from "express";
 import UserRoleService from "../services/userRoleService";
 import extractToken from "../utils/extractToken";
+import { MemberInfoService } from "../services/memberInfoService";
 
 export default class UserRoleController {
     private userRoleService: UserRoleService;
-
+    private memberInfoService: MemberInfoService;
     /**
      * Constructor for the UserRoleController
      */
     constructor() {
         this.userRoleService = new UserRoleService();
+        this.memberInfoService = new MemberInfoService();
     }
 
     /**
@@ -44,83 +46,7 @@ export default class UserRoleController {
         }
     }
 
-
-    async getSponsors(req: Request, res: Response) {
-        const token = extractToken(req);
-        if (!token) {
-            res.status(401).json({ error: 'No authorization token provided' });
-            return;
-        }
-
-        this.userRoleService.setToken(token as string);
-        const roles = await this.userRoleService.getSponsors();
-        
-        if (!roles) {
-            res.status(404).json({ error: 'No sponsors found' });
-            return;
-        }
-
-        // Extract just the user_ids from the roles array
-        const userIds = roles.map(role => role.user_id);
-        const emails = await this.userRoleService.getEmail(userIds);
-        
-        res.json(emails);
-    }
-
-    /**
-     * Get all general members
-     * @param req - The request object
-     * @param res - The response object
-     */
-    async getGeneralMembers(req: Request, res: Response) {
-        const token = extractToken(req);
-        if (!token) {
-            res.status(401).json({ error: 'No authorization token provided' });
-            return;
-        }
-
-        this.userRoleService.setToken(token as string);
-        const roles = await this.userRoleService.getGeneralMembers();
-
-        if (!roles) {
-            res.status(404).json({ error: 'No general members found' });
-            return;
-        }
-
-        // Extract just the user_ids from the roles array
-        const userIds = roles.map(role => role.user_id);
-        const emails = await this.userRoleService.getEmail(userIds);
-
-        res.json(emails);
-    }
-
-    /**
-     * Get all officers
-     * @param req - The request object
-     * @param res - The response object
-     */
-    async getOfficers(req: Request, res: Response) {
-        const token = extractToken(req);
-        
-        if (!token) {
-            res.status(401).json({ error: 'No authorization token provided' });
-            return;
-        }
-
-        this.userRoleService.setToken(token as string);
-        const roles = await this.userRoleService.getOfficers();
-
-        if (!roles) {
-            res.status(404).json({ error: 'No officers found' });
-            return;
-        }
-
-        // Extract just the user_ids from the roles array
-        const userIds = roles.map(role => role.user_id);
-        const emails = await this.userRoleService.getEmail(userIds);
-
-        res.json(emails);
-    }
+    
     /**
      * Assign a role to a user
      * @param req - The request object
@@ -135,6 +61,7 @@ export default class UserRoleController {
             }
 
             this.userRoleService.setToken(token as string);
+            this.memberInfoService.setToken(token as string);
             const { user_email, role } = req.body;
 
             if (!user_email || !role) {
@@ -143,14 +70,13 @@ export default class UserRoleController {
             }
 
             const user_id = await this.userRoleService.getUserID(user_email);
-
             const result = await this.userRoleService.assignRole(user_id, role);
+            const add_user = await this.memberInfoService.addMember(user_id);
 
-            if (!result) {
-                res.status(400).json({ error: 'User already has this role' });
-                return;
-            } else {
+            if (add_user && result) {
                 res.json({ message: 'Role assigned successfully' });
+            } else {
+                res.status(400).json({ error: 'User already has this role' });
             }
         } catch (error) {
             console.error('Error assigning role:', error);
@@ -193,48 +119,6 @@ export default class UserRoleController {
         } catch (error) {
             console.error('Error removing role:', error);
             res.status(500).json({ error: 'Failed to remove role' });
-            return;
-        }
-    }
-
-    /**
-     * Get the session token or Supabase login URL
-     * @param req - The request object
-     * @param res - The response object
-     */
-    async getSession(req: Request, res: Response) {
-        try {
-            const token = extractToken(req);
-            
-            // If no token, return Supabase login URL
-            if (!token) {
-                const supabaseUrl = process.env.VITE_SUPABASE_URL;
-                const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-
-                if (!supabaseUrl || !supabaseKey) {
-                    res.status(500).json({ error: 'Supabase configuration missing' });
-                    return;
-                }
-
-                const loginUrl = `${supabaseUrl}/auth/v1/authorize?` +
-                    `provider=google` +
-                    `&redirect_to=${encodeURIComponent(process.env.FRONTEND_URL || 'http://localhost:3000')}`;
-                
-                res.json({ 
-                    loginUrl,
-                    message: 'Please login with Google via Supabase'
-                });
-                return;
-            }
-
-            // If token exists, return it
-            res.json({ 
-                token,
-                message: 'Successfully authenticated'
-            });
-        } catch (error) {
-            console.error('Error handling session:', error);
-            res.status(500).json({ error: 'Failed to handle session' });
             return;
         }
     }

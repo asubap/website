@@ -27,45 +27,6 @@ POST /roles
 ]
 ```
 
-### Get All Sponsors
-```http
-GET /roles/sponsors
-```
-**Response:**
-```json
-[
-    {
-        "email": "string"
-    }
-]
-```
-
-### Get All General Members
-```http
-GET /roles/general-members
-```
-**Response:**
-```json
-[
-    {
-        "email": "string"
-    }
-]
-```
-
-### Get All E-board
-```http
-GET /roles/e-board
-```
-**Response:**
-```json
-[
-    {
-        "email": "string"
-    }
-]
-```
-
 ### Assign Role
 ```http
 POST /roles/assign-role
@@ -88,17 +49,7 @@ POST /roles/remove-role
     "user_email": "string",
     "role": "string" // "e-board", "sponsor", or "general-member"
 }
-```
 
-### Get Session Token
-```http
-GET /roles/session
-```
-**Response:**
-```json
-{
-    "token": "string"
-}
 ```
 ## Member Info routes
 
@@ -109,18 +60,26 @@ GET /member-info/
 **Response:**
 ```json
 {
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
+    "user_id": "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "created_at": "2025-04-09T01:06:58.377182+00:00",
+    "about": "",
+    "internship experience": "",
+    "first_name": "",
+    "last_name": "",
+    "year": "",
+    "major": "",
+    "contact_me": "",
+    "phone_number": "",
+    "graduation_year": "",
+    "member_status": "",
+    "roles": [
+        
+    ]
 }
 ```
 
 
-### Get Member Info
+### Get Member Info By Member Email
 ```http
 POST /member-info/
 ```
@@ -133,40 +92,22 @@ POST /member-info/
 **Response:**
 ```json
 {
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
+    "user_id": "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "created_at": "2025-04-09T01:06:58.377182+00:00",
+    "about": "",
+    "internship experience": "",
+    "first_name": "",
+    "last_name": "",
+    "year": "",
+    "major": "",
+    "contact_me": "",
+    "phone_number": "",
+    "graduation_year": "",
+    "member_status": "",
+    "roles": [
+        
+    ]
 }
-```
-
-### Search Members
-```http
-POST /member-info/search/
-```
-**Request Body:**
-```json
-{
-    "search_query": "string"
-}
-```
-**Response:**
-```json
-[
-    {
-        "user_id": "string",
-        "bio": "string",
-        "internship": "string",
-        "first_name": "string",
-        "last_name": "string",
-        "year": "string",
-        "major": "string",
-        "user_email": "string"
-    }
-]
 ```
 
 ### Edit Complete Member Info
@@ -176,28 +117,22 @@ POST /member-info/edit-member-info/
 **Request Body:**
 ```json
 {
-    "user_email": "string",
-    "bio": "string" || "", // leave this empty ("") if not being changed
-    "internship": "string" || "", // leave this empty ("") if not being changed
-    "first_name": "string" || "", // leave this empty ("") if not being changed
-    "last_name": "string" || "", // leave this empty ("") if not being changed
-    "year": "string" || "", // leave this empty ("") if not being changed
-    "major": "string" || "", // leave this empty ("") if not being changed
-    "contact_me": "string" || "" // leave this empty ("") if not being changed
+    "user_email": "xxxxxx@asu.edu",
+    "about": "",
+    "internship_experience": "",
+    "first_name": "",
+    "last_name": "",
+    "year": "",
+    "major": "",
+    "contact_me": "",
+    "phone_number": "",
+    "graduation_year": "",
+    "member_status": ""
 }
 ```
 **Response:**
 ```json
-{
-    "user_id": "string",
-    "bio": "string",
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string",
-    "contact_me": "string"
-}
+"Member info updated successfully"
 ```
 ### Delete Member
 ```http
@@ -211,38 +146,7 @@ POST /member-info/delete-member/
 ```
 **Response:**
 ```json
-{
-    "user_id": "string",
-    "bio": "string" || null,
-    "internship": "string",
-    "first_name": "string",
-    "last_name": "string",
-    "year": "string",
-    "major": "string"
-}
-```
-
-### Add Member
-```http
-POST /member-info/add-member/
-```
-**Request Body:**
-```json
-{
-    "user_email": "string"
-}
-```
-**Response:**
-```json
-{
-    "user_id": "string",
-    "bio": null,
-    "internship": null,
-    "first_name": null,
-    "last_name": null,
-    "year": null,
-    "major": null
-}
+"Member deleted successfully"
 ```
 
 ## Event Routes
@@ -272,7 +176,7 @@ GET /events
 ]
 ```
 
-### Get Events by Name
+### Get Events by ID
 ```http
 POST /events
 ```
@@ -280,23 +184,10 @@ POST /events
 **Request Body:**
 ```json
 {
-    "name": "string"
+    "event_id": x // integer
 }
 ```
 **Response**: Array of matching event objects
-
-### Get Events by Date
-```http
-POST /events/get-events-by-date
-```
-**Authentication**: Required (Bearer Token)
-**Request Body:**
-```json
-{
-    "date": "YYYY-MM-DD"  // Optional, defaults to today
-}
-```
-**Response**: Array of events for the specified date
 
 ### Add Event
 ```http
@@ -315,7 +206,7 @@ POST /events/add-event
     "sponsors": ["sponsor1", "sponsor2"]
 }
 ```
-**Response**: Created event object
+**Response**: "Event added successfully"
 
 ### Edit Event
 ```http
@@ -325,8 +216,7 @@ POST /events/edit-event
 **Request Body:**
 ```json
 {
-    "user_email": "string",
-    "event_name": "string",
+    "event_id": x, // integer
     "name": "string",        // Optional which means "" if you don't want to update
     "date": "YYYY-MM-DD",    // Optional which means "" if you don't want to update
     "location": "string",    // Optional which means "" if you don't want to update
@@ -345,10 +235,10 @@ POST /events/delete-event
 **Request Body:**
 ```json
 {
-    "event_name": "string"
+    "event_id": x // integer
 }
 ```
-**Response**: Success message or error
+**Response**: "Event deleted successfully"
 
 ## Announcement Routes
 
@@ -369,7 +259,7 @@ GET /announcements
 ]
 ```
 
-### Get Announcements by Name
+### Get Announcements by ID
 ```http
 POST /announcements
 ```
@@ -377,7 +267,7 @@ POST /announcements
 **Request Body:**
 ```json
 {
-    "announcements_name": "string"
+    "announcement_id": x // integer
 }
 ```
 **Response**: Array of matching announcement objects
@@ -391,7 +281,7 @@ POST /announcements/add-announcement
 ```json
 {
     "user_email": "string",
-    "announcement_name": "string",
+    "title": "string",
     "description": "string"
 }
 ```
@@ -405,8 +295,7 @@ POST /announcements/edit-announcement
 **Request Body:**
 ```json
 {
-    "user_email": "string",
-    "announcement_name": "string",
+    "announcement_id": x, // integer
     "title": "string",        // Optional which means "" if you don't want to update
     "description": "string"   // Optional which means "" if you don't want to update
 }
