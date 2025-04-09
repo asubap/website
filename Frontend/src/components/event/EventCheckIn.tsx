@@ -31,7 +31,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({ eventId }) => {
           setStatus("sending");
           console.log("Sending check-in request with token:", session.access_token);
 
-          const res = await fetch(`http://localhost:3000/events/checkin/${eventId}`, {
+          const res = await fetch(`https://asubap-backend.vercel.app/events/checkin/${eventId}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
