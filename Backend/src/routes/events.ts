@@ -10,7 +10,7 @@ eventRoutes
 // public routes
 .get('/public', controller.getPublicEvents.bind(controller)) // get all events for public view
 .get('/', verifySupabaseToken, controller.getEvents.bind(controller)) // get all events (authenticated)
-.post('/', verifySupabaseToken, controller.getEventsByName.bind(controller)) // get events by name
+.post('/', verifySupabaseToken, controller.getEventsByID.bind(controller)) // get events by name
 .post('/get-events-by-date', verifySupabaseToken, controller.getEventsByDate.bind(controller)) // get events by date
 
 // checkin route
