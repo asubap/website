@@ -19,7 +19,7 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId }) => {
 
     try {
       setStatus("sending");
-      const res = await fetch(`http://localhost:3000/events/rsvp/${eventId}`, {
+      const res = await fetch(`https://asubap-backend.vercel.app/events/rsvp/${eventId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
