@@ -1,20 +1,23 @@
 import Navbar from "../../components/layout/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
-import { useEffect } from "react";
 import { supabase } from "../../context/auth/supabaseClient";
 import MemberDescription from "../../components/member/MemberDescription";
+
+// Add environment variable for backend URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const MemberView = () => {
     const session = useAuth();
     const email = session.session.user.email
     const navLinks = [
            
-            { name: "Events", href: "/" },
+            { name: "Events", href: "/events" },
           ];
     
     const [sponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
+    const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
         
@@ -31,6 +34,8 @@ const MemberView = () => {
         hours: ""
     });
 
+    const [photoLoading, setPhotoLoading] = useState<boolean>(false);
+
     useEffect(() => {
         const fetchMembers = async () => {
             setLoading(true);
@@ -39,7 +44,7 @@ const MemberView = () => {
                 if (session) {
                     // Fetch user role
                     const token = session.access_token;
-                    const response = await fetch("https://asubap-backend.vercel.app/member-info/", {
+                    const response = await fetch(`${BACKEND_URL}/member-info/`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -59,6 +64,10 @@ const MemberView = () => {
                     
                     if (data && data.length > 0) {
                         setUserDetails(data[0]);
+                        // Set profile photo URL if available
+                        if (data[0].profile_photo_url) {
+                            setProfilePhotoUrl(data[0].profile_photo_url);
+                        }
                     } else {
                         setError("No user details found");
                     }
@@ -73,7 +82,9 @@ const MemberView = () => {
 
         fetchMembers();
     }, []);
-     
+
+    
+
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar
@@ -93,18 +104,20 @@ const MemberView = () => {
                     <p>{error}</p>
                 </div>
             ) : (
-                <MemberDescription
-                    profileUrl={sponsorProfileUrl} 
-                    name={userDetails.first_name || "N/A"} 
-                    major={userDetails.major || "N/A"}
-                    email={email}
-                    phone={userDetails.contact_me || "N/A"}
-                    status={"Not-Grad"}
-                    hours={userDetails.hours || "0"}
-                    year={userDetails.year || "N/A"}
-                    internship={userDetails.internship || "N/A"}
-                    description={userDetails.bio || "No bio available"} 
-                />
+                <>
+                    <MemberDescription
+                        profileUrl={profilePhotoUrl || sponsorProfileUrl} 
+                        name={userDetails.first_name || "N/A"} 
+                        major={userDetails.major || "N/A"}
+                        email={email}
+                        phone={userDetails.contact_me || "N/A"}
+                        status={"Not-Grad"}
+                        hours={userDetails.hours || "0"}
+                        year={userDetails.year || "N/A"}
+                        internship={userDetails.internship || "N/A"}
+                        description={userDetails.bio || "No bio available"} 
+                    />
+                </>
             )}
                             
             <Footer backgroundColor="#AF272F" />

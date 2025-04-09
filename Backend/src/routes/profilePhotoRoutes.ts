@@ -18,6 +18,4 @@ router.put('/update', upload.single('file'), updateProfilePhoto);
 // Route for deleting profile photo
 router.delete('/:userId', deleteProfilePhoto);
 
-// Additional routes for retrieving, updating, and deleting photos can be added here.
-
 export default router; 

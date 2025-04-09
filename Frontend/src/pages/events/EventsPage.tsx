@@ -24,8 +24,8 @@ const EventsPage: React.FC = () => {
       try {
         // Choose endpoint based on authentication status
         const endpoint = session?.access_token 
-          ? "http://localhost:3000/events"
-          : "http://localhost:3000/events/public";
+          ? `${import.meta.env.VITE_BACKEND_URL}/events`
+          : `${import.meta.env.VITE_BACKEND_URL}/events/public`;
         
         const headers: HeadersInit = {
           'Content-Type': 'application/json'
