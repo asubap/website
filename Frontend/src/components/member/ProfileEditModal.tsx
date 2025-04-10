@@ -1,7 +1,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { ChevronDown, Plus } from "lucide-react"
+import { ChevronDown} from "lucide-react"
 import { useAuth } from "../../context/auth/authProvider"
 
 
