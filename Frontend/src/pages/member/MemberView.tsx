@@ -34,7 +34,7 @@ const MemberView = () => {
         hours: ""
     });
 
-    const [photoLoading, setPhotoLoading] = useState<boolean>(false);
+    // const [photoLoading, setPhotoLoading] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchMembers = async () => {
