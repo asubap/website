@@ -28,6 +28,7 @@
     "express-validator": "^7.2.1",
     "geolib": "^3.3.4",
     "jsonwebtoken": "^9.0.2",
+    "multer": "1.4.5-lts.2",
     "node-fetch": "^3.3.2",
     "ts-node": "^10.9.2",
     "vercel": "^41.5.0"
@@ -36,6 +37,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^1.4.12",
     "tsconfig-paths": "^4.2.0"
   }
 }

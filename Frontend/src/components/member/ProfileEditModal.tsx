@@ -25,6 +25,9 @@ interface ProfileEditModalProps {
   onSave: (data: ProfileData) => void
 }
 
+// Add environment variable for backend URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export default function ProfileEditModal({ isOpen, onClose, profileData, onSave }: ProfileEditModalProps) {
   const [formData, setFormData] = useState<ProfileData>(profileData)
   const [photoPreview, setPhotoPreview] = useState<string | null>(profileData.photoUrl || null)
@@ -37,19 +40,104 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setPhotoPreview(event.target.result as string)
-          setFormData((prev) => ({ ...prev, photoUrl: event.target?.result as string }))
-        }
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+    const file = event.target.files[0];
+    try {
+      const token = session.access_token;
+      const formData = new FormData();
+      formData.append('file', file);
+      // Get the user's ID from the session or fetch it if needed
+      // Use the actual user ID instead of email
+      const response = await fetch(`${BACKEND_URL}/member-info/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_email: profileData.email
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch user details");
       }
-      reader.readAsDataURL(file)
+      
+      const userData = await response.json();
+      const userId = userData[0]?.user_id;
+      
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+      
+      // Now use the actual user ID for uploading the photo
+      const formDataWithId = new FormData();
+      formDataWithId.append('file', file);
+      formDataWithId.append('userId', userId);
+      
+      const uploadResponse = await fetch(`${BACKEND_URL}/profile-photo/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formDataWithId,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload photo");
+      }
+
+      const data = await uploadResponse.json();
+      setPhotoPreview(data.photoUrl);
+    } catch (error) {
+      console.error("Error uploading photo:", error);
     }
-  }
+  };
+
+  const handlePhotoDelete = async () => {
+    try {
+      const token = session.access_token;
+      
+      // Get the user's ID from the session or fetch it
+      const response = await fetch(`${BACKEND_URL}/member-info/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_email: profileData.email
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch user details");
+      }
+      
+      const userData = await response.json();
+      const userId = userData[0]?.user_id;
+      
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+      
+      const deleteResponse = await fetch(`${BACKEND_URL}/profile-photo/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!deleteResponse.ok) {
+        throw new Error("Failed to delete photo");
+      }
+
+      setPhotoPreview(null);
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +147,7 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
     
     
 
-    fetch("https://asubap-backend.vercel.app/member-info/edit-member-info/", {
+    fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
     method: "POST",
     headers: {
         "Content-Type": "application/json",
@@ -197,31 +285,35 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
           {/* Center - Photo Upload */}
           <div className="w-full lg:w-auto flex justify-center items-start p-6">
             <div className="relative">
-              <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden">
+              <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
                 {photoPreview ? (
-                  <img
-                    src={photoPreview || "/placeholder.svg"}
-                    alt="Profile Preview"
-                    width={144}
-                    height={144}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={photoPreview} alt="Profile Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="text-center text-sm">
-                    <div>Upload</div>
-                    <div>
-                      Photo <Plus className="inline-block" size={12} />
-                    </div>
+                  <div className="text-center text-sm text-gray-500">
+                    <div>No Photo</div>
                   </div>
                 )}
               </div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                aria-label="Upload profile photo"
-              />
+              <div className="flex flex-col gap-2 mt-2">
+                <label className="px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm">
+                  Upload Profile Photo
+                  <input
+                    accept="image/*"
+                    className="hidden"
+                    aria-label="Upload profile photo"
+                    type="file"
+                    onChange={handlePhotoUpload}
+                  />
+                </label>
+                {photoPreview && (
+                  <button 
+                    onClick={handlePhotoDelete} 
+                    className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
+                  >
+                    Delete Photo
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
