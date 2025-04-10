@@ -41,7 +41,7 @@ export const ProcessFlow = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col mt-20 min-h-screen bg-white">
       <Navbar
         isLogged = {false}
         links={navLinks}
@@ -56,7 +56,7 @@ export const ProcessFlow = () => {
             <div key={index} className="flex flex-1 items-start">
               <ProcessStep {...step} />
               {index < steps.length - 1 && (
-                <div className="flex mt-20">
+                <div className="flex mt-[200px]">
                   <ProcessArrow />
                 </div>
               )}

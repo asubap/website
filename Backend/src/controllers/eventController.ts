@@ -48,6 +48,32 @@ export class EventController {
     }
 
     /**
+     * Get all events by name
+     * @param req 
+     * @param res 
+     * @returns 
+     */
+    async getEventByID(req: Request, res: Response) {
+        const token = extractToken(req);
+
+        if (!token) {
+            res.status(401).json({ error: 'No authorization token provided' });
+            return;
+        }
+
+        this.eventService.setToken(token as string);
+
+        try {
+            const { event_id } = req.body;
+            const event = await this.eventService.getEventID(event_id);
+            res.json(event);
+        } catch (error) {
+            console.error('Error fetching event:', error);
+            res.status(500).json({ error: 'Failed to fetch event' });
+        }
+    }
+
+    /**
      * Add an event
      * @param req 
      * @param res 
@@ -141,6 +167,10 @@ export class EventController {
         
         try {
             const updatedEvent = await this.eventService.editEvent(event_id, updateFields);
+            if (!updatedEvent) {
+                res.status(404).json({ error: 'Event not found.' });
+                return;
+            }
             res.json("Event updated successfully");
         } catch (error) {
             console.error('Error updating event:', error);

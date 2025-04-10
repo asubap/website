@@ -155,13 +155,15 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
     },
     body: JSON.stringify({
         user_email: formData.email,
-        bio: formData.about, // leave this empty ("") if not being changed
-        internship: formData.internship, // leave this empty ("") if not being changed
+        about: formData.about, // leave this empty ("") if not being changed
+        internship_experience: formData.internship, // leave this empty ("") if not being changed
         first_name: formData.name, // leave this empty ("") if not being changed
         last_name: "", // leave this empty ("") if not being changed
         year: formData.graduationDate, // leave this empty ("") if not being changed
         major: formData.major, // leave this empty ("") if not being changed
-        contact_me: formData.phone // leave this empty ("") if not being changed
+        contact_me: formData.phone, // leave this empty ("") if not being changed
+        graduation_year: "",
+        member_status: formData.status, // leave this empty ("") if not being changed
     }),
     }).then((response) => response.json())
     .then((data) => {

@@ -76,7 +76,7 @@ export class announcementsController {
 
         try {
             const announcements = await this.announcementsService.addannouncements(user_id, title, description);
-            res.json(announcements);
+            res.json("Announcement added successfully");
         } catch (error) {
             res.status(500).json({ error: 'Failed to add announcements' });
         }

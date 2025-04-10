@@ -24,6 +24,7 @@ const CreateEvent = () => {
 
         // POST /events/add-event
         const { data: { session } } = await supabase.auth.getSession();
+        console.log(session)
         if (session) {
             const token = session.access_token;
             fetch("https://asubap-backend.vercel.app/events/add-event", {
@@ -38,7 +39,8 @@ const CreateEvent = () => {
                     date: date,
                     location: location,
                     description: description,
-                    time: time
+                    time: time,
+                    sponsors: sponsors,
                 })
             }).then((response) => response.json())
             .then((data) => {
