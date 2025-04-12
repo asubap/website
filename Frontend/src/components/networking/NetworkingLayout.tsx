@@ -11,8 +11,9 @@ const NetworkingLayout = ({ children }: NetworkingLayoutProps) => {
   
   // Define the navigation links for authenticated users in the networking section
   const navLinks = [
+    { name: "Network", href: "/network" },
     { name: "Events", href: "/events" },
-    { name: "Network", href: "/network" }
+    { name: "Dashboard", href: "/admin" }
   ];
 
   return (

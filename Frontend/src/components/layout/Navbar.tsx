@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import LogOut from "../logOut/LogOut";
 
@@ -26,7 +26,6 @@ const Navbar: React.FC<NavbarProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
   const lastToggleTime = useRef(0);
-  const navigate = useNavigate();
 
   // Check screen size
   useEffect(() => {

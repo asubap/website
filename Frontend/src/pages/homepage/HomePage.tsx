@@ -7,17 +7,24 @@ import { useAuth } from "../../context/auth/authProvider";
 export default function Homepage() {
   const { session } = useAuth();
 
-  // Define navigation links to pass to Navbar
-  const navLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Our Sponsors", href: "/sponsors" },
-    { name: "Events", href: "/events" },
-    { name: "Membership", href: "/membership" },
-  ];
-  
-  // Add login link only if user is not logged in
-  if (!session) {
-    navLinks.push({ name: "Log In", href: "/login" });
+  let navLinks;
+
+  if (session) {
+    // Links for logged-in users
+    navLinks = [
+      { name: "Network", href: "/network" },
+      { name: "Events", href: "/events" },
+      { name: "Dashboard", href: "/admin" },
+    ];
+  } else {
+    // Links for logged-out users
+    navLinks = [
+      { name: "About Us", href: "/about" },
+      { name: "Our Sponsors", href: "/sponsors" },
+      { name: "Events", href: "/events" },
+      { name: "Membership", href: "/membership" },
+      { name: "Log In", href: "/login" },
+    ];
   }
 
   return (

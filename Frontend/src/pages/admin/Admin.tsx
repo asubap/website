@@ -1,28 +1,29 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
 import { useToast } from "../../App";
+import CreateEventModal from "../../components/admin/CreateEventModal";
 
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
 
 const Admin = () => {
-    const navigate = useNavigate();
     const { showToast } = useToast();
     const adminFormRef = useRef<HTMLFormElement>(null);
     const sponsorFormRef = useRef<HTMLFormElement>(null);
     
     const [adminInputError, setAdminInputError] = useState(false);
     const [sponsorInputError, setSponsorInputError] = useState(false);
+    const [showCreateEventModal, setShowCreateEventModal] = useState(false);
     
     const navLinks = [
-        
+        { name: "Network", href: "/network" },
         { name: "Events", href: "/events" },
-      ];
+        { name: "Dashboard", href: "/admin" },
+    ];
     
    
 
@@ -229,7 +230,16 @@ const Admin = () => {
         }
     };
 
-   
+    // Handle a newly created event
+    const handleEventCreated = (newEvent: any) => {
+        // If it's an upcoming event, add it to upcomingEvents state
+        if (!isPastDate(newEvent.date)) {
+            setUpcomingEvents([...upcomingEvents, newEvent]);
+        } else {
+            setPastEvents([...pastEvents, newEvent]);
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen font-outfit">
             <Navbar
@@ -250,7 +260,12 @@ const Admin = () => {
                         <div className="order-1 md:order-1">
                             <div className="flex items-center">
                                 <h2 className="text-2xl font-semibold">Events</h2>
-                                <button className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" onClick={() => navigate("/admin/create-event")}>+ New Event</button>
+                                <button 
+                                    className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" 
+                                    onClick={() => setShowCreateEventModal(true)}
+                                >
+                                    + New Event
+                                </button>
                             </div>
                             <div>
                                 <EventListShort events={upcomingEvents} />
@@ -322,6 +337,14 @@ const Admin = () => {
             </div>
 
             <Footer backgroundColor="#AF272F" />
+            
+            {/* Event Creation Modal */}
+            {showCreateEventModal && (
+                <CreateEventModal 
+                    onClose={() => setShowCreateEventModal(false)}
+                    onEventCreated={handleEventCreated}
+                />
+            )}
         </div>
     )
 }
