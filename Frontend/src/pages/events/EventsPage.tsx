@@ -59,11 +59,13 @@ const EventsPage: React.FC = () => {
     { name: "Our Sponsors", href: "/sponsors" },
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
-    
-    // Log In link will be handled by Navbar if not logged in
   ];
 
+  // Add login link only if user is not logged in
+  if (!session) {
+    navLinks.push({ name: "Log In", href: "/login" });
+  }
+  
   // Split events into upcoming and past
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison

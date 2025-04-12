@@ -15,7 +15,7 @@ const LogOut = () => {
             setSession(null);
             
             // Navigate to home page using React Router
-            navigate("/login", { replace: true });
+            navigate("/", { replace: true });
         } catch (error) {
             console.error("Error during sign out:", error);
         }
@@ -25,7 +25,7 @@ const LogOut = () => {
         <>
             <Link
                 key="Log Out"
-                to="/login"
+                to="/"
                 onClick={handleSignOut}
                 className="hover:text-bapred text-xl font-medium"  
             >
