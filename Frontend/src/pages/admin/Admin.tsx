@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
+import { useToast } from "../../App";
 
 
 import { Event } from "../../types";
@@ -11,6 +12,12 @@ import { EventListShort } from "../../components/event/EventListShort";
 
 const Admin = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
+    const adminFormRef = useRef<HTMLFormElement>(null);
+    const sponsorFormRef = useRef<HTMLFormElement>(null);
+    
+    const [adminInputError, setAdminInputError] = useState(false);
+    const [sponsorInputError, setSponsorInputError] = useState(false);
     
     const navLinks = [
         
@@ -42,6 +49,25 @@ const Admin = () => {
    
     const [pastEvents, setPastEvents] = useState<Event[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+
+    // Reset input error state when clicking away from input
+    const handleInputFocus = (inputType: 'admin' | 'sponsor') => {
+        if (inputType === 'admin') {
+            setAdminInputError(false);
+        } else {
+            setSponsorInputError(false);
+        }
+    };
+
+    // Validate email function to reuse code
+    const validateEmail = (email: string): boolean => {
+        if (!email) {
+            return false;
+        }
+        
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    };
 
     useEffect(() => {
         const fetchAdmins = async () => {
@@ -107,23 +133,78 @@ const Admin = () => {
     }, [sponsorEmails, adminEmails]);
 
     const handleRoleSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
-        // TODO: Add admin email to the database
         e.preventDefault();
-
+        
+        // Get form and email value
+        const form = e.target as HTMLFormElement;
+        const emailInput = form.email as HTMLInputElement;
+        const email = emailInput.value.trim();
+        
+        // Set the appropriate error state to update UI based on role type
+        const isRoleAdmin = role === "e-board";
+        
+        // Validate email presence
+        if (!email) {
+            showToast("Please enter an email address", "error");
+            if (isRoleAdmin) {
+                setAdminInputError(true);
+            } else {
+                setSponsorInputError(true);
+            }
+            return;
+        }
+        
+        // Validate email format using regex
+        if (!validateEmail(email)) {
+            showToast("Please enter a valid email address", "error");
+            if (isRoleAdmin) {
+                setAdminInputError(true);
+            } else {
+                setSponsorInputError(true);
+            }
+            return;
+        }
+        
+        // If we got here, reset error state as email is valid
+        if (isRoleAdmin) {
+            setAdminInputError(false);
+        } else {
+            setSponsorInputError(false);
+        }
+        
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-            // Fetch user role
-            const token = session.access_token;
-            fetch("https://asubap-backend.vercel.app/users/add-user", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ user_email: (e.target as HTMLFormElement).email.value, role: role }),})
-                .then( () => window.location.reload())
-                .catch((error) => console.error("Error fetching role:", error));
-        }   
+            try {
+                // Fetch user role
+                const token = session.access_token;
+                const response = await fetch("https://asubap-backend.vercel.app/users/add-user", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ user_email: email, role: role }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to add user");
+                }
+                
+                // Update local state based on role
+                if (role === "e-board") {
+                    setAdminEmails([...adminEmails, email]);
+                    showToast("Admin added successfully", "success");
+                    if (adminFormRef.current) adminFormRef.current.reset();
+                } else if (role === "sponsor") {
+                    setSponsorEmails([...sponsorEmails, email]);
+                    showToast("Sponsor added successfully", "success");
+                    if (sponsorFormRef.current) sponsorFormRef.current.reset();
+                }
+            } catch (error) {
+                console.error("Error adding user:", error);
+                showToast("Failed to add user. Please try again.", "error");
+            }
+        }
     }
 
     const handleDelete = async (email: string) => {
@@ -178,18 +259,27 @@ const Admin = () => {
 
                         <div className="order-3 md:order-2">
                             <h2 className="text-2xl font-semibold mb-2">Admin Users</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "e-board")}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "e-board")} ref={adminFormRef}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter admin email.." 
-                                    className="w-3/4 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+                                    className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
+                                        adminInputError 
+                                            ? 'border-red-500 bg-red-50' 
+                                            : 'border-gray-300'
+                                    }`}
                                     name="email"
+                                    onFocus={() => handleInputFocus('admin')}
                                 />
                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
                                     + Add Admin
                                 </button>
                             </form>
-                            <EmailList emails={adminEmails} onDelete={handleDelete} />
+                            <EmailList 
+                                emails={adminEmails} 
+                                onDelete={handleDelete} 
+                                userType="admin" 
+                            />
                         </div>
                         
                         <div className="order-2 md:order-3">
@@ -205,18 +295,27 @@ const Admin = () => {
                         
                         <div className="order-4 md:order-4">
                             <h2 className="text-2xl font-semibold mb-2">Sponsors</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")} ref={sponsorFormRef}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter sponsor email.." 
-                                    className="w-3/4 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+                                    className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
+                                        sponsorInputError 
+                                            ? 'border-red-500 bg-red-50' 
+                                            : 'border-gray-300'
+                                    }`}
                                     name="email"
+                                    onFocus={() => handleInputFocus('sponsor')}
                                 />
                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
                                     + Add Sponsor
                                 </button>
                             </form>
-                            <EmailList emails={sponsorEmails} onDelete={handleDelete} />
+                            <EmailList 
+                                emails={sponsorEmails} 
+                                onDelete={handleDelete} 
+                                userType="sponsor" 
+                            />
                         </div>
                     </div>
                 </main>

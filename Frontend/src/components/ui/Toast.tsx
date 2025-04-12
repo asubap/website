@@ -37,7 +37,7 @@ const Toast = ({ message, duration = 3000, onClose, type = 'success' }: ToastPro
   // Create a portal to render at the body level
   return createPortal(
     <div 
-      className={`fixed bottom-4 right-4 z-50 transform transition-opacity duration-300 ease-in-out ${
+      className={`fixed bottom-24 right-4 z-50 transform transition-opacity duration-300 ease-in-out ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >
