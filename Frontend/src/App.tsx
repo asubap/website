@@ -29,20 +29,19 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/sponsors" element={<SponsorsPage />} />
             <Route path="/" element={<Homepage />} />
-
             <Route path="/events" element={<EventsPage />} />
 
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/eventsPrivate" element={<EventsPage />} />
+              <Route path="/events" element={<EventsPage />} />
               <Route path="/auth/Home" element={<AuthHome />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/sponsor" element={<SponsorHome />} />
               <Route path="/member" element={<MemberView />} />
               <Route path="/sponsor/edit" element={<SponsorEdit />} />
               <Route path="/admin/create-event" element={<CreateEvent />} />
-              <Route path="/networking" element={<NetworkingPage />} />
+              <Route path="/network" element={<NetworkingPage />} />
               <Route path="/events/:eventId" element={<ViewEvent />} />
             </Route>
 

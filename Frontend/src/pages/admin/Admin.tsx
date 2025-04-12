@@ -14,7 +14,7 @@ const Admin = () => {
     
     const navLinks = [
         
-        { name: "Event", href: "/eventsPrivate" },
+        { name: "Events", href: "/events" },
       ];
     
    
