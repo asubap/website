@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import LogOut from "../logOut/LogOut";
-import { useAuth } from "../../context/auth/authProvider";
+
 
 interface NavbarProps {
   links: { name: string; href: string; onClick?: () => void }[];
@@ -27,9 +27,8 @@ const Navbar: React.FC<NavbarProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
   const lastToggleTime = useRef(0);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
-  const {role} = useAuth();
-  const navigate = useNavigate();
+
+ 
 
   
 
@@ -50,22 +49,8 @@ const Navbar: React.FC<NavbarProps> = ({
       window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
-  const toggleRoleMenu = () =>{
-    setShowRoleMenu(!showRoleMenu);
-  }
-
-  const handleRoleClick = (selectedRole: string) => {
-    setShowRoleMenu(false);
-      if (selectedRole === "e-board") {
-        navigate("/admin");
-      }
-      else if (selectedRole === "sponsor") {
-        navigate("/sponsor");
-      }
-      else if (selectedRole === "general-member") {
-        navigate("/member");
-      }
-  }
+  
+ 
 
   // Use useCallback to prevent unnecessary re-renders
   const toggleMenu = useCallback((): void => {
@@ -171,7 +156,7 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={handleLogoClick}
             style={{ cursor: "pointer" }}
           >
-            <Link to="/" className="font-medium text-xl flex items-center">
+            <Link to={isLogged ? "/auth/Home" : "/"} className="font-medium text-xl flex items-center">
               <img
                 src={BAPLogo}
                 alt="BAP Logo"
@@ -189,44 +174,41 @@ const Navbar: React.FC<NavbarProps> = ({
             </Link>
           </div>
           <div className="hidden md:flex space-x-6 z-10">
-            {links.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                onClick={link.onClick}
-                className="hover:text-bapred transition-colors duration-200 font-medium"
-              >
-                {link.name}
-              </Link>
-            ))}
-            {/* Conditional rendering of Log Out link */} 
-            {isLogged && (
+            {isLogged ? (
               <>
+               
                 <LogOut/>
-                <Link
-                  to={'#'}
-                  onClick={toggleRoleMenu}
-                >
-                  Switch Roles
-                </Link>
+              
+              
+                  <Link
+                    to="/eventsPrivate"
+                    onClick={handleMenuItemClick()}
+                    className="hover:text-bapred text-xl font-medium"
+                  >
+                    Events
+                  </Link>
+                  <Link
+                    to="/networking"
+                    onClick={handleMenuItemClick()}
+                    className="hover:text-bapred text-xl font-medium"
+                  >
+                    Networking
+                  </Link>
+            
+               
               </>
-            )}
-            {showRoleMenu && (
-                <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
-                    <h3 className="text-lg font-medium mb-2">Select Role</h3>
-                    <div className="flex flex-col gap-2">
-                        {role ? role.map((item: string, i: number) => (
-                            <button 
-                                key={i}
-                                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
-                                onClick={() => handleRoleClick(item)}
-                            >
-                                {item}
-                            </button>
-                        )) : <p>No roles available</p>}
-                    </div>
-                </div>
-            )}
+            ): links.map((link) => (
+              
+                <Link
+                  to={link.href}
+                  onClick={handleMenuItemClick(link.onClick)}
+                  className="hover:text-bapred text-xl font-medium"
+                >
+                  {link.name}
+                </Link>
+            
+            ))}
+           
             
             
           
@@ -297,7 +279,34 @@ const Navbar: React.FC<NavbarProps> = ({
         )}
         <div className="flex flex-col space-y-8 p-4 items-center pt-20">
           <ul className="space-y-8 text-center text-xl">
-            {links.map((link) => (
+            
+            
+            {isLogged ? (
+              <>
+                <li>
+                <LogOut/>
+                </li>
+                <li>
+                  <Link
+                    to="/eventsPrivate"
+                    onClick={handleMenuItemClick()}
+                    className="hover:text-bapred text-xl font-medium"
+                  >
+                    Events
+                  </Link>
+                </li>
+                <li>
+                <Link
+                    to="/networking"
+                    onClick={handleMenuItemClick()}
+                    className="hover:text-bapred text-xl font-medium"
+                  >
+                    Networking
+                  </Link>
+                </li>
+               
+              </>
+            ): links.map((link) => (
               <li key={link.name}>
                 <Link
                   to={link.href}
@@ -308,39 +317,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               </li>
             ))}
-            
-            {isLogged && (
-              <>
-              <li>
-                <LogOut/>
-                </li>
-                <li>
-                <Link
-                  to={'#'}
-                  onClick={toggleRoleMenu}
-                >
-                  Switch Roles
-                </Link>
-              </li>
-              </>
-            )}
             <li>
-            {showRoleMenu && (
-                <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
-                    <h3 className="text-lg font-medium mb-2">Select Role</h3>
-                    <div className="flex flex-col gap-2">
-                        {role ? role.map((item: string, i: number) => (
-                            <button 
-                                key={i}
-                                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
-                                onClick={() => handleRoleClick(item)}
-                            >
-                                {item}
-                            </button>
-                        )) : <p>No roles available</p>}
-                    </div>
-                </div>
-            )}
+           
             </li>
 
             

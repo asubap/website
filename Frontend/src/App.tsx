@@ -35,6 +35,7 @@ function App() {
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/eventsPrivate" element={<EventsPage />} />
               <Route path="/auth/Home" element={<AuthHome />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/sponsor" element={<SponsorHome />} />

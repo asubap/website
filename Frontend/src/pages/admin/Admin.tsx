@@ -11,27 +11,15 @@ import { EventListShort } from "../../components/event/EventListShort";
 
 const Admin = () => {
     const navigate = useNavigate();
-    const { role } = useAuth();
-    const [showRoleMenu, setShowRoleMenu] = useState(false);
+    
     const navLinks = [
         
-        { name: "Event", href: "#" },
+        { name: "Event", href: "/eventsPrivate" },
       ];
     
    
 
-    const handleRoleClick = (selectedRole: string) => { 
-      setShowRoleMenu(false);
-      if (selectedRole === "e-board") {
-        navigate("/admin");
-      }
-      else if (selectedRole === "sponsor") {
-        navigate("/sponsor");
-      }
-      else if (selectedRole === "general-member") {
-        navigate("/");
-      }
-    };
+  
 
     const isPastDate = (dateString: string): boolean => {
         // Parse the input date string into a Date object
@@ -61,7 +49,7 @@ const Admin = () => {
             if (session) {
               // Fetch user role
               const token = session.access_token;
-              fetch("https://asubap-backend.vercel.app/member-info", {
+              fetch("https://asubap-backend.vercel.app/users", {
                 method: "GET",
                 headers: {
                   "Content-Type": "application/json",
@@ -71,11 +59,12 @@ const Admin = () => {
                 .then((data) => {
                     console.log("API response data:", data);
                     // Process e-board members
-                    const admins = data.filter((item: any) => item.roles?.includes("e-board")).map((item: any) => item.user_email);
+                    const admins = data.filter((item:any) => item.role === "e-board").map((item: any) => item.email);
+                    console.log(admins);
                     setAdminEmails(admins);
                     
                     // Process sponsors
-                    const sponsors = data.filter((item: any) => item.roles?.includes("sponsor")).map((item: any) => item.user_email);
+                    const sponsors = data.filter((item: any) => item.role === "sponsor").map((item: any) => item.email);
                     console.log("Sponsor emails:", sponsors);
                     setSponsorEmails(sponsors);
                     
@@ -125,7 +114,7 @@ const Admin = () => {
         if (session) {
             // Fetch user role
             const token = session.access_token;
-            fetch("https://asubap-backend.vercel.app/roles/assign-role", {
+            fetch("https://asubap-backend.vercel.app/users/add-user", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -137,6 +126,29 @@ const Admin = () => {
         }   
     }
 
+    const handleDelete = async (email: string) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            const token = session.access_token;
+            try {
+                await fetch("https://asubap-backend.vercel.app/users/delete-user", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ user_email: email }),
+                });
+                // Update the state to remove the deleted email
+                setAdminEmails(adminEmails.filter(e => e !== email));
+                setSponsorEmails(sponsorEmails.filter(e => e !== email));
+            } catch (error) {
+                console.error("Error deleting admin:", error);
+            }
+        }
+    };
+
+   
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar
@@ -147,23 +159,7 @@ const Admin = () => {
                 outlineColor="#AF272F"
             />
 
-            {/* Role selection dropdown */}
-            {showRoleMenu && (
-                <div className="fixed top-24 right-4 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
-                    <h3 className="text-lg font-semibold mb-2">Select Role</h3>
-                    <div className="flex flex-col gap-2">
-                        {role ? role.map((item: string, i: number) => (
-                            <button 
-                                key={i}
-                                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
-                                onClick={() => handleRoleClick(item)}
-                            >
-                                {item}
-                            </button>
-                        )) : <p>No roles available</p>}
-                    </div>
-                </div>
-            )}
+            
 
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-24">
@@ -193,7 +189,7 @@ const Admin = () => {
                                     + Add Admin
                                 </button>
                             </form>
-                            <EmailList emails={adminEmails} />
+                            <EmailList emails={adminEmails} onDelete={handleDelete} />
                         </div>
                         
                         <div className="order-2 md:order-3">
@@ -220,7 +216,7 @@ const Admin = () => {
                                     + Add Sponsor
                                 </button>
                             </form>
-                            <EmailList emails={sponsorEmails} />
+                            <EmailList emails={sponsorEmails} onDelete={handleDelete} />
                         </div>
                     </div>
                 </main>

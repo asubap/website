@@ -20,11 +20,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check session on mount
     const fetchUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
       setSession(session);
       if (session) {
         // Fetch user role
         const token = session.access_token;
-        fetch("https://asubap-backend.vercel.app/roles", {
+        fetch("https://asubap-backend.vercel.app/users", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -33,12 +34,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: JSON.stringify({ user_email: session.user.email }),
         }).then((response) => response.json())
           .then((data) => {
-            console.log(data)
+            console.log(data);
             // Check if data.role is an array and map over it to extract role values
-            if (Array.isArray(data)) {
-              const roles = data.map(item => item.role);
-              setRole(roles);
-            } 
+            setRole(data);
           })
           .catch((error) => console.error("Error fetching role:", error))
           .finally(() => setLoading(false));
@@ -54,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       if (session) {
         const token = session.access_token;
-        fetch("https://asubap-backend.vercel.app/roles", {
+        fetch("https://asubap-backend.vercel.app/users", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -66,10 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .then((data) => {
             console.log(data)
             // Check if data.role is an array and map over it to extract role values
-            if (Array.isArray(data)) {
-              const roles = data.map(item => item.role);
-              setRole(roles);
-            } 
+            setRole(data);
           })
           .catch((error) => console.error("Error fetching role:", error))
           .finally(() => setLoading(false));
@@ -77,11 +72,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     });
-
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  
 
   return (
     <AuthContext.Provider value={{ session, role, loading, setSession, setRole }}>
