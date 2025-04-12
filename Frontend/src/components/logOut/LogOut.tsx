@@ -27,7 +27,7 @@ const LogOut = () => {
                 key="Log Out"
                 to="/login"
                 onClick={handleSignOut}
-                className="hover:text-bapred transition-colors duration-200 font-medium"  
+                className="hover:text-bapred text-xl font-medium"  
             >
                 Log Out
             </Link>

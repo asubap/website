@@ -24,8 +24,8 @@ const EventsPage: React.FC = () => {
       try {
         // Choose endpoint based on authentication status
         const endpoint = session?.access_token 
-          ? `${import.meta.env.VITE_BACKEND_URL}/events`
-          : `${import.meta.env.VITE_BACKEND_URL}/events/public`;
+          ? "https://asubap-backend.vercel.app/events"
+          : "https://asubap-backend.vercel.app/events/public";
         
         const headers: HeadersInit = {
           'Content-Type': 'application/json'
@@ -36,20 +36,15 @@ const EventsPage: React.FC = () => {
           headers['Authorization'] = `Bearer ${session.access_token}`;
         }
 
-        const res = await fetch(endpoint, {
-          method: 'GET',
-          headers,
-          credentials: session ? 'include' : undefined
-        });
-        
-        const data = await res.json();
-        
-        // Sort events by date
-        const sortedEvents = data.sort((a: Event, b: Event) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        
-        setEvents(sortedEvents);
+        fetch(endpoint, {
+          method: "GET",
+          headers: headers,
+        }).then((response) => response.json())
+          .then((data) => {
+            console.log(data); 
+          })
+          .catch((error) => console.error("Error fetching role:", error))
+  
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -64,6 +59,8 @@ const EventsPage: React.FC = () => {
     { name: "Our Sponsors", href: "/sponsors" },
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
+    { name: "Log In", href: "/login" },
+    
     // Log In link will be handled by Navbar if not logged in
   ];
 
@@ -86,7 +83,7 @@ const EventsPage: React.FC = () => {
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={!!session} // Let Navbar know the auth state
+        isLogged={Boolean(session)} // Let Navbar know the auth state
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">

@@ -1,8 +1,29 @@
+import { useAuth } from "../../context/auth/authProvider";
 import { supabase } from "../../context/auth/supabaseClient";
 
 const GoogleLogin = () => {
-    const redirectTo = import.meta.env.VITE_ENV_STATE === 'development' ? 'http://localhost:5173/auth/Home' : `https://frontend-iota-gules-58.vercel.app/auth/Home`;
+    
+    const { role } = useAuth(); // Call hooks at the top level
+    // const redirectTo = () => {
+    //     let rolePage = "";
+    //     if (role === "e-board") {
+    //         rolePage = "admin";
+    //       }
+    //       else if (role === "sponsor") {
+    //         rolePage = "sponsor";
+    //       }
+    //       else if (role === "general-member") {
+    //         rolePage = "member";
+    //       }
+    //       else {
+    //         console.log("Invalid role");
+    //       }
 
+    //     const url = `http://localhost:5173/${rolePage}`;
+    //     console.log(url);
+    //     return url;
+    // }
+    const redirectTo = import.meta.env.VITE_ENV_STATE === "development" ? "http://localhost:5173/auth/Home" : "https://asubap-frontend.vercel.app/auth/Home";
     const handleGoogleLogin = async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
