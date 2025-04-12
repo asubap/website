@@ -17,37 +17,84 @@ import MemberView from "./pages/member/MemberView";
 import NetworkingPage from "./pages/networking/NetworkingPage";
 import NotFound from "./pages/notfound/NotFound";
 import ViewEvent from "./pages/events/ViewEvent";
+import { useState, createContext, useContext } from "react";
+import Toast from "./components/ui/Toast";
+
+// Define toast context
+interface ToastContextType {
+  showToast: (message: string, type?: 'success' | 'error' | 'info', duration?: number) => void;
+}
+
+export const ToastContext = createContext<ToastContextType | undefined>(undefined);
+
+export function useToast() {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
+  return context;
+}
 
 function App() {
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'info';
+    duration: number;
+  } | null>(null);
+
+  const showToast = (
+    message: string, 
+    type: 'success' | 'error' | 'info' = 'success',
+    duration: number = 3000
+  ) => {
+    setToast({ visible: true, message, type, duration });
+  };
+
+  const hideToast = () => {
+    setToast(null);
+  };
+
   return (
     <>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<LogInPage />} />
-            <Route path="/membership" element={<ProcessFlow />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/sponsors" element={<SponsorsPage />} />
-            <Route path="/" element={<Homepage />} />
+        <ToastContext.Provider value={{ showToast }}>
+          <Router>
+            <div className="font-outfit">
+              <Routes>
+                <Route path="/login" element={<LogInPage />} />
+                <Route path="/membership" element={<ProcessFlow />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/sponsors" element={<SponsorsPage />} />
+                <Route path="/" element={<Homepage />} />
 
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/events" element={<EventsPage />} />
+                  <Route path="/auth/Home" element={<AuthHome />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/sponsor" element={<SponsorHome />} />
+                  <Route path="/member" element={<MemberView />} />
+                  <Route path="/sponsor/edit" element={<SponsorEdit />} />
+                  <Route path="/admin/create-event" element={<CreateEvent />} />
+                  <Route path="/network" element={<NetworkingPage />} />
+                  <Route path="/events/:eventId" element={<ViewEvent />} />
+                </Route>
 
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/events" element={<EventsPage />} />
-              <Route path="/auth/Home" element={<AuthHome />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/sponsor" element={<SponsorHome />} />
-              <Route path="/member" element={<MemberView />} />
-              <Route path="/sponsor/edit" element={<SponsorEdit />} />
-              <Route path="/admin/create-event" element={<CreateEvent />} />
-              <Route path="/network" element={<NetworkingPage />} />
-              <Route path="/events/:eventId" element={<ViewEvent />} />
-            </Route>
-
-            {/* 404 catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
+                {/* 404 catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+            {toast && toast.visible && (
+              <Toast
+                message={toast.message}
+                type={toast.type}
+                duration={toast.duration}
+                onClose={hideToast}
+              />
+            )}
+          </Router>
+        </ToastContext.Provider>
       </AuthProvider>
     </>
   );

@@ -1,34 +1,34 @@
-
+import { useEffect } from "react";
 import { supabase } from "../../context/auth/supabaseClient";
+import { useAuth } from "../../context/auth/authProvider";
 
 const GoogleLogin = () => {
+    const { session } = useAuth();
     
+    // Get base URL for redirect
+    const baseUrl = import.meta.env.VITE_ENV_STATE === "development" 
+        ? "http://localhost:5173" 
+        : "https://frontend-iota-gules-58.vercel.app";
     
-    // const redirectTo = () => {
-    //     let rolePage = "";
-    //     if (role === "e-board") {
-    //         rolePage = "admin";
-    //       }
-    //       else if (role === "sponsor") {
-    //         rolePage = "sponsor";
-    //       }
-    //       else if (role === "general-member") {
-    //         rolePage = "member";
-    //       }
-    //       else {
-    //         console.log("Invalid role");
-    //       }
-
-    //     const url = `http://localhost:5173/${rolePage}`;
-    //     console.log(url);
-    //     return url;
-    // }
-    const redirectTo = import.meta.env.VITE_ENV_STATE === "development" ? "http://localhost:5173/auth/Home" : "https://frontend-iota-gules-58.vercel.app/auth/Home";
+    // Redirect to saved path or default to auth home
+    const getRedirectUrl = () => {
+        const savedPath = localStorage.getItem('redirectAfterLogin');
+        // If there's a saved path, use it and clear storage
+        if (savedPath) {
+            localStorage.removeItem('redirectAfterLogin');
+            return `${baseUrl}${savedPath}`;
+        }
+        // Otherwise default to auth home
+        return `${baseUrl}/auth/Home`;
+    };
+    
     const handleGoogleLogin = async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: {redirectTo: redirectTo}
+                options: {
+                    redirectTo: getRedirectUrl()
+                }
             });
             
             if (error) throw error;
@@ -36,6 +36,13 @@ const GoogleLogin = () => {
             console.error('Error logging in with Google:', error);
         }
     };
+
+    // If already logged in, redirect appropriately
+    useEffect(() => {
+        if (session) {
+            window.location.href = getRedirectUrl();
+        }
+    }, [session]);
 
     return (
         <div className="flex flex-col items-center gap-4 p-8">

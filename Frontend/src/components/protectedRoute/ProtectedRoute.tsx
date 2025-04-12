@@ -7,6 +7,8 @@ const ProtectedRoute = () => {
 
   // Function to check if user has permission for current route
   const hasPermission = () => {
+    if (!role) return false;
+    
     const path = location.pathname;
     
     // Check route against role permissions
@@ -18,8 +20,8 @@ const ProtectedRoute = () => {
     }
 
     if (path.startsWith("/member") && !role.includes("general-member")) {
-        return false;
-      }
+      return false;
+    }
     // Add more route permission checks as needed
     
     return true;
@@ -33,34 +35,21 @@ const ProtectedRoute = () => {
       </div>
     );
   }
-
-  // If not authenticated, redirect to login
-//   if(role.length > 1) {
-//     return <Navigate to="/auth/Home" />;
-//     // role.forEach((r) => {
-//     //   if (r === "e-board") {
-//     //     return <Navigate to="/admin" />;
-//     //   }
-//     //   if (r === "sponsor") {
-//     //     return <Navigate to="/sponsor" />;
-//     //   }
-//     //   if (r === "member") {
-//     //     return <Navigate to="/auth/Home" />;
-//     //   }
-//     // })
-//   }
   
-    
+  // If not authenticated, redirect to login
   if (!session) {
+    // Save the attempted URL for redirecting back after login
+    localStorage.setItem('redirectAfterLogin', location.pathname);
     return <Navigate to="/login" />;
   }
 
-  if(hasPermission() === false) {
-    return <Navigate to="/login"/>
+  // If user doesn't have permission for this route
+  if (!hasPermission()) {
+    return <Navigate to="/auth/Home" />;
   }
+  
+  // User is authenticated and has permission
   return <Outlet />;
-  
-  
 };
 
 export default ProtectedRoute;

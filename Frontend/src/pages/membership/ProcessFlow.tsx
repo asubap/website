@@ -2,14 +2,24 @@ import { ProcessStep } from "../../components/ui/ProcessStep";
 import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
+import { useAuth } from "../../context/auth/authProvider";
+
 export const ProcessFlow = () => {
+  const { session } = useAuth();
+  
+  // Define navigation links
   const navLinks = [
     { name: "About Us", href: "/about" },
     { name: "Our Sponsors", href: "/sponsors" },
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
   ];
+  
+  // Add login link only if user is not logged in
+  if (!session) {
+    navLinks.push({ name: "Log In", href: "/login" });
+  }
+  
   const steps = [
     {
       title: "W.P. Carey Student",
@@ -43,7 +53,7 @@ export const ProcessFlow = () => {
   return (
     <div className="flex flex-col mt-20 min-h-screen bg-white">
       <Navbar
-        isLogged = {false}
+        isLogged={!!session}
         links={navLinks}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"

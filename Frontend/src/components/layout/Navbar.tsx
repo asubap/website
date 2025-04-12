@@ -125,14 +125,8 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Navigate to homepage
-    navigate("/");
-    
-    // Additional scroll behavior if on homepage
-    const heroSection = document.getElementById("hero");
-    if (heroSection) {
-      heroSection.scrollIntoView({ behavior: "smooth" });
-    }
+    // Force navigation to homepage regardless of current route
+    window.location.href = "/";
     
     if (onClick) onClick();
   };
