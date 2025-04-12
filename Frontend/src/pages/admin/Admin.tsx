@@ -4,7 +4,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
-import { useAuth } from "../../context/auth/authProvider";
+
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
