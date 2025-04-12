@@ -1,4 +1,4 @@
-import { useAuth } from "../../context/auth/authProvider";
+
 import { supabase } from "../../context/auth/supabaseClient";
 
 const GoogleLogin = () => {
