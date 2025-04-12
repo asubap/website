@@ -3,7 +3,7 @@ import { supabase } from "../../context/auth/supabaseClient";
 
 const GoogleLogin = () => {
     
-    const { role } = useAuth(); // Call hooks at the top level
+    
     // const redirectTo = () => {
     //     let rolePage = "";
     //     if (role === "e-board") {
