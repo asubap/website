@@ -39,7 +39,7 @@ export default function AboutPage() {
 
       <main className="flex-grow mt-16 sm:mt-20 md:mt-24 mb-8 sm:mb-12 px-8 sm:px-16 lg:px-24">
         <section className="pt-4 sm:pt-8">
-          <h1 className="text-3xl sm:text-4xl font-bold font-arial text-[#AF272F] mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold font-outfit text-[#AF272F] mb-4">
             About Us
           </h1>
 
@@ -77,7 +77,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mb-8 md:mb-12">
             {/* Vision & Mission (Left Column) */}
             <div className="order-2 md:order-1">
-              <h2 className="text-xl sm:text-2xl font-bold font-arial text-[#AF272F] mb-3 sm:mb-4 mt-6 md:mt-0">
+              <h2 className="text-xl sm:text-2xl font-bold font-outfit text-[#AF272F] mb-3 sm:mb-4 mt-6 md:mt-0">
                 Vision
               </h2>
               <p className="text-gray-800 mb-4 sm:mb-6 font-pt-serif text-base sm:text-md">
@@ -86,7 +86,7 @@ export default function AboutPage() {
                 and confident leaders.
               </p>
 
-              <h2 className="text-xl sm:text-2xl font-bold font-arial text-[#AF272F] mb-3 sm:mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold font-outfit text-[#AF272F] mb-3 sm:mb-4">
                 Mission
               </h2>
               <p className="text-gray-800 font-pt-serif text-base sm:text-md">

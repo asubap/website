@@ -31,7 +31,7 @@ const SponsorCard: React.FC<SponsorCardProps> = ({
         />
       </div>
       <div className="h-1/4 flex items-center justify-center">
-        <h3 className="text-center font-bold text-bapgray font-arial text-sm sm:text-base">
+        <h3 className="text-center font-bold text-bapgray font-outfit text-sm sm:text-base">
           {name}
         </h3>
       </div>

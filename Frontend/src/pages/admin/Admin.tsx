@@ -164,7 +164,7 @@ const Admin = () => {
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-24">
                 <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
-                    <h1 className="text-4xl font-bold font-arial text-left w-full px-4 md:px-32 mb-6">Admin Dashboard</h1>
+                    <h1 className="text-4xl font-bold font-outfit text-left w-full px-4 md:px-32 mb-6">Admin Dashboard</h1>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-4 md:px-32">
                         <div className="order-1 md:order-1">
                             <div className="flex items-center">

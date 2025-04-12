@@ -184,7 +184,7 @@ export default function WhoWeAre() {
                     <div
                       style={{
                         color: "#3897f0",
-                        fontFamily: "Arial,sans-serif",
+                        fontFamily: "outfit,sans-serif",
                         fontSize: "14px",
                         fontStyle: "normal",
                         fontWeight: 550,
@@ -319,7 +319,7 @@ export default function WhoWeAre() {
                 <p
                   style={{
                     color: "#c9c8cd",
-                    fontFamily: "Arial,sans-serif",
+                    fontFamily: "outfit,sans-serif",
                     fontSize: "14px",
                     lineHeight: "17px",
                     marginBottom: 0,
@@ -335,7 +335,7 @@ export default function WhoWeAre() {
                     href="https://www.instagram.com/asubap/?utm_source=ig_embed&amp;utm_campaign=loading"
                     style={{
                       color: "#c9c8cd",
-                      fontFamily: "Arial,sans-serif",
+                      fontFamily: "outfit,sans-serif",
                       fontSize: "14px",
                       fontStyle: "normal",
                       fontWeight: "normal",
@@ -351,7 +351,7 @@ export default function WhoWeAre() {
                     href="https://www.instagram.com/asubap/?utm_source=ig_embed&amp;utm_campaign=loading"
                     style={{
                       color: "#c9c8cd",
-                      fontFamily: "Arial,sans-serif",
+                      fontFamily: "outfit,sans-serif",
                       fontSize: "14px",
                       fontStyle: "normal",
                       fontWeight: "normal",

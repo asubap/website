@@ -38,7 +38,7 @@ const SponsorHome = () => {
                     <div className="py-24 px-16 md:px-32 flex-grow flex flex-col md:grid md:grid-cols-2 items-center gap-24">
                         <div className="flex flex-col items-center justify-center h-full gap-8">
                             <div className="w-full">   
-                                <h1 className="text-4xl font-bold font-arial">
+                                <h1 className="text-4xl font-bold font-outfit">
                                     Welcome back, <span className="text-bapred">{sponsorName}</span>!
                                 </h1>
                             </div>

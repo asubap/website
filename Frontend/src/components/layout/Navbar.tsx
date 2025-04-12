@@ -138,7 +138,7 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 font-arial">
+    <nav className="fixed top-0 left-0 right-0 z-50 font-outfit">
       <div
         style={{
           backgroundColor: backgroundColor || "#FFFFFF",

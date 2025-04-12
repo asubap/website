@@ -40,7 +40,7 @@ const SponsorEdit = () => {
                     <div className="w-full py-24 px-16 md:px-32 flex-grow flex flex-col md:grid md:grid-cols-2 items-center gap-24">
                         <div className="flex flex-col h-full gap-8">
                             <div className="w-full flex flex-col gap-8">   
-                                <h1 className="text-4xl font-bold font-arial">Update Profile</h1>
+                                <h1 className="text-4xl font-bold font-outfit">Update Profile</h1>
                                 <form className="w-full flex flex-col gap-4" onSubmit={handleEditProfile}>
                                     <input 
                                         type="text" 
