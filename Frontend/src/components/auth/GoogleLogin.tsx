@@ -23,7 +23,7 @@ const GoogleLogin = () => {
     //     console.log(url);
     //     return url;
     // }
-    const redirectTo = import.meta.env.VITE_ENV_STATE === "development" ? "http://localhost:5173/auth/Home" : "https://asubap-frontend.vercel.app/auth/Home";
+    const redirectTo = import.meta.env.VITE_ENV_STATE === "development" ? "http://localhost:5173/auth/Home" : "https://frontend-iota-gules-58.vercel.app/auth/Home";
     const handleGoogleLogin = async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
