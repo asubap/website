@@ -16,7 +16,7 @@ interface Event {
 }
 
 const EventsPage: React.FC = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events] = useState<Event[]>([]);
   const { session } = useAuth();
 
   useEffect(() => {
