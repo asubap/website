@@ -3,7 +3,7 @@ import type React from "react"
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { useAuth } from "../../context/auth/authProvider"
-import { Modal } from "../../components/ui/Modal"
+import Modal from "../../components/ui/Modal"
 
 
 type ProfileData = {
@@ -188,9 +188,7 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
     <div className="flex flex-col lg:flex-row">
       {/* Left Column - Edit Form */}
       <div className="w-full lg:w-1/2 p-6">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-6">Update Profile</h2>
-
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           <div className="mb-6">
             <h3 className="text-xl font-bold mb-4">Profile</h3>
             <input
@@ -267,22 +265,6 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
               className="w-full border border-[#d9d9d9] rounded-lg p-3 min-h-[150px]"
             />
           </div>
-
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors"
-            >
-              Close
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors"
-            >
-              Save
-            </button>
-          </div>
         </form>
       </div>
 
@@ -328,9 +310,10 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
       isOpen={isOpen}
       onClose={onClose}
       title="Update Profile"
-      onSave={handleSubmit}
-      saveButtonText="Save Changes"
-      checkUnsavedChanges={hasUnsavedChanges}
+      hasUnsavedChanges={hasUnsavedChanges()}
+      onConfirm={handleSubmit}
+      confirmText="Save Changes"
+      showFooter={true}
     >
       {formContent}
     </Modal>

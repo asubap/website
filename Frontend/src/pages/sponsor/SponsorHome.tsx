@@ -5,6 +5,8 @@ import SponsorDescription from "../../components/sponsor/SponsorDescription";
 import axios from "axios";
 import { useAuth } from "../../context/auth/authProvider";
 import { MoreHorizontal, X } from "lucide-react";
+import Modal from "../../components/ui/Modal";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 
 // Edit Profile Modal Component
 interface ProfileEditModalProps {
@@ -20,10 +22,13 @@ interface ProfileEditModalProps {
 }
 
 const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sponsorName, sponsorDescription, onUpdate, token, profileUrl, onProfilePicChange, links = [] }) => {
+    // State variables
     const [about, setAbout] = useState(sponsorDescription);
     const [linksList, setLinksList] = useState<string[]>(links);
     const [newLink, setNewLink] = useState("");
     const [editingLink, setEditingLink] = useState({ index: -1, value: "" });
+    const [initialAbout, setInitialAbout] = useState(sponsorDescription);
+    const [initialLinks, setInitialLinks] = useState(JSON.stringify(links));
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
     const [currentProfileUrl, setCurrentProfileUrl] = useState(profileUrl);
@@ -31,120 +36,134 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     const [linkToRemove, setLinkToRemove] = useState("");
     const [linkError, setLinkError] = useState("");
     const [showPicConfirmation, setShowPicConfirmation] = useState(false);
-    const [showUnsavedChangesConfirmation, setShowUnsavedChangesConfirmation] = useState(false);
-    const [closeTrigger, setCloseTrigger] = useState<'x' | 'outside' | null>(null);
+    const [showLinkWarning, setShowLinkWarning] = useState(false);
     
-    // Track if there are unsaved changes
+    // Use refs to reliably track changes 
+    const hasChangesRef = useRef({
+        about: false,
+        links: false
+    });
+    
+    // Check if there are unsaved changes
     const hasUnsavedChanges = () => {
-        return about !== sponsorDescription || 
-               JSON.stringify(linksList) !== JSON.stringify(links) || 
-               profilePicFile !== null;
+        // Check links and bio directly
+        const areLinksChanged = hasChangesRef.current.links;
+        const isBioChanged = hasChangesRef.current.about;
+        const hasNewProfilePic = profilePicFile !== null;
+        const isEditingALink = editingLink.index !== -1;
+        
+        // Determine if there are any changes
+        const hasChanges = areLinksChanged || isBioChanged || hasNewProfilePic || isEditingALink;
+        
+        console.log("hasUnsavedChanges check:", {
+            areLinksChanged,
+            isBioChanged,
+            hasNewProfilePic,
+            isEditingALink,
+            hasChanges,
+            refState: { ...hasChangesRef.current }
+        });
+        
+        return hasChanges;
     };
-
-    const modalRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setAbout(sponsorDescription);
         setLinksList(links);
         setCurrentProfileUrl(profileUrl);
-    }, [sponsorDescription, links, profileUrl, isOpen]);
-
-    // Handle clicks outside the modal
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                handleClose('outside');
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
+        setInitialAbout(sponsorDescription);
+        setInitialLinks(JSON.stringify(links));
         
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+        // Reset change tracking when modal opens/closes
+        hasChangesRef.current = {
+            about: false,
+            links: false
         };
-    }, [isOpen]);
-
-    const handleClose = (trigger: 'x' | 'outside') => {
-        if (hasUnsavedChanges()) {
-            setCloseTrigger(trigger);
-            setShowUnsavedChangesConfirmation(true);
-        } else {
-            onClose();
-        }
-    };
-
-    const confirmClose = () => {
-        setShowUnsavedChangesConfirmation(false);
-        onClose();
-    };
-
-    const cancelClose = () => {
-        setShowUnsavedChangesConfirmation(false);
-        setCloseTrigger(null);
-    };
+    }, [sponsorDescription, links, profileUrl, isOpen]);
 
     const isValidUrl = (urlString: string) => {
         try {
-            // Check if it's a valid URL format
             const url = new URL(urlString);
-            // Check if it has http or https protocol
-            return url.protocol === 'http:' || url.protocol === 'https:';
-        } catch (e) {
+            return url.protocol === "http:" || url.protocol === "https:";
+        } catch (_) {
             return false;
         }
     };
 
     const handleAddLink = () => {
-        setLinkError("");
-        if (!newLink) return;
-
-        if (!isValidUrl(newLink)) {
-            setLinkError("Please enter a valid URL (must include http:// or https://)");
+        if (!newLink.trim()) {
+            setLinkError("Please enter a valid URL");
             return;
         }
 
-        if (!linksList.includes(newLink)) {
-            setLinksList([...linksList, newLink]);
-            setNewLink("");
+        if (!isValidUrl(newLink)) {
+            setLinkError("Please enter a valid URL starting with http:// or https://");
+            return;
         }
+
+        // Add link and set change state
+        const newLinksList = [...linksList, newLink];
+        setLinksList(newLinksList);
+        hasChangesRef.current.links = true;
+        
+        console.log("Link added, changes set to true:", hasChangesRef.current);
+        
+        setNewLink("");
+        setLinkError("");
     };
 
     const startEditLink = (index: number) => {
+        console.log("Starting to edit link at index:", index);
         setEditingLink({ index, value: linksList[index] });
+        // Just starting to edit is enough to mark as having unsaved changes
+        hasChangesRef.current.links = true;
+        console.log("Started editing link, changes set to true:", hasChangesRef.current);
     };
 
     const saveEditLink = () => {
-        setLinkError("");
-        if (!editingLink.value) {
-            setEditingLink({ index: -1, value: "" });
-            return;
-        }
-
         if (!isValidUrl(editingLink.value)) {
-            setLinkError("Please enter a valid URL (must include http:// or https://)");
+            setLinkError("Please enter a valid URL starting with http:// or https://");
             return;
         }
 
+        // Edit link and set change state
         const newLinks = [...linksList];
         newLinks[editingLink.index] = editingLink.value;
         setLinksList(newLinks);
-        setEditingLink({ index: -1, value: "" });
-    };
-
-    const cancelEditLink = () => {
-        setEditingLink({ index: -1, value: "" });
+        hasChangesRef.current.links = true;
+        
+        setEditingLink({ index: -1, value: '' });
         setLinkError("");
     };
 
-    const confirmRemoveLink = (linkToRemove: string) => {
+    const cancelEditLink = () => {
+        setEditingLink({ index: -1, value: '' });
+        setLinkError("");
+    };
+
+    const confirmRemoveLink = (linkToRemove: string, e?: React.MouseEvent) => {
+        // Only stop propagation but not preventDefault
+        if (e) {
+            e.stopPropagation();
+        }
         setLinkToRemove(linkToRemove);
         setShowConfirmation(true);
     };
 
-    const handleRemoveLink = () => {
-        setLinksList(linksList.filter(link => link !== linkToRemove));
+    const handleRemoveLink = (e?: React.MouseEvent) => {
+        console.log("Removing link:", linkToRemove);
+        
+        // Only stop propagation but not preventDefault
+        if (e) {
+            e.stopPropagation();
+        }
+        
+        // Remove the link immediately and set change state
+        const newLinksList = linksList.filter(link => link !== linkToRemove);
+        setLinksList(newLinksList);
+        hasChangesRef.current.links = true;
+        
+        // Close the confirmation dialog
         setShowConfirmation(false);
         setLinkToRemove("");
     };
@@ -154,50 +173,92 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         setLinkToRemove("");
     };
 
+    // Reset state when modal closes
+    const handleModalClose = () => {
+        // Reset ref before closing
+        hasChangesRef.current = {
+            about: false,
+            links: false
+        };
+        
+        onClose();
+        
+        // Reset the state 100ms after the modal closes
+        setTimeout(() => {
+            setNewLink("");
+            setEditingLink({ index: -1, value: "" });
+            setLinkError("");
+            setShowConfirmation(false);
+            setShowPicConfirmation(false);
+        }, 100);
+    };
+
     const handleSave = async () => {
-        try {
-            // Update sponsor details
-            await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/details`, {
-                about,
-                links: linksList
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            // Handle profile picture upload if selected
-            if (profilePicFile) {
-                await handleProfilePicUpload();
-            }
-
-            // Notify parent component of the update
-            onUpdate({ description: about, links: linksList });
-            onClose();
-        } catch (error) {
-            console.error('Error updating profile:', error);
+        // Check if there's text in the newLink input that hasn't been added
+        if (newLink.trim()) {
+            // Show warning instead of saving
+            setShowLinkWarning(true);
+            return;
         }
+        
+        onUpdate({
+            description: about,
+            links: linksList
+        });
+        
+        // Reset change tracking after saving
+        hasChangesRef.current = {
+            about: false,
+            links: false
+        };
+        
+        handleModalClose();
+    };
+
+    const handleAddAndSave = () => {
+        // Add the link first
+        handleAddLink();
+        // Then save after a small delay to ensure state is updated
+        setTimeout(() => {
+            onUpdate({
+                description: about,
+                links: [...linksList, newLink]
+            });
+            
+            // Reset change tracking
+            hasChangesRef.current = {
+                about: false,
+                links: false
+            };
+            
+            handleModalClose();
+        }, 100);
     };
 
     const handleProfilePicUpload = async () => {
-        if (!profilePicFile || !token) return;
-
+        if (!profilePicFile) return;
+        
         setUploadingProfilePic(true);
+        
         try {
             const formData = new FormData();
             formData.append('file', profilePicFile);
-
-            // Use the correct API endpoint
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, formData, {
+            
+            const response = await fetch('https://bap-backend.onrender.com/upload-sponsor-pic', {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                body: formData
             });
-
-            setCurrentProfileUrl(response.data.url);
-            onProfilePicChange(response.data.url);
+            
+            if (!response.ok) {
+                throw new Error('Failed to upload profile picture');
+            }
+            
+            const data = await response.json();
+            setCurrentProfileUrl(data.url);
+            onProfilePicChange(data.url);
             setProfilePicFile(null);
         } catch (error) {
             console.error('Error uploading profile picture:', error);
@@ -207,23 +268,27 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     };
 
     const handleProfilePicDelete = async () => {
-        if (!token) return;
-        
         try {
-            // Use the correct API endpoint
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
+            const response = await fetch('https://bap-backend.onrender.com/delete-sponsor-pic', {
+                method: 'DELETE',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
             });
             
-            const defaultPic = "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg";
-            setCurrentProfileUrl(defaultPic);
-            onProfilePicChange(defaultPic);
-            setShowPicConfirmation(false);
+            if (!response.ok) {
+                throw new Error('Failed to delete profile picture');
+            }
+            
+            // Set default image or placeholder
+            setCurrentProfileUrl('/placeholder-logo.png');
+            onProfilePicChange('/placeholder-logo.png');
         } catch (error) {
             console.error('Error deleting profile picture:', error);
         }
+        
+        setShowPicConfirmation(false);
     };
 
     const confirmProfilePicDelete = () => {
@@ -234,275 +299,284 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         setShowPicConfirmation(false);
     };
 
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div ref={modalRef} className="bg-white p-6 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">Edit Profile</h2>
-                    <button 
-                        onClick={() => handleClose('x')}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
-                        aria-label="Close"
-                    >
-                        <X size={20} className="text-gray-600" />
-                    </button>
-                </div>
-                
-                {/* Profile Picture Section */}
-                <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
-                    <div className="flex items-start gap-6">
-                        <div className="relative">
-                            <div className="w-24 h-24 rounded-md border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
-                                <img 
-                                    src={currentProfileUrl} 
-                                    alt={`${sponsorName} Logo`} 
-                                    className="max-w-full max-h-full object-contain p-1" 
-                                />
-                            </div>
-                            <div className="absolute -bottom-2 -right-2">
-                                <label 
-                                    htmlFor="profile-pic-upload" 
-                                    className="bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md"
-                                    title="Change picture"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                                      <path d="M12 5v14M5 12h14"></path>
-                                    </svg>
-                                </label>
-                            </div>
-                            <input 
-                                id="profile-pic-upload"
-                                type="file" 
-                                accept="image/*" 
-                                onChange={e => setProfilePicFile(e.target.files?.[0] || null)}
-                                className="hidden"
+    const modalContent = (
+        <>
+            {/* Profile Picture Section */}
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
+                <div className="flex items-start gap-6">
+                    <div className="relative">
+                        <div className="w-24 h-24 rounded-md border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                            <img 
+                                src={currentProfileUrl} 
+                                alt={`${sponsorName} Logo`} 
+                                className="max-w-full max-h-full object-contain p-1" 
                             />
                         </div>
+                        <div className="absolute -bottom-2 -right-2">
+                            <label 
+                                htmlFor="profile-pic-upload" 
+                                className="bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md"
+                                title="Change picture"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                                  <path d="M12 5v14M5 12h14"></path>
+                                </svg>
+                            </label>
+                        </div>
+                        <input 
+                            id="profile-pic-upload"
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setProfilePicFile(e.target.files?.[0] || null)}
+                            className="hidden"
+                        />
+                    </div>
+                    
+                    <div className="flex flex-col">
+                        <h4 className="text-xl font-bold">{sponsorName}</h4>
                         
-                        <div className="flex flex-col">
-                            <h4 className="text-xl font-bold">{sponsorName}</h4>
-                            
-                            {profilePicFile && (
-                                <p className="text-sm text-gray-600 mt-1">
-                                    New image selected: {profilePicFile.name.length > 20 ? 
-                                        profilePicFile.name.substring(0, 20) + '...' : 
-                                        profilePicFile.name}
-                                </p>
-                            )}
-                            
-                            {!profilePicFile && !uploadingProfilePic && (
+                        {profilePicFile && (
+                            <p className="text-sm text-gray-600 mt-1">
+                                New image selected: {profilePicFile.name.length > 20 ? 
+                                    profilePicFile.name.substring(0, 20) + '...' : 
+                                    profilePicFile.name}
+                            </p>
+                        )}
+                        
+                        {!profilePicFile && !uploadingProfilePic && (
+                            <button 
+                                onClick={confirmProfilePicDelete}
+                                className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit"
+                            >
+                                Remove Picture
+                            </button>
+                        )}
+                        
+                        {profilePicFile && (
+                            <div className="flex gap-2 mt-2">
                                 <button 
-                                    onClick={confirmProfilePicDelete}
-                                    className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit"
+                                    onClick={handleProfilePicUpload} 
+                                    disabled={uploadingProfilePic}
+                                    className="px-3 py-1 bg-bapred text-white rounded-md text-sm disabled:opacity-50"
                                 >
-                                    Remove Picture
+                                    {uploadingProfilePic ? 'Uploading...' : 'Save Picture'}
                                 </button>
-                            )}
-                            
-                            {profilePicFile && (
-                                <div className="flex gap-2 mt-2">
+                                <button 
+                                    onClick={() => setProfilePicFile(null)}
+                                    className="px-3 py-1 bg-gray-400 text-white rounded-md text-sm"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-3 ml-1">Recommended size: 250x250px square image</p>
+            </div>
+            
+            {/* Links Section */}
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Links</h3>
+                <div className="flex gap-2 mb-4">
+                    <input 
+                        type="text" 
+                        value={newLink} 
+                        onChange={e => {
+                            setNewLink(e.target.value);
+                            // Mark that we're making changes to links
+                            if (e.target.value.trim()) {
+                                hasChangesRef.current.links = true;
+                            }
+                        }}
+                        placeholder="https://example.com"
+                        className="flex-grow px-3 py-2 border rounded-md"
+                    />
+                    <button 
+                        onClick={handleAddLink}
+                        className="px-4 py-2 bg-bapred text-white rounded-md font-bold"
+                        title="Add link"
+                    >
+                        +
+                    </button>
+                </div>
+                {linkError && <p className="text-red-500 text-sm mb-4">{linkError}</p>}
+                
+                {editingLink.index !== -1 && (
+                    <div className="mb-4 p-3 border rounded-md bg-gray-50">
+                        <h4 className="font-medium mb-2">Edit Link</h4>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={editingLink.value} 
+                                onChange={e => {
+                                    setEditingLink({ ...editingLink, value: e.target.value });
+                                    // Force change tracking for link edits
+                                    hasChangesRef.current.links = true;
+                                    console.log("Editing link value, changes set to true:", hasChangesRef.current);
+                                }}
+                                className="flex-grow px-3 py-2 border rounded-md"
+                            />
+                            <button 
+                                onClick={saveEditLink}
+                                className="px-3 py-2 bg-green-600 text-white rounded-md"
+                                title="Save"
+                            >
+                                Save
+                            </button>
+                            <button 
+                                onClick={cancelEditLink}
+                                className="px-3 py-2 bg-gray-400 text-white rounded-md"
+                                title="Cancel"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {linksList.length > 0 && (
+                    <ul className="border rounded-md overflow-hidden">
+                        {linksList.map((link, index) => (
+                            <li key={index} className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-gray-50">
+                                <span className="text-black truncate max-w-[80%]">{link}</span>
+                                <div className="flex gap-2">
                                     <button 
-                                        onClick={handleProfilePicUpload} 
-                                        disabled={uploadingProfilePic}
-                                        className="px-3 py-1 bg-bapred text-white rounded-md text-sm disabled:opacity-50"
+                                        onClick={() => {
+                                            startEditLink(index);
+                                            // Mark as changed when editing a link
+                                            hasChangesRef.current.links = true;
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
+                                        title="Edit"
                                     >
-                                        {uploadingProfilePic ? 'Uploading...' : 'Save Picture'}
+                                        <MoreHorizontal size={16} className="text-gray-600" />
                                     </button>
                                     <button 
-                                        onClick={() => setProfilePicFile(null)}
-                                        className="px-3 py-1 bg-gray-400 text-white rounded-md text-sm"
+                                        onClick={(e) => {
+                                            confirmRemoveLink(link, e);
+                                            // Mark as changed when removing a link
+                                            hasChangesRef.current.links = true;
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
+                                        title="Remove"
                                     >
-                                        Cancel
+                                        <X size={16} className="text-red-600" />
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-3 ml-1">Recommended size: 250x250px square image</p>
-                </div>
-                
-                {/* Links Section */}
-                <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4">Links</h3>
-                    <div className="flex gap-2 mb-4">
-                        <input 
-                            type="text" 
-                            value={newLink} 
-                            onChange={e => setNewLink(e.target.value)}
-                            placeholder="https://example.com"
-                            className="flex-grow px-3 py-2 border rounded-md"
-                        />
-                        <button 
-                            onClick={handleAddLink}
-                            className="px-4 py-2 bg-bapred text-white rounded-md font-bold"
-                            title="Add link"
-                        >
-                            +
-                        </button>
-                    </div>
-                    {linkError && <p className="text-red-500 text-sm mb-4">{linkError}</p>}
-                    
-                    {editingLink.index !== -1 && (
-                        <div className="mb-4 p-3 border rounded-md bg-gray-50">
-                            <h4 className="font-medium mb-2">Edit Link</h4>
-                            <div className="flex gap-2">
-                                <input 
-                                    type="text" 
-                                    value={editingLink.value} 
-                                    onChange={e => setEditingLink({ ...editingLink, value: e.target.value })}
-                                    className="flex-grow px-3 py-2 border rounded-md"
-                                />
-                                <button 
-                                    onClick={saveEditLink}
-                                    className="px-3 py-2 bg-green-600 text-white rounded-md"
-                                    title="Save"
-                                >
-                                    Save
-                                </button>
-                                <button 
-                                    onClick={cancelEditLink}
-                                    className="px-3 py-2 bg-gray-400 text-white rounded-md"
-                                    title="Cancel"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {linksList.length > 0 && (
-                        <ul className="border rounded-md overflow-hidden">
-                            {linksList.map((link, index) => (
-                                <li key={index} className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-gray-50">
-                                    <span className="text-black truncate max-w-[80%]">{link}</span>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => startEditLink(index)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
-                                            title="Edit"
-                                        >
-                                            <MoreHorizontal size={16} className="text-gray-600" />
-                                        </button>
-                                        <button 
-                                            onClick={() => confirmRemoveLink(link)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
-                                            title="Remove"
-                                        >
-                                            <X size={16} className="text-red-600" />
-                                        </button>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-                
-                {/* About Section */}
-                <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4">About</h3>
-                    <textarea 
-                        value={about} 
-                        onChange={e => setAbout(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-md min-h-[150px] focus:ring-bapred focus:border-bapred"
-                        maxLength={500}
-                    />
-                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                        <span>Company description (max 500 characters)</span>
-                        <span>{about.length}/500</span>
-                    </div>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-2 border-t">
-                    <button 
-                        onClick={onClose}
-                        className="px-5 py-2 border rounded-md hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={handleSave}
-                        className="px-5 py-2 bg-bapred text-white rounded-md hover:bg-red-700"
-                    >
-                        Save Changes
-                    </button>
-                </div>
-
-                {/* Confirmation Dialog */}
-                {showConfirmation && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-                        <div className="bg-white p-6 rounded-lg w-full max-w-md">
-                            <h3 className="text-xl font-bold mb-4">Confirm Removal</h3>
-                            <p className="mb-3">Are you sure you want to remove this link?</p>
-                            <p className="text-black mb-6 break-all p-2 bg-gray-100 rounded">{linkToRemove}</p>
-                            <div className="flex justify-end gap-2">
-                                <button 
-                                    onClick={handleCancelRemove}
-                                    className="px-4 py-2 border rounded hover:bg-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleRemoveLink}
-                                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {showPicConfirmation && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-                        <div className="bg-white p-6 rounded-lg w-full max-w-md">
-                            <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
-                            <p className="mb-3">Are you sure you want to remove this profile picture?</p>
-                            <div className="flex justify-end gap-2">
-                                <button 
-                                    onClick={cancelProfilePicDelete}
-                                    className="px-4 py-2 border rounded hover:bg-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleProfilePicDelete}
-                                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {showUnsavedChangesConfirmation && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-                        <div className="bg-white p-6 rounded-lg w-full max-w-md">
-                            <h3 className="text-xl font-bold mb-4">Unsaved Changes</h3>
-                            <p className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</p>
-                            <div className="flex justify-end gap-2">
-                                <button 
-                                    onClick={cancelClose}
-                                    className="px-4 py-2 border rounded hover:bg-gray-100"
-                                >
-                                    Continue Editing
-                                </button>
-                                <button 
-                                    onClick={confirmClose}
-                                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                                >
-                                    Discard Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                            </li>
+                        ))}
+                    </ul>
                 )}
             </div>
-        </div>
+            
+            {/* About Section */}
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">About</h3>
+                <textarea 
+                    value={about} 
+                    onChange={e => {
+                        const newValue = e.target.value;
+                        setAbout(newValue);
+                        
+                        // Update ref directly - much more reliable than state
+                        hasChangesRef.current.about = (newValue !== initialAbout);
+                        
+                        console.log("About text changed:", {
+                            newValue,
+                            initialAbout,
+                            hasChanged: hasChangesRef.current.about
+                        });
+                    }}
+                    onBlur={() => {
+                        // Use ref directly on blur too
+                        hasChangesRef.current.about = (about !== initialAbout);
+                        console.log("Textarea blur - ref:", hasChangesRef.current);
+                    }}
+                    className="w-full px-3 py-2 border rounded-md min-h-[150px] focus:ring-bapred focus:border-bapred"
+                    maxLength={500}
+                />
+                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                    <span>Company description (max 500 characters)</span>
+                    <span>{about.length}/500</span>
+                </div>
+            </div>
+
+            {/* Confirmation modals */}
+            {showConfirmation && (
+                <ConfirmDialog
+                    isOpen={showConfirmation}
+                    onClose={(e) => {
+                        handleCancelRemove();
+                    }}
+                    onConfirm={(e) => {
+                        handleRemoveLink(e);
+                    }}
+                    title="Confirm Removal"
+                    message="Are you sure you want to remove this link?"
+                    confirmText="Remove"
+                    cancelText="Cancel"
+                    preventOutsideClick={true}
+                />
+            )}
+
+            {showPicConfirmation && (
+                <ConfirmDialog
+                    isOpen={showPicConfirmation}
+                    onClose={(e) => {
+                        cancelProfilePicDelete();
+                    }}
+                    onConfirm={(e) => {
+                        handleProfilePicDelete();
+                    }}
+                    title="Confirm Deletion"
+                    message="Are you sure you want to remove this profile picture?"
+                    confirmText="Remove"
+                    cancelText="Cancel"
+                    preventOutsideClick={true}
+                />
+            )}
+            
+            {/* Link warning dialog */}
+            {showLinkWarning && (
+                <ConfirmDialog
+                    isOpen={showLinkWarning}
+                    onClose={() => {
+                        setShowLinkWarning(false);
+                        // Just save without the link
+                        onUpdate({
+                            description: about,
+                            links: linksList
+                        });
+                        handleModalClose();
+                    }}
+                    onConfirm={() => {
+                        handleAddAndSave();
+                    }}
+                    title="Unsaved Link"
+                    message={`You have text in the link field that hasn't been added: "${newLink}". Would you like to add it before saving?`}
+                    confirmText="Add & Save"
+                    cancelText="Discard Link"
+                    preventOutsideClick={true}
+                />
+            )}
+        </>
+    );
+
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={handleModalClose}
+            title="Edit Profile"
+            hasUnsavedChanges={hasUnsavedChanges}
+            onConfirm={handleSave}
+            confirmText="Save Changes"
+            cancelText="Cancel"
+            showFooter={true}
+            size="lg"
+        >
+            {modalContent}
+        </Modal>
     );
 };
 
@@ -739,19 +813,18 @@ const SponsorHome = () => {
             
             <Footer backgroundColor="#AF272F" />
 
-            {isEditModalOpen && (
-                <ProfileEditModal
-                    isOpen={isEditModalOpen}
-                    onClose={() => setIsEditModalOpen(false)}
-                    sponsorName={sponsorName}
-                    sponsorDescription={sponsorDescription}
-                    onUpdate={handleProfileUpdate}
-                    token={token}
-                    profileUrl={sponsorProfileUrl}
-                    onProfilePicChange={setSponsorProfileUrl}
-                    links={sponsorLinks}
-                />
-            )}
+            {/* Profile Edit Modal */}
+            <ProfileEditModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                sponsorName={sponsorName}
+                sponsorDescription={sponsorDescription}
+                onUpdate={handleProfileUpdate}
+                token={session?.access_token || ""}
+                profileUrl={sponsorProfileUrl}
+                onProfilePicChange={(url) => setSponsorProfileUrl(url)}
+                links={sponsorLinks}
+            />
         </div>
     );
 };
