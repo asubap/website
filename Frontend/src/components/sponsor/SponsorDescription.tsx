@@ -10,7 +10,7 @@ const SponsorDescription: React.FC<SponsorDescriptionProps> = ({ profileUrl, nam
     return (
         <div className="flex flex-col w-full h-full gap-8">
             <div className="flex items-center gap-8">
-                <div className="w-24 h-24 rounded-md border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                <div className="w-24 h-24 rounded-md flex items-center justify-center bg-white overflow-hidden">
                     <img src={profileUrl} alt="Sponsor Logo" className="max-w-full max-h-full object-contain p-1" />
                 </div>
                 <h1 className="text-4xl font-bold">{name}</h1>

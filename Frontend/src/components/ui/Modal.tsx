@@ -14,6 +14,7 @@ interface ModalProps {
   hasUnsavedChanges?: boolean | (() => boolean);
   preventOutsideClick?: boolean;
   size?: "sm" | "md" | "lg" | "xl";
+  transparentBg?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -28,6 +29,7 @@ const Modal: React.FC<ModalProps> = ({
   hasUnsavedChanges = false,
   preventOutsideClick = false,
   size = "md",
+  transparentBg = false,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [showUnsavedChangesConfirmation, setShowUnsavedChangesConfirmation] = useState(false);
@@ -144,7 +146,7 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+    <div className={`fixed inset-0 ${transparentBg ? '' : 'bg-black bg-opacity-50'} flex items-center justify-center z-[9999]`}>
       <div 
         ref={modalRef} 
         className={`modal-content bg-white p-6 rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto relative`}
@@ -183,7 +185,7 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Unsaved Changes Confirmation */}
         {showUnsavedChangesConfirmation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
+          <div className={`fixed inset-0 ${transparentBg ? '' : 'bg-black bg-opacity-50'} flex items-center justify-center z-[10000]`}>
             <div className="bg-white p-6 rounded-lg w-full max-w-md">
               <h3 className="text-xl font-bold mb-4">Unsaved Changes</h3>
               <p className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</p>

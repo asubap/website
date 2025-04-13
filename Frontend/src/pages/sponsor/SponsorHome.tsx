@@ -28,7 +28,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     const [newLink, setNewLink] = useState("");
     const [editingLink, setEditingLink] = useState({ index: -1, value: "" });
     const [initialAbout, setInitialAbout] = useState(sponsorDescription);
-    const [initialLinks, setInitialLinks] = useState(JSON.stringify(links));
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
     const [currentProfileUrl, setCurrentProfileUrl] = useState(profileUrl);
@@ -72,7 +71,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         setLinksList(links);
         setCurrentProfileUrl(profileUrl);
         setInitialAbout(sponsorDescription);
-        setInitialLinks(JSON.stringify(links));
         
         // Reset change tracking when modal opens/closes
         hasChangesRef.current = {
@@ -306,7 +304,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                 <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
                 <div className="flex items-start gap-6">
                     <div className="relative">
-                        <div className="w-24 h-24 rounded-md border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                        <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden">
                             <img 
                                 src={currentProfileUrl} 
                                 alt={`${sponsorName} Logo`} 
@@ -436,9 +434,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                 )}
                 
                 {linksList.length > 0 && (
-                    <ul className="border rounded-md overflow-hidden">
+                    <ul className="overflow-hidden">
                         {linksList.map((link, index) => (
-                            <li key={index} className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-gray-50">
+                            <li key={index} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md">
                                 <span className="text-black truncate max-w-[80%]">{link}</span>
                                 <div className="flex gap-2">
                                     <button 
@@ -506,7 +504,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
             {showConfirmation && (
                 <ConfirmDialog
                     isOpen={showConfirmation}
-                    onClose={(e) => {
+                    onClose={() => {
                         handleCancelRemove();
                     }}
                     onConfirm={(e) => {
@@ -523,10 +521,10 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
             {showPicConfirmation && (
                 <ConfirmDialog
                     isOpen={showPicConfirmation}
-                    onClose={(e) => {
+                    onClose={() => {
                         cancelProfilePicDelete();
                     }}
-                    onConfirm={(e) => {
+                    onConfirm={() => {
                         handleProfilePicDelete();
                     }}
                     title="Confirm Deletion"
@@ -580,28 +578,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     );
 };
 
-// Define SponsorOption component
-interface SponsorOptionProps {
-    header: string;
-    description: string;
-    buttonText: string;
-    onClick: () => void;
-}
-
-const SponsorOption: React.FC<SponsorOptionProps> = ({ header, description, buttonText, onClick }) => {
-    return (
-        <div className="p-6 border border-gray-300 rounded-lg shadow-sm">
-            <h3 className="text-xl font-bold mb-2">{header}</h3>
-            <p className="mb-4">{description}</p>
-            <button 
-                onClick={onClick}
-                className="px-4 py-2 bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
-            >
-                {buttonText}
-            </button>
-        </div>
-    );
-};
 
 const SponsorHome = () => {
     const { session } = useAuth();
@@ -614,7 +590,7 @@ const SponsorHome = () => {
       ];
 
     const [sponsorProfileUrl, setSponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
-    const [sponsorName] = useState("Google");
+    const [sponsorName] = useState("Deloitte");
     const [sponsorDescription, setSponsorDescription] = useState("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec blandit dapibus dolor, id malesuada sapien lacinia non. Aliquam eget mattis tellus. Praesent in elit et velit fringilla feugiat. Donec mauris velit, finibus quis quam vel, rhoncus eleifend odio. Integer a pharetra sem. Duis aliquam felis nec nulla porttitor luctus. Phasellus sed euismod enim, sit amet dignissim nibh. Nulla tempor, felis non consequat imperdiet, nunc metus interdum odio, eget placerat ipsum velit a tortor. Nulla imperdiet mi eu condimentum pharetra. Fusce quam libero, pharetra nec enim nec, ultrices scelerisque est.");
     const [sponsorLinks, setSponsorLinks] = useState<string[]>([]);
     const [resources, setResources] = useState<{id: number, name: string, url: string, uploadDate: string}[]>([]);
@@ -622,17 +598,21 @@ const SponsorHome = () => {
     const [resourceName, setResourceName] = useState("");
     const [uploading, setUploading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [previewResource, setPreviewResource] = useState<{id: number, name: string, url: string} | null>(null);
 
-    const [sponserOptions] = useState([
-        { 
-            header: "Edit Profile", 
-            description: "Edit your profile information.", 
-            buttonText: "Edit", 
-            onClick: () => setIsEditModalOpen(true) 
-        },
-        { header: "View Applications", description: "View applications from members.", buttonText: "View", onClick: () => console.log("View Applications") },
-        { header: "Post Event", description: "Post an event for members to see.", buttonText: "Post", onClick: () => console.log("Post Event") },
-    ]);
+    // Helper function to format dates properly
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "Unknown date";
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? "Recent upload" : date.toLocaleDateString();
+    };
+
+    // Reset zoom level when opening a new preview
+    useEffect(() => {
+        if (previewResource) {
+           // No zoom state to reset
+        }
+    }, [previewResource]);
 
     useEffect(() => {
         // Fetch resources when component mounts
@@ -708,6 +688,16 @@ const SponsorHome = () => {
         }
     };
 
+    // Function to handle showing resource preview
+    const showResourcePreview = (resource: {id: number, name: string, url: string}) => {
+        setPreviewResource(resource);
+    };
+
+    // Function to close the preview modal
+    const closePreview = () => {
+        setPreviewResource(null);
+    };
+
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar
@@ -780,17 +770,15 @@ const SponsorHome = () => {
                                                 <div key={resource.id} className="flex justify-between items-center border-b pb-2">
                                                     <div>
                                                         <p className="font-medium">{resource.name}</p>
-                                                        <p className="text-sm text-gray-500">Uploaded on {new Date(resource.uploadDate).toLocaleDateString()}</p>
+                                                        <p className="text-sm text-gray-500">Uploaded on {formatDate(resource.uploadDate)}</p>
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <a 
-                                                            href={resource.url} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer"
-                                                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+                                                        <button 
+                                                            onClick={() => showResourcePreview(resource)}
+                                                            className="px-3 py-1 bg-bapred text-white rounded text-sm"
                                                         >
                                                             View
-                                                        </a>
+                                                        </button>
                                                         <button 
                                                             onClick={() => handleResourceDelete(resource.id)}
                                                             className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
@@ -825,6 +813,77 @@ const SponsorHome = () => {
                 onProfilePicChange={(url) => setSponsorProfileUrl(url)}
                 links={sponsorLinks}
             />
+
+            {/* Resource Preview Modal */}
+            {previewResource && (
+                <Modal
+                    isOpen={!!previewResource}
+                    onClose={closePreview}
+                    title={previewResource.name}
+                    showFooter={true}
+                    confirmText="Close"
+                    onConfirm={closePreview}
+                    size="lg"
+                >
+                    <div className="w-full h-[70vh] flex flex-col items-center">
+                         {/* Header row for Open in New Tab button only */}
+                         <div className="w-full mb-4 flex justify-end items-center">
+                            <a 
+                                href={previewResource.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="px-3 py-1 bg-bapred text-white rounded text-sm"
+                            >
+                                Open in New Tab
+                            </a>
+                        </div>
+                        
+                        {/* Scrollable container for preview content */}
+                        <div 
+                            className="w-full flex-1 overflow-auto border border-gray-200 bg-gray-50"
+                            style={{ maxHeight: 'calc(70vh - 60px)' }} // Adjust height based on controls row height
+                        >
+                            {previewResource.url.endsWith('.pdf') ? (
+                                // PDF container
+                                <div 
+                                    className="w-full h-full flex justify-center"
+                                    style={{ minHeight: '100%' }} // Ensure PDF takes full height
+                                >
+                                    <iframe 
+                                        src={`${previewResource.url}#toolbar=0`} 
+                                        className="w-full h-full border-none shadow-md"
+                                        title={previewResource.name}
+                                        loading="eager"
+                                    />
+                                </div>
+                            ) : previewResource.url.match(/\.(jpe?g|png|gif|svg|webp)$/i) ? (
+                                // Image container
+                                <div 
+                                    className="w-full h-full flex items-center justify-center p-4"
+                                >
+                                    <img 
+                                        src={previewResource.url} 
+                                        alt={previewResource.name} 
+                                        style={{ 
+                                            maxWidth: '100%', // Respect container width initially
+                                            maxHeight: '100%', // Respect container height initially
+                                            width: 'auto', 
+                                            height: 'auto',
+                                            display: 'block' // Helps with centering/sizing
+                                        }}
+                                        className="block shadow-md"
+                                        loading="eager"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-center">
+                                    <p className="mb-4">This file type cannot be previewed in-browser.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 };
