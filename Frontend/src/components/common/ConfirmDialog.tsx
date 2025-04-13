@@ -60,7 +60,6 @@ const ConfirmDialog = ({
         size="sm"
         hasUnsavedChanges={false}
         preventOutsideClick={preventOutsideClick}
-        transparentBg={true}
       >
         <p className="text-gray-700">{message}</p>
       </Modal>

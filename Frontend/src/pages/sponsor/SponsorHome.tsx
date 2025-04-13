@@ -15,7 +15,7 @@ interface ProfileEditModalProps {
     onClose: () => void;
     sponsorName: string;
     sponsorDescription: string;
-    onUpdate: (updatedProfile: { description: string; links: string[] }) => void;
+    onUpdate: (updatedProfile: { description: string; links: string[]; newProfilePic: File | null }) => void;
     token: string;
     profileUrl: string;
     onProfilePicChange: (url: string) => void;
@@ -32,6 +32,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
     const [currentProfileUrl, setCurrentProfileUrl] = useState(profileUrl);
+    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [linkToRemove, setLinkToRemove] = useState("");
     const [linkError, setLinkError] = useState("");
@@ -72,6 +73,12 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         setLinksList(links);
         setCurrentProfileUrl(profileUrl);
         setInitialAbout(sponsorDescription);
+        // Reset file selection state when modal opens/closes
+        setProfilePicFile(null);
+        if (previewImageUrl) {
+            URL.revokeObjectURL(previewImageUrl); // Clean up previous preview
+        }
+        setPreviewImageUrl(null);
         
         // Reset change tracking when modal opens/closes
         hasChangesRef.current = {
@@ -189,6 +196,11 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
             setLinkError("");
             setShowConfirmation(false);
             setShowPicConfirmation(false);
+            // Ensure preview URL is revoked on close
+            if (previewImageUrl) {
+                URL.revokeObjectURL(previewImageUrl);
+            }
+            setPreviewImageUrl(null);
         }, 100);
     };
 
@@ -202,10 +214,11 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         
         onUpdate({
             description: about,
-            links: linksList
+            links: linksList,
+            newProfilePic: profilePicFile
         });
         
-        // Reset change tracking after saving
+        // Reset change tracking after initiating save
         hasChangesRef.current = {
             about: false,
             links: false
@@ -221,7 +234,8 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         setTimeout(() => {
             onUpdate({
                 description: about,
-                links: [...linksList, newLink]
+                links: [...linksList, newLink],
+                newProfilePic: profilePicFile
             });
             
             // Reset change tracking
@@ -242,10 +256,11 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         
         try {
             const formData = new FormData();
-            formData.append('file', profilePicFile);
+            // Match the key expected by the backend ('Key' from Postman screenshot)
+            formData.append('Key', profilePicFile); 
             
-            // Use environment variable for backend URL
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/upload-pic`, { 
+            // Use environment variable for backend URL and correct endpoint path
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -273,31 +288,44 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     };
 
     const handleProfilePicDelete = async () => {
-        if (!token) return; // Check for token
+        if (!token) {
+            console.error("Cannot delete profile picture: No authentication token available");
+            return;
+        }
         
-        console.log("Deleting profile picture...");
+        console.log("Deleting profile picture...", {
+            endpoint: `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
+            method: 'DELETE'
+        });
+        
         try {
-             // Use environment variable for backend URL
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/delete-pic`, { 
+            // Use environment variable for backend URL and correct endpoint path
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             
+            // Get response text regardless of success/failure
+            const responseText = await response.text();
+            console.log(`Delete profile picture response: ${response.status}`, responseText || "(empty response body)");
+            
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to delete profile picture: ${response.status} ${errorText}`);
+                throw new Error(`Failed to delete profile picture: ${response.status} ${responseText}`);
             }
             
-            console.log("Deletion successful");
+            console.log("Profile picture deletion successful");
+            
             // Set default image or placeholder
-            const placeholderUrl = '/placeholder-logo.png'; // Define placeholder
+            const placeholderUrl = '/placeholder-logo.png';
             setCurrentProfileUrl(placeholderUrl);
-            onProfilePicChange(placeholderUrl); // Update parent state
+            onProfilePicChange(placeholderUrl); // Update parent state via callback
+            
         } catch (error) {
             console.error('Error deleting profile picture:', error);
-            // Add user feedback here if desired
+            // Add user feedback here if desired (toast notification, etc.)
+            alert('Failed to delete profile picture. Please try again or contact support.');
         } finally {
             setShowPicConfirmation(false); // Close confirmation dialog regardless of outcome
         }
@@ -311,24 +339,68 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         setShowPicConfirmation(false);
     };
 
+    // Handle file selection: Create and set preview URL
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0] || null;
+        
+        // Revoke previous preview URL if it exists
+        if (previewImageUrl) {
+            URL.revokeObjectURL(previewImageUrl);
+            setPreviewImageUrl(null);
+        }
+
+        setProfilePicFile(file);
+
+        if (file) {
+            const newPreviewUrl = URL.createObjectURL(file);
+            setPreviewImageUrl(newPreviewUrl);
+            // Mark changes if a file is selected
+            hasChangesRef.current.about = hasChangesRef.current.about || true; 
+        } else {
+            // Mark changes if file selection is cleared (might revert to original)
+            hasChangesRef.current.about = hasChangesRef.current.about || (currentProfileUrl !== profileUrl);
+        }
+    };
+
+    // Cancel the current file selection (clears preview)
+    const cancelFileSelection = () => {
+        if (previewImageUrl) {
+            URL.revokeObjectURL(previewImageUrl);
+        }
+        setProfilePicFile(null);
+        setPreviewImageUrl(null);
+        // Mark changes if selection is cancelled (might revert to original)
+        hasChangesRef.current.about = hasChangesRef.current.about || (currentProfileUrl !== profileUrl);
+    };
+
+    // Cleanup effect for object URL
+    useEffect(() => {
+        // Return cleanup function to revoke URL on unmount
+        return () => {
+            if (previewImageUrl) {
+                URL.revokeObjectURL(previewImageUrl);
+            }
+        };
+    }, [previewImageUrl]); // Rerun only if previewImageUrl changes (should only run on unmount due to dependency)
+
     const modalContent = (
         <>
             {/* Profile Picture Section */}
             <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
                 <div className="flex items-start gap-6">
-                    <div className="relative">
-                        <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden">
+                    <div className="relative group">
+                        <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden shadow-sm">
                             <img 
-                                src={currentProfileUrl} 
-                                alt={`${sponsorName} Logo`} 
+                                src={previewImageUrl || currentProfileUrl}
+                                alt={`${sponsorName} Logo Preview`} 
                                 className="max-w-full max-h-full object-contain p-1" 
                             />
                         </div>
                         <div className="absolute -bottom-2 -right-2">
                             <label 
                                 htmlFor="profile-pic-upload" 
-                                className="bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md"
+                                className="bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors"
                                 title="Change picture"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
@@ -336,11 +408,20 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                                 </svg>
                             </label>
                         </div>
+                        {previewImageUrl && (
+                            <button 
+                                onClick={cancelFileSelection}
+                                className="absolute top-0 right-0 -mt-2 -mr-2 bg-gray-600 text-white w-5 h-5 rounded-full flex items-center justify-center cursor-pointer shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Cancel selection"
+                            >
+                                <X size={12} />
+                            </button>
+                        )}
                         <input 
                             id="profile-pic-upload"
                             type="file" 
                             accept="image/*" 
-                            onChange={e => setProfilePicFile(e.target.files?.[0] || null)}
+                            onChange={handleFileSelect}
                             className="hidden"
                         />
                     </div>
@@ -348,39 +429,13 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                     <div className="flex flex-col">
                         <h4 className="text-xl font-bold">{sponsorName}</h4>
                         
-                        {profilePicFile && (
-                            <p className="text-sm text-gray-600 mt-1">
-                                New image selected: {profilePicFile.name.length > 20 ? 
-                                    profilePicFile.name.substring(0, 20) + '...' : 
-                                    profilePicFile.name}
-                            </p>
-                        )}
-                        
-                        {!profilePicFile && !uploadingProfilePic && (
+                        {!profilePicFile && (
                             <button 
                                 onClick={confirmProfilePicDelete}
-                                className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit"
+                                className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit hover:bg-gray-700 transition-colors"
                             >
                                 Remove Picture
                             </button>
-                        )}
-                        
-                        {profilePicFile && (
-                            <div className="flex gap-2 mt-2">
-                                <button 
-                                    onClick={handleProfilePicUpload} 
-                                    disabled={uploadingProfilePic}
-                                    className="px-3 py-1 bg-bapred text-white rounded-md text-sm disabled:opacity-50"
-                                >
-                                    {uploadingProfilePic ? 'Uploading...' : 'Save Picture'}
-                                </button>
-                                <button 
-                                    onClick={() => setProfilePicFile(null)}
-                                    className="px-3 py-1 bg-gray-400 text-white rounded-md text-sm"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
                         )}
                     </div>
                 </div>
@@ -558,7 +613,8 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                         // Just save without the link
                         onUpdate({
                             description: about,
-                            links: linksList
+                            links: linksList,
+                            newProfilePic: null
                         });
                         handleModalClose();
                     }}
@@ -603,10 +659,20 @@ const SponsorHome = () => {
         { name: "Dashboard", href: "/sponsor" },
       ];
 
-    const [sponsorProfileUrl, setSponsorProfileUrl] = useState("https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg");
-    const [sponsorName] = useState("Deloitte");
-    const [sponsorDescription, setSponsorDescription] = useState("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec blandit dapibus dolor, id malesuada sapien lacinia non. Aliquam eget mattis tellus. Praesent in elit et velit fringilla feugiat. Donec mauris velit, finibus quis quam vel, rhoncus eleifend odio. Integer a pharetra sem. Duis aliquam felis nec nulla porttitor luctus. Phasellus sed euismod enim, sit amet dignissim nibh. Nulla tempor, felis non consequat imperdiet, nunc metus interdum odio, eget placerat ipsum velit a tortor. Nulla imperdiet mi eu condimentum pharetra. Fusce quam libero, pharetra nec enim nec, ultrices scelerisque est.");
-    const [sponsorLinks, setSponsorLinks] = useState<string[]>([]);
+    // Replace hardcoded states with dynamic loading
+    const [sponsorData, setSponsorData] = useState<{
+        name: string; // Name will be fetched
+        description: string;
+        profileUrl: string;
+        links: string[];
+    }>({
+        name: "", // Start with empty name
+        description: "",
+        profileUrl: "",
+        links: []
+    });
+    const [loadingSponsor, setLoadingSponsor] = useState(true);
+    const [sponsorError, setSponsorError] = useState<string | null>(null);
     const [resources, setResources] = useState<{id: number, name: string, url: string, uploadDate: string}[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [resourceName, setResourceName] = useState("");
@@ -614,6 +680,7 @@ const SponsorHome = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [previewResource, setPreviewResource] = useState<{id: number, name: string, url: string} | null>(null);
     const [loadingResources, setLoadingResources] = useState(true);
+    const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
 
     // Helper function to format dates properly
     const formatDate = (dateString: string) => {
@@ -629,9 +696,71 @@ const SponsorHome = () => {
         }
     }, [previewResource]);
 
-    useEffect(() => {
-        // Fetch resources when component mounts
+    // Fetch sponsor data from backend - using passcode endpoint
+    const fetchSponsorData = async () => {
+        setLoadingSponsor(true);
+        setSponsorError(null);
+        // const sponsorName = "Deloitte"; // No longer needed
+        const passcode = "1324"; // Passcode for the endpoint
+        
+        try {
+            // Fetch dynamic data using the passcode endpoint
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-sponsor-info`, 
+                { passcode: passcode }, // Request body
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add Authorization header if this endpoint requires it
+                        // Authorization: `Bearer ${token}` 
+                    }
+                }
+            );
+            
+            const data = response.data;
+            
+            // Assuming the response includes company_name, description, pfp_url, links
+            setSponsorData({
+                name: data.company_name || "Sponsor Name Missing", // Use fetched name
+                description: data.about || data.description || "No description provided.", // Check for 'about' or 'description'
+                profileUrl: data.pfp_url || data.profileUrl || "/placeholder-logo.png", // Check for 'pfp_url' or 'profileUrl'
+                links: data.links || []
+            });
+            
+        } catch (error) {
+            console.error(`Error fetching sponsor data with passcode:`, error);
+            let errorMessage = "Could not retrieve sponsor information. Please try again later.";
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+                errorMessage = "Invalid passcode provided for fetching sponsor data.";
+            } else if (axios.isAxiosError(error) && error.response) {
+                errorMessage = `Error fetching sponsor data: ${error.response.status} ${error.response.statusText}`;
+            } else if (error instanceof Error) {
+                 errorMessage = `Error fetching sponsor data: ${error.message}`;
+            }
+            setSponsorError(errorMessage);
+            
+            // Set fallback data 
+            setSponsorData({
+                name: "Error", // Indicate error in name
+                description: "Information unavailable.",
+                profileUrl: "/placeholder-logo.png",
+                links: []
+            });
+        } finally {
+            setLoadingSponsor(false);
+        }
+    };
+
+    // Reload sponsor data
+    const reloadSponsorData = () => {
         if (token) {
+            fetchSponsorData();
+        }
+    };
+
+    useEffect(() => {
+        // Fetch data when component mounts and when token changes
+        if (token) {
+            fetchSponsorData();
             fetchResources();
         }
     }, [token]);
@@ -640,7 +769,7 @@ const SponsorHome = () => {
         setLoadingResources(true);
         try {
             // Use the correct API endpoint with environment variable
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`, {
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -667,7 +796,7 @@ const SponsorHome = () => {
             formData.append('file', file);
 
             // Use the correct API endpoint with environment variable
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`, formData, {
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`
@@ -684,9 +813,72 @@ const SponsorHome = () => {
         }
     };
 
-    const handleProfileUpdate = (updatedProfile: { description: string; links: string[] }) => {
-        setSponsorDescription(updatedProfile.description);
-        setSponsorLinks(updatedProfile.links);
+    // Separate function to upload profile picture
+    const uploadProfilePicture = async (file: File): Promise<string | null> => {
+        if (!token) return null;
+
+        setUploadingProfilePic(true); // Use a specific state for PFP upload
+        console.log("Uploading profile picture (from parent)...");
+
+        try {
+            const formData = new FormData();
+            formData.append('Key', file);
+
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/pfp`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log("Upload successful:", data);
+            return data.url; // Return the new URL
+        } catch (error) {
+            console.error('Error uploading profile picture:', error);
+            // Add user feedback (e.g., toast notification)
+            return null; // Indicate failure
+        } finally {
+            setUploadingProfilePic(false);
+        }
+    };
+
+    const handleProfileUpdate = async (updatedProfile: { description: string; links: string[]; newProfilePic: File | null }) => {
+        let newProfileUrl = sponsorData.profileUrl; // Start with current URL
+
+        // 1. Upload new profile picture if provided
+        if (updatedProfile.newProfilePic) {
+            const uploadedUrl = await uploadProfilePicture(updatedProfile.newProfilePic);
+            if (uploadedUrl) {
+                newProfileUrl = uploadedUrl; // Update URL if upload succeeded
+            } else {
+                console.error("Profile picture upload failed. Profile data not updated.");
+                // Optional: Show error to user
+                return; // Stop the update process if PFP upload fails
+            }
+        }
+
+        // 2. Update other profile data (description, links)
+        // TODO: Implement API call to update description and links, potentially passing newProfileUrl if it changed
+        console.log("Updating profile description and links (API call needed)", {
+            description: updatedProfile.description,
+            links: updatedProfile.links,
+            profilePicUrl: newProfileUrl // Use the potentially updated URL
+        });
+
+        // For now, just update local state (replace with API call + state update on success)
+        setSponsorData(prevData => ({
+            ...prevData,
+            description: updatedProfile.description,
+            links: updatedProfile.links,
+            profileUrl: newProfileUrl // Update local state with new URL
+        }));
     };
 
     const handleResourceDelete = async (resourceId: number) => {
@@ -694,7 +886,7 @@ const SponsorHome = () => {
         
         try {
             // Use the correct API endpoint with environment variable
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources/${resourceId}`, {
+            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources/${resourceId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -728,19 +920,40 @@ const SponsorHome = () => {
 
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col pt-[72px] flex-grow">
-                <main className="flex-grow flex flex-col items-center justify-center">
-                    <div className="py-24 px-16 md:px-32 flex-grow flex flex-col md:grid md:grid-cols-2 items-start gap-24">
+                <main className="flex-grow flex flex-col items-center justify-center py-24">
+                    {loadingSponsor ? (
+                        // Use navbar padding for alignment
+                        <div className="w-full px-8 sm:px-16 lg:px-24">
+                            <LoadingSpinner text="Loading sponsor information..." size="lg" />
+                        </div>
+                    ) : sponsorError ? (
+                         // Use navbar padding for alignment
+                        <div className="w-full px-8 sm:px-16 lg:px-24">
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                <p className="font-bold">Error Loading Data</p>
+                                <p className="block sm:inline">{sponsorError}</p>
+                                <button 
+                                    onClick={reloadSponsorData}
+                                    className="mt-3 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                >
+                                    Try Again
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                    // Apply the user-specified grid, gap, and padding classes
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-4 md:px-32">
                         <div className="flex flex-col items-center justify-start h-full gap-8 w-full">
                             <div className="w-full">   
                                 <h1 className="text-4xl font-bold font-outfit">
-                                    Welcome back, <span className="text-bapred">{sponsorName}</span>!
+                                    Welcome back, <span className="text-bapred">{sponsorData.name}</span>!
                                 </h1>
                             </div>
                             <SponsorDescription 
-                                profileUrl={sponsorProfileUrl} 
-                                name={sponsorName} 
-                                description={sponsorDescription} 
-                                links={sponsorLinks}
+                                profileUrl={sponsorData.profileUrl} 
+                                name={sponsorData.name} 
+                                description={sponsorData.description} 
+                                links={sponsorData.links}
                                 onEditClick={() => setIsEditModalOpen(true)}
                             />
                         </div>
@@ -816,6 +1029,7 @@ const SponsorHome = () => {
                             </div>
                         </div>
                     </div>
+                    )}
                 </main>
             </div>
             
@@ -825,13 +1039,13 @@ const SponsorHome = () => {
             <ProfileEditModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
-                sponsorName={sponsorName}
-                sponsorDescription={sponsorDescription}
+                sponsorName={sponsorData.name}
+                sponsorDescription={sponsorData.description}
                 onUpdate={handleProfileUpdate}
                 token={session?.access_token || ""}
-                profileUrl={sponsorProfileUrl}
-                onProfilePicChange={(url) => setSponsorProfileUrl(url)}
-                links={sponsorLinks}
+                profileUrl={sponsorData.profileUrl}
+                onProfilePicChange={(url) => setSponsorData(prevData => ({ ...prevData, profileUrl: url }))}
+                links={sponsorData.links}
             />
 
             {/* Resource Preview Modal */}
