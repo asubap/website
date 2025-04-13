@@ -231,12 +231,19 @@ const Admin = () => {
     };
 
     // Handle a newly created event
-    const handleEventCreated = (newEvent: any) => {
-        // If it's an upcoming event, add it to upcomingEvents state
-        if (!isPastDate(newEvent.date)) {
-            setUpcomingEvents([...upcomingEvents, newEvent]);
+    const handleEventCreated = (newEvent: Event) => {
+        // Determine if it's upcoming or past
+        const isNewEventPast = isPastDate(newEvent.date);
+
+        // Update the correct list and sort it
+        if (!isNewEventPast) {
+            setUpcomingEvents(prevEvents => 
+                [...prevEvents, newEvent].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            );
         } else {
-            setPastEvents([...pastEvents, newEvent]);
+            setPastEvents(prevEvents => 
+                [...prevEvents, newEvent].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Past events descending
+            );
         }
     };
 
@@ -258,8 +265,8 @@ const Admin = () => {
                     <h1 className="text-4xl font-bold text-left w-full px-4 md:px-32 mb-6">Admin Dashboard</h1>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-4 md:px-32">
                         <div className="order-1 md:order-1">
-                            <div className="flex items-center">
-                                <h2 className="text-2xl font-semibold">Events</h2>
+                            <div className="flex items-center mb-2">
+                                <h2 className="text-2xl font-semibold">Upcoming Events</h2>
                                 <button 
                                     className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" 
                                     onClick={() => setShowCreateEventModal(true)}
@@ -267,9 +274,11 @@ const Admin = () => {
                                     + New Event
                                 </button>
                             </div>
-                            <div>
-                                <EventListShort events={upcomingEvents} />
-                            </div>
+                            {upcomingEvents.length > 0 ? (
+                                    <EventListShort events={upcomingEvents} />
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No upcoming events scheduled.</p>
+                                )}
                         </div>
 
                         <div className="order-3 md:order-2">
@@ -298,12 +307,14 @@ const Admin = () => {
                         </div>
                         
                         <div className="order-2 md:order-3">
-                            <div className="flex items-center">
+                            <div className="flex items-center mb-2">
                                 <h2 className="text-2xl font-semibold">Past Events</h2>
                             </div>
-                            <div>
-                                <EventListShort events={pastEvents} />
-                            </div>
+                            {pastEvents.length > 0 ? (
+                                    <EventListShort events={pastEvents} />
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No past events found.</p>
+                                )}
                         </div>
                         
                         
