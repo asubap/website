@@ -10,7 +10,6 @@ import { AuthProvider } from "./context/auth/authProvider";
 import AboutPage from "./pages/about/AboutPage";
 import SponsorsPage from "./pages/sponsors/SponsorsPage";
 import SponsorHome from "./pages/sponsor/SponsorHome";
-import SponsorEdit from "./pages/sponsor/SponsorEdit";
 import Admin from "./pages/admin/Admin";
 import MemberView from "./pages/member/MemberView";
 import NetworkingPage from "./pages/networking/NetworkingPage";
@@ -74,7 +73,6 @@ function App() {
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/sponsor" element={<SponsorHome />} />
                   <Route path="/member" element={<MemberView />} />
-                  <Route path="/sponsor/edit" element={<SponsorEdit />} />
                   <Route path="/network" element={<NetworkingPage />} />
                   <Route path="/events/:eventId" element={<ViewEvent />} />
                 </Route>

@@ -1,8 +1,9 @@
 import type React from "react"
 
 import { useState } from "react"
-import { ChevronDown} from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { useAuth } from "../../context/auth/authProvider"
+import { Modal } from "../../components/ui/Modal"
 
 
 type ProfileData = {
@@ -32,6 +33,12 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
   const [formData, setFormData] = useState<ProfileData>(profileData)
   const [photoPreview, setPhotoPreview] = useState<string | null>(profileData.photoUrl || null)
   const {session }= useAuth();
+
+  // Check for unsaved changes
+  const hasUnsavedChanges = () => {
+    return JSON.stringify(formData) !== JSON.stringify(profileData) || 
+           photoPreview !== profileData.photoUrl;
+  };
 
   if (!isOpen) return null
 
@@ -139,8 +146,7 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     onSave(formData)
     // Send the updated data to the server
   
@@ -178,149 +184,155 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
    
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-auto">
-        <div className="flex flex-col lg:flex-row">
-          {/* Left Column - Edit Form */}
-          <div className="w-full lg:w-1/2 p-6">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6">Update Profile</h2>
+  const formContent = (
+    <div className="flex flex-col lg:flex-row">
+      {/* Left Column - Edit Form */}
+      <div className="w-full lg:w-1/2 p-6">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6">Update Profile</h2>
 
-            <form onSubmit={handleSubmit}>
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-4">Profile</h3>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Name"
-                  value={formData.name}
+        <form onSubmit={handleSubmit}>
+          <div className="mb-6">
+            <h3 className="text-xl font-bold mb-4">Profile</h3>
+            <input
+              type="text"
+              name="name"
+              placeholder="Name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full border border-[#d9d9d9] rounded-lg p-3 mb-4"
+              required
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+                className="border border-[#d9d9d9] rounded-lg p-3"
+                required
+              />
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Phone Number"
+                value={formData.phone}
+                onChange={handleChange}
+                className="border border-[#d9d9d9] rounded-lg p-3"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <input
+                type="text"
+                name="major"
+                placeholder="Major(s)"
+                value={formData.major}
+                onChange={handleChange}
+                className="border border-[#d9d9d9] rounded-lg p-3 sm:col-span-1"
+              />
+              <input
+                type="text"
+                name="graduationDate"
+                placeholder="Graduation Date"
+                value={formData.graduationDate}
+                onChange={handleChange}
+                className="border border-[#d9d9d9] rounded-lg p-3"
+              />
+              <div className="relative">
+                <select
+                  name="status"
+                  value={formData.status}
                   onChange={handleChange}
-                  className="w-full border border-[#d9d9d9] rounded-lg p-3 mb-4"
-                  required
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="border border-[#d9d9d9] rounded-lg p-3"
-                    required
-                  />
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="Phone Number"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="border border-[#d9d9d9] rounded-lg p-3"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                  <input
-                    type="text"
-                    name="major"
-                    placeholder="Major(s)"
-                    value={formData.major}
-                    onChange={handleChange}
-                    className="border border-[#d9d9d9] rounded-lg p-3 sm:col-span-1"
-                  />
-                  <input
-                    type="text"
-                    name="graduationDate"
-                    placeholder="Graduation Date"
-                    value={formData.graduationDate}
-                    onChange={handleChange}
-                    className="border border-[#d9d9d9] rounded-lg p-3"
-                  />
-                  <div className="relative">
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
-                    >
-                      <option value="">Status</option>
-                      <option value="Looking for Internship">Looking for Internship</option>
-                      <option value="Looking for Full-time">Looking for Full-time</option>
-                      <option value="Not Looking">Not Looking</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                      size={16}
-                    />
-                  </div>
-                </div>
-
-                <textarea
-                  name="about"
-                  placeholder="Write about yourself..."
-                  value={formData.about}
-                  onChange={handleChange}
-                  className="w-full border border-[#d9d9d9] rounded-lg p-3 min-h-[150px]"
-                />
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors"
+                  className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
                 >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Center - Photo Upload */}
-          <div className="w-full lg:w-auto flex justify-center items-start p-6">
-            <div className="relative">
-              <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="Profile Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center text-sm text-gray-500">
-                    <div>No Photo</div>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 mt-2">
-                <label className="px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm">
-                  Upload Profile Photo
-                  <input
-                    accept="image/*"
-                    className="hidden"
-                    aria-label="Upload profile photo"
-                    type="file"
-                    onChange={handlePhotoUpload}
-                  />
-                </label>
-                {photoPreview && (
-                  <button 
-                    onClick={handlePhotoDelete} 
-                    className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
-                  >
-                    Delete Photo
-                  </button>
-                )}
+                  <option value="">Status</option>
+                  <option value="Looking for Internship">Looking for Internship</option>
+                  <option value="Looking for Full-time">Looking for Full-time</option>
+                  <option value="Not Looking">Not Looking</option>
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                  size={16}
+                />
               </div>
             </div>
+
+            <textarea
+              name="about"
+              placeholder="Write about yourself..."
+              value={formData.about}
+              onChange={handleChange}
+              className="w-full border border-[#d9d9d9] rounded-lg p-3 min-h-[150px]"
+            />
           </div>
 
-          
+          <div className="flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors"
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Center - Photo Upload */}
+      <div className="w-full lg:w-auto flex justify-center items-start p-6">
+        <div className="relative">
+          <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
+            {photoPreview ? (
+              <img src={photoPreview} alt="Profile Preview" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-sm text-gray-500">
+                <div>No Photo</div>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 mt-2">
+            <label className="px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm">
+              Upload Profile Photo
+              <input
+                accept="image/*"
+                className="hidden"
+                aria-label="Upload profile photo"
+                type="file"
+                onChange={handlePhotoUpload}
+              />
+            </label>
+            {photoPreview && (
+              <button 
+                onClick={handlePhotoDelete} 
+                className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
+              >
+                Delete Photo
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
-    </div>
+  );
 
-  )
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Update Profile"
+      onSave={handleSubmit}
+      saveButtonText="Save Changes"
+      checkUnsavedChanges={hasUnsavedChanges}
+    >
+      {formContent}
+    </Modal>
+  );
 }
