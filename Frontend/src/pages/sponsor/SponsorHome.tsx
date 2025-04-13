@@ -7,6 +7,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import { MoreHorizontal, X } from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 // Edit Profile Modal Component
 interface ProfileEditModalProps {
@@ -234,59 +235,72 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     };
 
     const handleProfilePicUpload = async () => {
-        if (!profilePicFile) return;
+        if (!profilePicFile || !token) return; // Also check for token
         
         setUploadingProfilePic(true);
+        console.log("Uploading profile picture...");
         
         try {
             const formData = new FormData();
             formData.append('file', profilePicFile);
             
-            const response = await fetch('https://bap-backend.onrender.com/upload-sponsor-pic', {
+            // Use environment variable for backend URL
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/upload-pic`, { 
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
+                    // Content-Type is set automatically by fetch for FormData
                 },
                 body: formData
             });
             
             if (!response.ok) {
-                throw new Error('Failed to upload profile picture');
+                const errorText = await response.text();
+                throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
             }
             
             const data = await response.json();
+            console.log("Upload successful:", data);
             setCurrentProfileUrl(data.url);
-            onProfilePicChange(data.url);
-            setProfilePicFile(null);
+            onProfilePicChange(data.url); // Update parent state
+            setProfilePicFile(null); // Clear the selected file
         } catch (error) {
             console.error('Error uploading profile picture:', error);
+            // Add user feedback here if desired (e.g., toast notification)
         } finally {
             setUploadingProfilePic(false);
         }
     };
 
     const handleProfilePicDelete = async () => {
+        if (!token) return; // Check for token
+        
+        console.log("Deleting profile picture...");
         try {
-            const response = await fetch('https://bap-backend.onrender.com/delete-sponsor-pic', {
+             // Use environment variable for backend URL
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/delete-pic`, { 
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
             });
             
             if (!response.ok) {
-                throw new Error('Failed to delete profile picture');
+                const errorText = await response.text();
+                throw new Error(`Failed to delete profile picture: ${response.status} ${errorText}`);
             }
             
+            console.log("Deletion successful");
             // Set default image or placeholder
-            setCurrentProfileUrl('/placeholder-logo.png');
-            onProfilePicChange('/placeholder-logo.png');
+            const placeholderUrl = '/placeholder-logo.png'; // Define placeholder
+            setCurrentProfileUrl(placeholderUrl);
+            onProfilePicChange(placeholderUrl); // Update parent state
         } catch (error) {
             console.error('Error deleting profile picture:', error);
+            // Add user feedback here if desired
+        } finally {
+            setShowPicConfirmation(false); // Close confirmation dialog regardless of outcome
         }
-        
-        setShowPicConfirmation(false);
     };
 
     const confirmProfilePicDelete = () => {
@@ -599,6 +613,7 @@ const SponsorHome = () => {
     const [uploading, setUploading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [previewResource, setPreviewResource] = useState<{id: number, name: string, url: string} | null>(null);
+    const [loadingResources, setLoadingResources] = useState(true);
 
     // Helper function to format dates properly
     const formatDate = (dateString: string) => {
@@ -622,6 +637,7 @@ const SponsorHome = () => {
     }, [token]);
 
     const fetchResources = async () => {
+        setLoadingResources(true);
         try {
             // Use the correct API endpoint with environment variable
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`, {
@@ -635,6 +651,8 @@ const SponsorHome = () => {
             setResources(resourcesData);
         } catch (error) {
             console.error('Error fetching resources:', error);
+        } finally {
+            setLoadingResources(false);
         }
     };
 
@@ -764,7 +782,9 @@ const SponsorHome = () => {
                                 
                                 <div className="border p-6 rounded-lg shadow-md">
                                     <h2 className="text-2xl font-bold mb-4">My Resources</h2>
-                                    {Array.isArray(resources) && resources.length > 0 ? (
+                                    {loadingResources ? (
+                                        <LoadingSpinner text="Loading resources..." />
+                                    ) : Array.isArray(resources) && resources.length > 0 ? (
                                         <div className="flex flex-col gap-3">
                                             {resources.map(resource => (
                                                 <div key={resource.id} className="flex justify-between items-center border-b pb-2">
