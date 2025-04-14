@@ -111,6 +111,13 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
                 passcode: passcode,
             };
 
+            // if passcode length is less than 6, show toast
+            if (passcode.length < 6) {
+                showToast("Passcode must be at least 6 characters long.", "error");
+                setIsLoading(false);
+                return;
+            }
+
             const response = await fetch("https://asubap-backend.vercel.app/sponsors/add-sponsor", {
                 method: "POST",
                 headers: {
@@ -121,12 +128,12 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
             });
 
             if (!response.ok) {
-                 const errorData = await response.json().catch(() => ({ message: "Failed to create event" }));
+                 const errorData = await response.json().catch(() => ({ message: "Failed to add sponsor" }));
                  console.error("Backend error:", errorData);
-                 showToast(`Error: ${errorData.message || 'Failed to create event'}`, "error"); // Keep toast for server errors
+                 showToast(`Error: ${errorData.message || 'Failed to add sponsor'}`, "error"); // Keep toast for server errors
                  // Potentially set server-side validation errors here if backend provides field-specific errors
                  // setErrors(mapBackendErrorsToFormErrors(errorData)); 
-                 throw new Error(errorData.message || "Failed to create event");
+                 throw new Error(errorData.message || "Failed to add sponsor");
             }
 
             const data = await response.json();
@@ -136,10 +143,10 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
             onClose(); // Close directly on success (no unsaved changes confirmation needed)
 
         } catch (error) {
-            console.error("Error creating event:", error);
+            console.error("Error adding sponsor:", error);
             // Avoid showing generic toast if specific one was shown above
              if (!`${error}`.includes("Error: ")) {
-                 showToast("Failed to create event. Please try again.", "error");
+                 showToast("Failed to add sponsor. Please try again.", "error");
              }
         } finally {
             setIsLoading(false);
