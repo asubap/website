@@ -4,6 +4,7 @@ import { useAuth } from "../../context/auth/authProvider";
 
 const SponsorAuth = () => {
     const { session } = useAuth();
+    const { setSession, setRole } = useAuth();
 
     const [sponsors, setSponsors] = useState<string[]>([]);
 
@@ -75,12 +76,18 @@ const SponsorAuth = () => {
         });
         
         const { token } = await res.json();
+
+        console.log(token);
         
         // Tell Supabase to use this token for future requests
         await supabase.auth.setSession({
             access_token: token,
             refresh_token: "", // empty if you're not handling refresh logic
         });
+
+        
+        setSession(token);
+        setRole("sponsor");
 
         window.location.href = `${baseUrl}/auth/Home`;
     };
