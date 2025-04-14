@@ -2,25 +2,16 @@ import React, { useEffect } from "react";
 import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
+import { Event } from "../../types";
 
 interface EventCardProps {
-  eventId: string;
-  title: string;
-  description: string | null;
+  event: Event;
   isPast: boolean;
-  location?: string | null;
-  date?: string;
-  time?: string | null;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
-  eventId,
-  title,
-  description,
+  event,  
   isPast,
-  location,
-  date,
-  time
 }) => {
   const { session, role, loading } = useAuth();
 
@@ -60,38 +51,75 @@ export const EventCard: React.FC<EventCardProps> = ({
   });
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
-      <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">{title}</h3>
-      
-      <div className="space-y-2 mb-4">
-        {location && (
-          <div>
-            <span className="font-semibold text-gray-700">Location: </span>
-            <span className="text-gray-600">{location}</span>
-          </div>
-        )}
-        {date && (
-          <div>
-            <span className="font-semibold text-gray-700">Date/Time: </span>
-            <span className="text-gray-600">{formatDateTime(date, time)}</span>
-          </div>
-        )}
+    <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200 grid grid-cols-2">
+      <div className="col-span-1">
+        <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">{event.event_name}</h3>
+        
+        <div className="space-y-2 mb-4">
+          {event.event_location && (
+            <div>
+              <span className="font-semibold text-gray-700">Location: </span>
+              <span className="text-gray-600">{event.event_location}</span>
+            </div>
+          )}
+          {event.event_date && (
+            <div>
+              <span className="font-semibold text-gray-700">Date/Time: </span>
+              <span className="text-gray-600">{formatDateTime(event.event_date, event.event_time)}</span>
+            </div>
+          )}
+        </div>
+
+        <p className="text-gray-600 text-sm mb-4">
+          {event.event_description || 'No description available'}
+        </p>
       </div>
 
-      <p className="text-gray-600 text-sm mb-4">
-        {description || 'No description available'}
-      </p>
+      <div className="col-span-1">
+        {event.event_hours_type && (
+          <div>
+            <span className="font-semibold text-gray-700">Hours: </span>
+            <span className="text-gray-600">{event.event_hours} {event.event_hours_type}</span>
+          </div>
+        )}
+
+        {event.sponsors_attending && (
+          <div>
+            <span className="font-semibold text-gray-700">Sponsors: </span>
+            <span className="text-gray-600">{event.sponsors_attending.join(', ')}</span>
+          </div>
+        )}
+
+        {event.event_rsvped && (
+          <div>
+            <span className="font-semibold text-gray-700">RSVPed: </span>
+            <span className="text-gray-600">RSVPed: {event.event_rsvped.join(', ')}</span>
+          </div>
+        )}
+
+        {event.event_attending && (
+          <div>
+            <span className="font-semibold text-gray-700">Attending: </span>
+            <span className="text-gray-600">Attending: {event.event_attending.join(', ')}</span>
+          </div>
+        )}
+        
+        
+        
+        
+      </div>
+      
       
       {!isPast && isLoggedIn && !loading && (
         <div className="flex justify-end space-x-4">
           {(isMember || isSponsor) && (
             <div className="w-40">
-              <EventRSVP eventId={eventId} />
+              <EventRSVP eventId={event.id} />
             </div>
           )}
           {isMember && (
             <div className="w-40">
-              <EventCheckIn eventId={eventId} />
+              <EventCheckIn eventId={event.id} />
             </div>
           )}
         </div>

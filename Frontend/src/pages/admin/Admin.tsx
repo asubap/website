@@ -132,8 +132,8 @@ const Admin = () => {
                 }).then((response) => response.json())
                 .then((data) => {
                     console.log("Events:", data);
-                    setPastEvents(data.filter((event: Event) => isPastDate(event.date)));
-                    setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.date)));
+                    setPastEvents(data.filter((event: Event) => isPastDate(event.event_date)));
+                    setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.event_date)));
                 })
                 .catch((error) => console.error("Error fetching events:", error));
             }
@@ -237,16 +237,16 @@ const Admin = () => {
     // Handle a newly created event
     const handleEventCreated = (newEvent: Event) => {
         // Determine if it's upcoming or past
-        const isNewEventPast = isPastDate(newEvent.date);
+        const isNewEventPast = isPastDate(newEvent.event_date);
 
         // Update the correct list and sort it
         if (!isNewEventPast) {
             setUpcomingEvents(prevEvents => 
-                [...prevEvents, newEvent].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                [...prevEvents, newEvent].sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
             );
         } else {
             setPastEvents(prevEvents => 
-                [...prevEvents, newEvent].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Past events descending
+                [...prevEvents, newEvent].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()) // Past events descending
             );
         }
     };
