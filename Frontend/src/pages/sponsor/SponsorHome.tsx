@@ -249,18 +249,15 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     };
 
     const handleProfilePicUpload = async () => {
-        if (!profilePicFile || !token) return; // Also check for token
+        if (!profilePicFile || !token) return;
         
         setUploadingProfilePic(true);
-        console.log("Uploading profile picture...");
         
         try {
             const formData = new FormData();
-            // Match the key expected by the backend
-            formData.append('Key', profilePicFile); 
+            formData.append('file', profilePicFile);
             
-            // Use the API endpoint provided
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
+            const response = await fetch(`https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -268,19 +265,18 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                 body: formData
             });
             
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
             }
             
-            const data = await response.json();
-            console.log("Upload successful:", data);
-            setCurrentProfileUrl(data.url);
-            onProfilePicChange(data.url); // Update parent state
-            setProfilePicFile(null); // Clear the selected file
+            setCurrentProfileUrl(data.photoUrl || data.url);
+            onProfilePicChange(data.photoUrl || data.url);
+            setProfilePicFile(null);
         } catch (error) {
             console.error('Error uploading profile picture:', error);
-            // Add user feedback here if desired (e.g., toast notification)
+            alert(error instanceof Error ? error.message : 'Upload failed');
         } finally {
             setUploadingProfilePic(false);
         }
@@ -668,14 +664,13 @@ const SponsorHome = () => {
         { name: "Dashboard", href: "/sponsor" },
       ];
 
-    // Replace hardcoded states with dynamic loading
     const [sponsorData, setSponsorData] = useState<{
-        name: string; // Name will be fetched
+        name: string;
         description: string;
         profileUrl: string;
         links: string[];
     }>({
-        name: "", // Start with empty name
+        name: "",
         description: "",
         profileUrl: "",
         links: []
@@ -690,13 +685,8 @@ const SponsorHome = () => {
     const [previewResource, setPreviewResource] = useState<{id?: number, label: string, url: string, name?: string} | null>(null);
     const [loadingResources, setLoadingResources] = useState(true);
     
-    // State for editing resource labels
-    const [editingResource, setEditingResource] = useState<{id?: number, label: string, url: string} | null>(null);
-    const [newLabel, setNewLabel] = useState("");
-    const [updatingLabel, setUpdatingLabel] = useState(false);
-    const [showLabelConfirmation, setShowLabelConfirmation] = useState(false);
-    const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
-    const [originalLabel, setOriginalLabel] = useState("");
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [resourceToDelete, setResourceToDelete] = useState<{id?: number, label: string, url: string} | null>(null);
 
     // Helper function to format dates properly
     const formatDate = (dateString: string) => {
@@ -822,11 +812,13 @@ const SponsorHome = () => {
             const formData = new FormData();
             formData.append('resourceLabel', resourceName);
             formData.append('file', file);
+            
+            console.log("Uploading resource with key 'file'");
 
             // Use the correct API endpoint with environment variable
             await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    // Do not set Content-Type, axios will set it automatically with proper boundary
                     'Authorization': `Bearer ${token}`
                 }
             });
@@ -843,33 +835,30 @@ const SponsorHome = () => {
 
     const uploadProfilePicture = async (file: File): Promise<string | null> => {
         if (!token) return null;
-
-        console.log("Uploading profile picture (from parent)...");
-
+        
         try {
             const formData = new FormData();
-            formData.append('Key', file);
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/pfp`, {
+            formData.append('file', file);
+            
+            const response = await fetch(`https://asubap-backend.vercel.app/sponsors/${sponsorData.name}/pfp`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
                 body: formData
             });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
-            }
-
+            
             const data = await response.json();
-            console.log("Upload successful:", data);
-            return data.url; // Return the new URL
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            return data.photoUrl || data.url;
         } catch (error) {
             console.error('Error uploading profile picture:', error);
-            // Add user feedback (e.g., toast notification)
-            return null; // Indicate failure
+            alert(error instanceof Error ? error.message : 'Upload failed');
+            return null;
         }
     };
 
@@ -943,130 +932,55 @@ const SponsorHome = () => {
         }
     };
 
-    const handleResourceDelete = async (resourceId?: number) => {
-        if (!token || resourceId === undefined) {
-            console.error('Cannot delete resource: missing token or resource ID');
+    const handleResourceDelete = async (resource: {id?: number, label: string, url: string}) => {
+        console.log("handleResourceDelete called for resource URL:", resource.url);
+        
+        if (!token || !resource.url) {
+            console.error('Cannot delete resource: missing token or resource URL');
             return;
         }
         
         try {
-            // Use the correct API endpoint with environment variable
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources/${resourceId}`, {
+            console.log(`Attempting to delete resource with URL: ${resource.url}`);
+            // Use the endpoint DELETE /sponsors/:companyName/resources
+            // Send resourceUrl in the request body
+            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' // Important for sending data in body
+                },
+                data: { // Use 'data' key for request body in axios.delete
+                    resourceUrl: resource.url 
                 }
             });
+            console.log(`Successfully sent delete request for resource URL: ${resource.url}`);
             // Refresh resource list after deletion
             fetchResources();
         } catch (error) {
             console.error('Error deleting resource:', error);
-        }
-    };
-
-    // Function to start editing a resource label
-    const startEditResourceLabel = (resource: {id?: number, label: string, url: string}) => {
-        setEditingResource(resource);
-        setNewLabel(resource.label);
-        setOriginalLabel(resource.label);
-    };
-    
-    // Function to cancel editing a resource label
-    const cancelEditResourceLabel = () => {
-        // Check if there are unsaved changes
-        if (newLabel.trim() !== originalLabel.trim()) {
-            // Show confirmation dialog
-            setShowDiscardConfirmation(true);
-        } else {
-            // No changes, safe to exit edit mode
-            exitEditMode();
+            alert(`Failed to delete resource: ${resource.label}. Please try again.`);
         }
     };
     
-    // Function to actually exit edit mode
-    const exitEditMode = () => {
-        setEditingResource(null);
-        setNewLabel("");
-        setShowDiscardConfirmation(false);
+    // Function to trigger delete confirmation
+    const confirmResourceDelete = (resource: {id?: number, label: string, url: string}) => {
+        setResourceToDelete(resource);
+        setShowDeleteConfirmation(true);
     };
     
-    // Function to handle keydown events on the label input field
-    const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (newLabel.trim() !== originalLabel.trim()) {
-                confirmLabelUpdate();
-            } else {
-                cancelEditResourceLabel();
-            }
-        } else if (e.key === 'Escape') {
-            cancelEditResourceLabel();
+    // Function to execute deletion after confirmation
+    const executeDelete = () => {
+        if (resourceToDelete) {
+            handleResourceDelete(resourceToDelete);
         }
+        setShowDeleteConfirmation(false);
+        setResourceToDelete(null);
     };
     
-    // Function to show label update confirmation
-    const confirmLabelUpdate = () => {
-        if (!newLabel.trim()) {
-            alert('Please enter a valid label');
-            return;
-        }
-        
-        if (newLabel.trim() === originalLabel.trim()) {
-            cancelEditResourceLabel();
-            return;
-        }
-        
-        setShowLabelConfirmation(true);
-    };
-    
-    // Function to update a resource label
-    const updateResourceLabel = async () => {
-        if (!token || !editingResource || !editingResource.id) {
-            console.error('Cannot update resource: missing token or resource data');
-            setShowLabelConfirmation(false);
-            return;
-        }
-        
-        if (!newLabel.trim()) {
-            alert('Please enter a valid label');
-            setShowLabelConfirmation(false);
-            return;
-        }
-        
-        setUpdatingLabel(true);
-        setShowLabelConfirmation(false);
-        
-        try {
-            // Send the update to the backend
-            await axios.put(
-                `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources/${editingResource.id}`, 
-                { label: newLabel },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
-            
-            // Update local state
-            setResources(prevResources => 
-                prevResources.map(res => 
-                    res.id === editingResource.id 
-                        ? { ...res, label: newLabel } 
-                        : res
-                )
-            );
-            
-            // Reset edit state
-            setEditingResource(null);
-            setNewLabel("");
-            
-        } catch (error) {
-            console.error('Error updating resource label:', error);
-            alert('Failed to update label. Please try again.');
-        } finally {
-            setUpdatingLabel(false);
-        }
+    // Function to cancel deletion
+    const cancelDelete = () => {
+        setShowDeleteConfirmation(false);
+        setResourceToDelete(null);
     };
 
     // Function to handle showing resource preview
@@ -1173,44 +1087,9 @@ const SponsorHome = () => {
                                             {resources.map(resource => (
                                                 <div key={resource.id || resource.url} className="flex justify-between items-center border-b pb-2">
                                                     <div>
-                                                        {editingResource && editingResource.id === resource.id ? (
-                                                            <div className="flex gap-2 items-center mb-1">
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={newLabel} 
-                                                                    onChange={(e) => setNewLabel(e.target.value)}
-                                                                    onKeyDown={handleLabelKeyDown}
-                                                                    className="px-2 py-1 border rounded"
-                                                                    autoFocus
-                                                                />
-                                                                <button 
-                                                                    onClick={confirmLabelUpdate}
-                                                                    disabled={updatingLabel}
-                                                                    className="text-green-600 hover:text-green-800 disabled:opacity-50"
-                                                                    title="Save"
-                                                                >
-                                                                    <Check size={18} />
-                                                                </button>
-                                                                <button 
-                                                                    onClick={cancelEditResourceLabel}
-                                                                    className="text-gray-600 hover:text-gray-800"
-                                                                    title="Cancel"
-                                                                >
-                                                                    <X size={18} />
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center mb-1">
-                                                                <p className="font-medium">{resource.label}</p>
-                                                                <button 
-                                                                    onClick={() => startEditResourceLabel(resource)}
-                                                                    className="text-gray-500 hover:text-gray-700 ml-2"
-                                                                    title="Edit label"
-                                                                >
-                                                                    <Pencil size={14} />
-                                                                </button>
-                                                            </div>
-                                                        )}
+                                                        <div className="flex items-center mb-1">
+                                                            <p className="font-medium">{resource.label}</p>
+                                                        </div>
                                                         <p className="text-sm text-gray-500">Uploaded on {formatDate(resource.uploadDate || '')}</p>
                                                     </div>
                                                     <div className="flex gap-2">
@@ -1221,7 +1100,14 @@ const SponsorHome = () => {
                                                             View
                                                         </button>
                                                         <button 
-                                                            onClick={() => resource.id !== undefined && handleResourceDelete(resource.id)}
+                                                            onClick={() => {
+                                                                console.log("Delete button clicked for resource:", resource);
+                                                                if (resource.url) {
+                                                                    confirmResourceDelete(resource); // Trigger confirmation
+                                                                } else {
+                                                                    console.log("Resource URL is missing, cannot delete");
+                                                                }
+                                                            }}
                                                             className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
                                                         >
                                                             Delete
@@ -1257,100 +1143,96 @@ const SponsorHome = () => {
             />
 
             {/* Resource Preview Modal */}
-            {previewResource && (
-                <Modal
-                    isOpen={!!previewResource}
-                    onClose={closePreview}
-                    title={previewResource.label}
-                    showFooter={true}
-                    confirmText="Close"
-                    onConfirm={closePreview}
-                    size="lg"
-                >
-                    <div className="w-full h-[70vh] flex flex-col items-center">
-                         {/* Header row for Open in New Tab button only */}
-                         <div className="w-full mb-4 flex justify-end items-center">
-                            <a 
-                                href={previewResource.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="px-3 py-1 bg-bapred text-white rounded text-sm"
+            {previewResource && (() => { // Use IIFE to calculate variable within JSX scope
+                const isPreviewable = previewResource.url.endsWith('.pdf') || 
+                                      previewResource.url.match(/\.(jpe?g|png|gif|svg|webp)$/i);
+                
+                return (
+                    <Modal
+                        isOpen={!!previewResource}
+                        onClose={closePreview}
+                        title={previewResource.label}
+                        showFooter={true}
+                        confirmText="Close"
+                        onConfirm={closePreview}
+                        size="lg"
+                    >
+                        <div className="w-full h-[70vh] flex flex-col items-center">
+                             {/* Header row for Open in New Tab / Download button */}
+                             <div className="w-full mb-4 flex justify-end items-center">
+                                <a 
+                                    href={previewResource.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 bg-bapred text-white rounded text-sm"
+                                    {...(!isPreviewable && { download: previewResource.label || 'download' })} // Add download attribute conditionally
+                                >
+                                    {isPreviewable ? 'Open in New Tab' : 'Download'} {/* Conditional text */}
+                                </a>
+                            </div>
+                            
+                            {/* Scrollable container for preview content */}
+                            <div 
+                                className="w-full flex-1 overflow-auto border border-gray-200 bg-gray-50"
+                                style={{ maxHeight: 'calc(70vh - 60px)' }} // Adjust height based on controls row height
                             >
-                                Open in New Tab
-                            </a>
+                                {isPreviewable ? (
+                                    previewResource.url.endsWith('.pdf') ? (
+                                        // PDF container
+                                        <div 
+                                            className="w-full h-full flex justify-center"
+                                            style={{ minHeight: '100%' }} // Ensure PDF takes full height
+                                        >
+                                            <iframe 
+                                                src={`${previewResource.url}#toolbar=0`} 
+                                                className="w-full h-full border-none shadow-md"
+                                                title={previewResource.label}
+                                                loading="eager"
+                                            />
+                                        </div>
+                                    ) : (
+                                        // Image container
+                                        <div 
+                                            className="w-full h-full flex items-center justify-center p-4"
+                                        >
+                                            <img 
+                                                src={previewResource.url} 
+                                                alt={previewResource.label} 
+                                                style={{ 
+                                                    maxWidth: '100%', // Respect container width initially
+                                                    maxHeight: '100%', // Respect container height initially
+                                                    width: 'auto', 
+                                                    height: 'auto',
+                                                    display: 'block' // Helps with centering/sizing
+                                                }}
+                                                className="block shadow-md"
+                                                loading="eager"
+                                            />
+                                        </div>
+                                    )
+                                ) : (
+                                    // Message for non-previewable files
+                                    <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                                        <p className="mb-4">This file type cannot be previewed in-browser.</p>
+                                        <p className="text-sm text-gray-500">Click the 'Download' button above to save the file.</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        
-                        {/* Scrollable container for preview content */}
-                        <div 
-                            className="w-full flex-1 overflow-auto border border-gray-200 bg-gray-50"
-                            style={{ maxHeight: 'calc(70vh - 60px)' }} // Adjust height based on controls row height
-                        >
-                            {previewResource.url.endsWith('.pdf') ? (
-                                // PDF container
-                                <div 
-                                    className="w-full h-full flex justify-center"
-                                    style={{ minHeight: '100%' }} // Ensure PDF takes full height
-                                >
-                                    <iframe 
-                                        src={`${previewResource.url}#toolbar=0`} 
-                                        className="w-full h-full border-none shadow-md"
-                                        title={previewResource.label}
-                                        loading="eager"
-                                    />
-                                </div>
-                            ) : previewResource.url.match(/\.(jpe?g|png|gif|svg|webp)$/i) ? (
-                                // Image container
-                                <div 
-                                    className="w-full h-full flex items-center justify-center p-4"
-                                >
-                                    <img 
-                                        src={previewResource.url} 
-                                        alt={previewResource.label} 
-                                        style={{ 
-                                            maxWidth: '100%', // Respect container width initially
-                                            maxHeight: '100%', // Respect container height initially
-                                            width: 'auto', 
-                                            height: 'auto',
-                                            display: 'block' // Helps with centering/sizing
-                                        }}
-                                        className="block shadow-md"
-                                        loading="eager"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center">
-                                    <p className="mb-4">This file type cannot be previewed in-browser.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </Modal>
-            )}
+                    </Modal>
+                );
+            })()}
 
-            {/* Label Update Confirmation Dialog */}
-            {showLabelConfirmation && (
+            {/* Delete Resource Confirmation Dialog */}
+            {showDeleteConfirmation && resourceToDelete && (
                 <ConfirmDialog
-                    isOpen={showLabelConfirmation}
-                    onClose={() => setShowLabelConfirmation(false)}
-                    onConfirm={updateResourceLabel}
-                    title="Confirm Label Update"
-                    message={`Are you sure you want to change the label from "${originalLabel}" to "${newLabel}"?`}
-                    confirmText="Update"
+                    isOpen={showDeleteConfirmation}
+                    onClose={cancelDelete}
+                    onConfirm={executeDelete}
+                    title="Confirm Deletion"
+                    message={`Are you sure you want to delete the resource: "${resourceToDelete.label}"? This action cannot be undone.`}
+                    confirmText="Delete"
                     cancelText="Cancel"
-                    preventOutsideClick={true}
-                />
-            )}
-            
-            {/* Discard Changes Confirmation Dialog */}
-            {showDiscardConfirmation && (
-                <ConfirmDialog
-                    isOpen={showDiscardConfirmation}
-                    onClose={() => setShowDiscardConfirmation(false)}
-                    onConfirm={exitEditMode}
-                    title="Discard Changes"
-                    message="You have unsaved changes to this resource label. Are you sure you want to discard them?"
-                    confirmText="Discard Changes"
-                    cancelText="Continue Editing"
                     preventOutsideClick={true}
                 />
             )}
