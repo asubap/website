@@ -953,7 +953,6 @@ const SponsorHome = () => {
     newProfilePic: File | null;
   }) => {
     let newProfileUrl = sponsorData.profileUrl; // Start with current URL
-    const passcode = "1324"; // Use the same passcode used for fetching sponsor data
 
     // 1. Upload new profile picture if provided
     if (updatedProfile.newProfilePic) {
@@ -975,24 +974,19 @@ const SponsorHome = () => {
     try {
       console.log("Updating sponsor details...");
 
-      // Format the request body to match exactly what the API expects
-      // Links should be an empty string when empty or joined with commas if there are links
-      const linksForApi =
-        Array.isArray(updatedProfile.links) && updatedProfile.links.length > 0
-          ? updatedProfile.links.join(",")
-          : "";
-
+      // Format the request body for the new API endpoint
       const requestBody = {
-        passcode: passcode,
         about: updatedProfile.description,
-        links: linksForApi,
+        links: updatedProfile.links, // Send links directly as an array
       };
 
       console.log("Sending update with body:", requestBody);
 
-      // Make the API call to update sponsor details
+      // Make the API call to update sponsor details using the new endpoint pattern
       const response = await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/details`,
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
+          sponsorData.name
+        }/details`,
         requestBody,
         {
           headers: {
