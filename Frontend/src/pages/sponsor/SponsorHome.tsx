@@ -983,7 +983,7 @@ const SponsorHome = () => {
       console.log("Sending update with body:", requestBody);
 
       // Make the API call to update sponsor details using the new endpoint pattern
-      const response = await axios.patch(
+      const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
           sponsorData.name
         }/details`,
