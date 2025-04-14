@@ -4,7 +4,7 @@ import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
 import axios from "axios";
 import { useAuth } from "../../context/auth/authProvider";
-import { MoreHorizontal, X, Pencil, Check } from "lucide-react";
+import { MoreHorizontal, X} from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -706,18 +706,14 @@ const SponsorHome = () => {
     const fetchSponsorData = async () => {
         setLoadingSponsor(true);
         setSponsorError(null);
-        // const sponsorName = "Deloitte"; // No longer needed
-        const passcode = "1324"; // Passcode for the endpoint
         
         try {
             // Fetch dynamic data using the passcode endpoint
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-sponsor-info`, 
-                { passcode: passcode }, // Request body
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-all-sponsor-info`, 
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        // Add Authorization header if this endpoint requires it
-                        // Authorization: `Bearer ${token}` 
+                        Authorization: `Bearer ${token}`
                     }
                 }
             );

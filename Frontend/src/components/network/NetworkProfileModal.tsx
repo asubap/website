@@ -1,0 +1,133 @@
+import { Member } from "../../types";
+import Modal from "../ui/Modal";
+import { Briefcase, Clock, GraduationCap, Info, Link as LinkIcon, Mail, User } from 'lucide-react';
+
+interface NetworkProfileModalProps {
+  member: Member;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const formatRoleName = (role: string | null | undefined): string => {
+    if (!role) return 'Not Provided';
+    if (role === 'general-member') return 'General Member';
+    return role.charAt(0).toUpperCase() + role.slice(1);
+};
+
+const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
+  member,
+  isOpen,
+  onClose,
+}) => {
+  // No need for modal container logic - it's handled by the Modal component
+
+  const profileContent = (
+    <div className="p-2 space-y-6">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div className="w-32 h-32 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border">
+          {member.photoUrl ? (
+            <img
+              src={member.photoUrl}
+              alt={`${member.name}'s profile`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-red-700 text-white text-3xl font-bold">
+              {member.name?.substring(0, 1).toUpperCase() || ''}
+            </div>
+          )}
+        </div>
+
+        <div className="text-center sm:text-left flex-1">
+          <h3 className="text-2xl font-bold">{member.name || 'Name Not Provided'}</h3>
+          {member.major && member.major !== 'Not Provided' && (
+            <p className="text-lg text-gray-600 flex items-center justify-center sm:justify-start">
+                <Briefcase className="w-5 h-5 mr-2 text-gray-500" /> 
+                {member.major}
+            </p>
+          )}
+          <p className="text-md text-gray-500 flex items-center justify-center sm:justify-start mt-1">
+              <User className="w-5 h-5 mr-2 text-gray-500" />
+              {formatRoleName(member.role)}
+          </p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 border-t pt-6">
+          <div className="flex items-center">
+            <Mail className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
+            <span className="truncate" title={member.email || ''}>{member.email || 'Not Provided'}</span>
+          </div>
+          
+          <div className="flex items-center">
+            <GraduationCap className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
+            <span>Graduating: {member.graduationDate || 'Not Provided'}</span>
+          </div>
+          
+          <div className="flex items-center">
+            <Clock className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
+            <span>Total Hours: {member.hours ?? '0'}</span>
+          </div>
+          
+          {member.links && member.links.length > 0 && (
+              <div className="flex items-start">
+                  <LinkIcon className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                      {member.links.map((link, index) => (
+                          <a 
+                              key={index}
+                              href={link.startsWith('http') ? link : `https://${link}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline truncate"
+                          >
+                              {link}
+                          </a>
+                      ))}
+                  </div>
+              </div>
+          )}
+      </div>
+
+      {member.about && member.about !== 'Not Provided' && (
+          <div className="border-t pt-6">
+            <h4 className="text-lg font-semibold mb-2 flex items-center">
+                <Info className="w-5 h-5 mr-2 text-gray-500" /> About
+            </h4>
+            <p className="text-gray-700 whitespace-pre-wrap">
+              {member.about}
+            </p>
+          </div>
+      )}
+
+      <div className="mt-2 flex justify-center sm:justify-start">
+        <a
+          href={`mailto:${member.email}`}
+          className={`px-6 py-2 bg-red-700 text-white rounded hover:bg-red-800 transition-colors inline-flex items-center ${!member.email || member.email === 'Not Provided' ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={(e) => {!member.email || member.email === 'Not Provided' ? e.preventDefault() : null}}
+          aria-disabled={!member.email || member.email === 'Not Provided'}
+        >
+          <Mail className="w-5 h-5 mr-2" />
+          Contact
+        </a>
+      </div>
+    </div>
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Profile Details"
+      size="lg"
+      showFooter={true}
+      cancelText="Close"
+      preventOutsideClick={false}
+      hasUnsavedChanges={false}
+    >
+      {profileContent}
+    </Modal>
+  );
+};
+
+export default NetworkProfileModal;
