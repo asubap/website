@@ -120,6 +120,13 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
         passcode: passcode,
       };
 
+      // error if passcode is not 6 characters
+      if (passcode.length !== 6) {
+        showToast("Passcode must be 6 characters long", "error");
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/add-sponsor`,
         {
