@@ -39,6 +39,24 @@ interface BackendMember {
   photo_url?: string;
 }
 
+// Define interface for sponsor resources
+interface SponsorResource {
+  id?: number;
+  label?: string;
+  url?: string;
+  uploadDate?: string;
+}
+
+// Define interface for backend sponsor data
+interface BackendSponsor {
+  id?: number;
+  company_name?: string;
+  about?: string;
+  links?: string | null;
+  pfp_url?: string;
+  resources?: SponsorResource[]; // Properly typed resources array
+}
+
 const NetworkingPage = () => {
   const { session } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
@@ -71,7 +89,7 @@ const NetworkingPage = () => {
         }
 
         const response = await fetch(
-          "${import.meta.env.VITE_BACKEND_URL}/member-info/",
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
           {
             method: "GET",
             headers: {
@@ -169,26 +187,77 @@ const NetworkingPage = () => {
         const data = await response.json();
 
         // Transform sponsor data according to the API response structure
-        const transformedSponsors = data.map((item: any): Sponsor => {
-          // Handle null or non-string links
-          const parsedLinks =
-            typeof item.links === "string" && item.links.trim() !== ""
-              ? item.links
+        const transformedSponsors = data.map(
+          (item: BackendSponsor): Sponsor => {
+            // Better handling for links that could be array, string, or null
+            let parsedLinks: string[] = [];
+
+            // Add debug logging to see what we're getting
+            console.log(
+              "Original links data for",
+              item.company_name,
+              ":",
+              item.links
+            );
+
+            if (Array.isArray(item.links)) {
+              // If links is already an array, use it directly
+              parsedLinks = item.links.filter(
+                (link) => typeof link === "string" && link.trim() !== ""
+              );
+            } else if (
+              typeof item.links === "string" &&
+              item.links.trim() !== ""
+            ) {
+              // If links is a string, try to parse it
+              try {
+                // First try to parse as JSON, in case it's a stringified array
+                const parsed = JSON.parse(item.links);
+                if (Array.isArray(parsed)) {
+                  parsedLinks = parsed.filter(
+                    (link) => typeof link === "string" && link.trim() !== ""
+                  );
+                } else {
+                  // If it's not an array, fall back to comma splitting
+                  parsedLinks = item.links
+                    .split(",")
+                    .map((link: string) => link.trim())
+                    .filter((link: string) => link !== "");
+                }
+              } catch (e) {
+                // If JSON parsing fails, it's likely a comma-separated string
+                console.log(
+                  "JSON parsing failed, treating as comma-separated string:",
+                  e
+                );
+                parsedLinks = item.links
                   .split(",")
                   .map((link: string) => link.trim())
-                  .filter((link: string) => link !== "")
-              : [];
+                  .filter((link: string) => link !== "");
+              }
+            }
 
-          return {
-            id: item.id?.toString(), // Convert number id to string if present
-            type: "sponsor",
-            name: item.company_name || "Unknown Sponsor", // Use company_name
-            about: item.about || "No description available.", // Use about, provide fallback
-            links: parsedLinks, // Use parsed links
-            photoUrl: item.pfp_url || "/placeholder-logo.png", // Use pfp_url, provide fallback
-            resources: item.resources || [], // Use resources, provide fallback
-          };
-        });
+            // Log the parsed links for debugging
+            console.log(
+              "Parsed links for",
+              item.company_name,
+              ":",
+              parsedLinks
+            );
+
+            return {
+              id: item.id?.toString(), // Convert number id to string if present
+              type: "sponsor",
+              name: item.company_name || "Unknown Sponsor", // Use company_name
+              about: item.about || "No description available.", // Use about, provide fallback
+              links: parsedLinks, // Use parsed links
+              photoUrl: item.pfp_url || "/placeholder-logo.png", // Use pfp_url, provide fallback
+              resources: item.resources
+                ? item.resources.map((r) => r.url || "")
+                : [], // Convert resource objects to strings (URLs)
+            };
+          }
+        );
 
         setAllSponsors(transformedSponsors);
       } catch (error) {

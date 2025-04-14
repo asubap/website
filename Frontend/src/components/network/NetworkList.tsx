@@ -2,7 +2,15 @@ import { useState } from "react";
 import { Member, Sponsor } from "../../types";
 import NetworkProfileModal from "./NetworkProfileModal";
 import SponsorProfileModal from "./SponsorProfileModal";
-import { Briefcase, GraduationCap, Link as LinkIcon, Mail, Clock, Info, User } from 'lucide-react';
+import {
+  Briefcase,
+  GraduationCap,
+  Link as LinkIcon,
+  Mail,
+  Clock,
+  Info,
+  User,
+} from "lucide-react";
 
 interface NetworkListProps {
   entities: (Member | Sponsor)[];
@@ -10,13 +18,15 @@ interface NetworkListProps {
 
 // Format role names to be more readable
 const formatRoleName = (role: string | null | undefined): string => {
-  if (!role) return 'Not Provided';
-  if (role === 'general-member') return 'General Member';
+  if (!role) return "Not Provided";
+  if (role === "general-member") return "General Member";
   return role.charAt(0).toUpperCase() + role.slice(1);
 };
 
 const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
-  const [selectedNetworkEntity, setSelectedNetworkEntity] = useState<Member | Sponsor | null>(null);
+  const [selectedNetworkEntity, setSelectedNetworkEntity] = useState<
+    Member | Sponsor | null
+  >(null);
 
   const openNetworkProfile = (entity: Member | Sponsor) => {
     setSelectedNetworkEntity(entity);
@@ -37,7 +47,11 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
           <div
             key={entity.id || entity.name}
             className="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200"
-            onClick={() => entity.type === 'member' ? openNetworkProfile(entity) : handleSponsorClick(entity)}
+            onClick={() =>
+              entity.type === "member"
+                ? openNetworkProfile(entity)
+                : handleSponsorClick(entity)
+            }
           >
             <div className="p-5">
               <div className="flex items-center">
@@ -56,33 +70,43 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold">{entity.name}</h3>
-                  {entity.type === 'member' && (
-                    <p className="text-sm text-gray-600">{entity.major || 'Not Provided'}</p>
+                  {entity.type === "member" && (
+                    <p className="text-sm text-gray-600">
+                      {entity.major || "Not Provided"}
+                    </p>
                   )}
-                  {entity.type === 'sponsor' && (
+                  {entity.type === "sponsor" && (
                     <p className="text-sm text-blue-600 font-medium">Sponsor</p>
                   )}
                 </div>
               </div>
 
               <div className="mt-4 space-y-2">
-                {entity.type === 'member' && (
+                {entity.type === "member" && (
                   <>
                     <div className="flex items-center text-sm">
                       <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">{entity.email || 'Not Provided'}</span>
+                      <span className="text-gray-700">
+                        {entity.email || "Not Provided"}
+                      </span>
                     </div>
                     <div className="flex items-center text-sm">
                       <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">Total Hours: {entity.hours ?? '0'}</span>
+                      <span className="text-gray-700">
+                        Total Hours: {entity.hours ?? "0"}
+                      </span>
                     </div>
                     {entity.links && entity.links.length > 0 ? (
                       <div className="flex items-center text-sm">
                         <LinkIcon className="w-4 h-4 mr-2 text-gray-500" />
-                        <a 
-                          href={entity.links[0].startsWith('http') ? entity.links[0] : `https://${entity.links[0]}`}
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href={
+                            entity.links[0].startsWith("http")
+                              ? entity.links[0]
+                              : `https://${entity.links[0]}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-blue-600 hover:underline truncate"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -92,52 +116,75 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     ) : null}
                     <div className="flex items-center text-sm">
                       <Briefcase className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">Major: {entity.major || 'Not Provided'}</span>
+                      <span className="text-gray-700">
+                        Major: {entity.major || "Not Provided"}
+                      </span>
                     </div>
                     <div className="flex items-center text-sm">
                       <Info className="w-4 h-4 mr-2 text-gray-500" />
-                      <p className="text-sm text-gray-700 italic line-clamp-2" title={entity.about || ''}>
-                        {entity.about || 'No description provided.'}
+                      <p
+                        className="text-sm text-gray-700 italic line-clamp-2"
+                        title={entity.about || ""}
+                      >
+                        {entity.about || "No description provided."}
                       </p>
                     </div>
                     <div className="flex items-center text-sm">
                       <GraduationCap className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="text-gray-700">
-                        Graduating: {entity.graduationDate || 'Not Provided'}
+                        Graduating: {entity.graduationDate || "Not Provided"}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">
                       <User className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">Role: {formatRoleName(entity.role)}</span>
+                      <span className="text-gray-700">
+                        Role: {formatRoleName(entity.role)}
+                      </span>
                     </div>
                   </>
                 )}
-                
-                {entity.type === 'sponsor' && (
+
+                {entity.type === "sponsor" && (
                   <>
                     <div className="flex items-center text-sm">
                       <Info className="w-4 h-4 mr-2 text-gray-500" />
-                      <p className="text-sm text-gray-700 italic line-clamp-2" title={entity.about || ''}>
-                        {entity.about || 'No description provided.'}
+                      <p
+                        className="text-sm text-gray-700 italic line-clamp-2"
+                        title={entity.about || ""}
+                      >
+                        {entity.about || "No description provided."}
                       </p>
                     </div>
                     {entity.links && entity.links.length > 0 ? (
-                      <div className="flex items-center text-sm">
-                        <LinkIcon className="w-4 h-4 mr-2 text-gray-500" />
-                        <a 
-                          href={entity.links[0].startsWith('http') ? entity.links[0] : `https://${entity.links[0]}`}
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-blue-600 hover:underline truncate"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {entity.links[0]}
-                        </a>
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center text-sm">
+                          <LinkIcon className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
+                          <span className="font-medium">Links:</span>
+                        </div>
+                        {entity.links.map((link, index) => (
+                          <div key={index} className="ml-6 text-sm">
+                            <a
+                              href={
+                                link.startsWith("http")
+                                  ? link
+                                  : `https://${link}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline truncate block"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {link}
+                            </a>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div className="flex items-center text-sm">
                         <LinkIcon className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="text-gray-500 italic">No links provided</span>
+                        <span className="text-gray-500 italic">
+                          No links provided
+                        </span>
                       </div>
                     )}
                   </>
@@ -149,14 +196,14 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                   className="w-full bg-red-700 text-white py-2 rounded hover:bg-red-800 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (entity.type === 'member') {
-                        openNetworkProfile(entity);
+                    if (entity.type === "member") {
+                      openNetworkProfile(entity);
                     } else {
-                        handleSponsorClick(entity);
+                      handleSponsorClick(entity);
                     }
                   }}
                 >
-                  {entity.type === 'member' ? 'View Profile' : 'View Sponsor'} 
+                  {entity.type === "member" ? "View Profile" : "View Sponsor"}
                 </button>
               </div>
             </div>
@@ -164,15 +211,15 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
         ))}
       </div>
 
-      {selectedNetworkEntity && selectedNetworkEntity.type === 'member' && (
+      {selectedNetworkEntity && selectedNetworkEntity.type === "member" && (
         <NetworkProfileModal
           isOpen={true}
           onClose={closeNetworkProfile}
           member={selectedNetworkEntity as Member}
         />
       )}
-      
-      {selectedNetworkEntity && selectedNetworkEntity.type === 'sponsor' && (
+
+      {selectedNetworkEntity && selectedNetworkEntity.type === "sponsor" && (
         <SponsorProfileModal
           isOpen={true}
           onClose={closeNetworkProfile}
