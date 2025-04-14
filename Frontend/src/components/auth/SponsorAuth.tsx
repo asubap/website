@@ -51,10 +51,44 @@ const SponsorAuth = () => {
         }
     }, [session]);
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const form = e.target as HTMLFormElement;
+        const sponsorElement = form.elements.namedItem('sponsor') as HTMLSelectElement;
+        const passcodeElement = form.elements.namedItem('passcode') as HTMLInputElement;
+
+        if (!sponsorElement || !passcodeElement) {
+            console.error("Form elements not found");
+            return;
+        }
+
+        const companyName = sponsorElement.value;
+        const passcode = passcodeElement.value;
+
+        console.log(companyName, passcode);
+
+        // After backend says "auth success" and sends token
+        const res = await fetch("https://asubap-backend.vercel.app/sponsors/auth", {
+            method: "POST",
+            body: JSON.stringify({ companyName, passcode }),
+            headers: { "Content-Type": "application/json" },
+        });
+        
+        const { token } = await res.json();
+        
+        // Tell Supabase to use this token for future requests
+        await supabase.auth.setSession({
+            access_token: token,
+            refresh_token: "", // empty if you're not handling refresh logic
+        });
+
+        window.location.href = `${baseUrl}/auth/Home`;
+    };
+
     return (
         <div className="flex flex-col items-center">
             <h1 className="text-2xl font-outfit mb-4">Sponsors</h1>
-            <form className="flex flex-col gap-2 items-center">
+            <form className="flex flex-col gap-2 items-center" onSubmit={handleSubmit}>
                 <select 
                     name="sponsor" 
                     id="sponsor"
@@ -65,6 +99,8 @@ const SponsorAuth = () => {
                     ))}
                 </select>
                 <input
+                    name="passcode"
+                    id="passcode"
                     type="password"
                     placeholder="Enter passcode"
                     className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
