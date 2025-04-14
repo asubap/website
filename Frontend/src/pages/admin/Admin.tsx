@@ -18,7 +18,6 @@ const Admin = () => {
     const sponsorFormRef = useRef<HTMLFormElement>(null);
     
     const [adminInputError, setAdminInputError] = useState(false);
-    const [sponsorInputError, setSponsorInputError] = useState(false);
     const [showCreateEventModal, setShowCreateEventModal] = useState(false);
     const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
     
@@ -55,11 +54,9 @@ const Admin = () => {
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
 
     // Reset input error state when clicking away from input
-    const handleInputFocus = (inputType: 'admin' | 'sponsor') => {
+    const handleInputFocus = (inputType: 'admin') => {
         if (inputType === 'admin') {
             setAdminInputError(false);
-        } else {
-            setSponsorInputError(false);
         }
     };
 
@@ -162,8 +159,6 @@ const Admin = () => {
             showToast("Please enter an email address", "error");
             if (isRoleAdmin) {
                 setAdminInputError(true);
-            } else {
-                setSponsorInputError(true);
             }
             return;
         }
@@ -173,8 +168,6 @@ const Admin = () => {
             showToast("Please enter a valid email address", "error");
             if (isRoleAdmin) {
                 setAdminInputError(true);
-            } else {
-                setSponsorInputError(true);
             }
             return;
         }
@@ -182,8 +175,6 @@ const Admin = () => {
         // If we got here, reset error state as email is valid
         if (isRoleAdmin) {
             setAdminInputError(false);
-        } else {
-            setSponsorInputError(false);
         }
         
         const { data: { session } } = await supabase.auth.getSession();
