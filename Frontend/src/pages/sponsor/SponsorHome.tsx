@@ -681,7 +681,7 @@ const SponsorHome = () => {
     const [previewResource, setPreviewResource] = useState<{id: number, name: string, url: string} | null>(null);
     const [loadingResources, setLoadingResources] = useState(true);
     const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
-
+    console.log(uploadingProfilePic);
     // Helper function to format dates properly
     const formatDate = (dateString: string) => {
         if (!dateString) return "Unknown date";
