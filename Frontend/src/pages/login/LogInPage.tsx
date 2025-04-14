@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import GoogleLogin from "../../components/auth/GoogleLogin";
+import SponsorAuth from "../../components/auth/SponsorAuth";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import BAPLogo from "../../assets/BAP_Logo.png";
@@ -58,8 +59,10 @@ const LogInPage = () => {
                 />
                 <main className="flex-grow flex flex-col items-center justify-center h-full">
                     <div className="flex flex-col md:grid md:grid-cols-[auto_min-content_auto] items-center gap-8 h-full">
-                        <div className="flex justify-center md:justify-end">
+                        <div className="flex flex-col items-center gap-6 p-8">
+                            <h1 className="text-4xl font-bold font-outfit">Welcome Back<span className="text-bapred">.</span></h1>
                             <GoogleLogin />
+                            <SponsorAuth />
                         </div>
 
                         {/* vertical divider */}
