@@ -701,7 +701,7 @@ const SponsorHome = () => {
         setLoadingSponsor(true);
         setSponsorError(null);
         // const sponsorName = "Deloitte"; // No longer needed
-        const passcode = "1324"; // Passcode for the endpoint
+     // Passcode for the endpoint
         
         try {
             // Fetch dynamic data using the passcode endpoint
