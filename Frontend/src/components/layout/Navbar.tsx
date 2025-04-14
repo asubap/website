@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import LogOut from "../logOut/LogOut";
 
-
 interface NavbarProps {
   links: { name: string; href: string; onClick?: () => void }[];
   title: string;
-  isLogged : boolean;
+  isLogged: boolean;
   backgroundColor?: string;
   outlineColor?: string;
   onClick?: () => void;
@@ -28,10 +27,6 @@ const Navbar: React.FC<NavbarProps> = ({
   const lastScrollTop = useRef(0);
   const lastToggleTime = useRef(0);
 
- 
-
-  
-
   // Check screen size
   useEffect(() => {
     const checkScreenSize = () => {
@@ -50,8 +45,6 @@ const Navbar: React.FC<NavbarProps> = ({
     };
   }, []);
   
- 
-
   // Use useCallback to prevent unnecessary re-renders
   const toggleMenu = useCallback((): void => {
     // Prevent double-clicks by adding a debounce
@@ -131,16 +124,14 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const heroSection = document.getElementById("hero");
-    if (heroSection) {
-      heroSection.scrollIntoView({ behavior: "smooth" });
-    }
+    // Force navigation to homepage regardless of current route
+    window.location.href = "/";
+    
     if (onClick) onClick();
   };
 
   return (
-
-    <nav className="fixed top-0 left-0 right-0 z-50 font-arial">
+    <nav className="fixed top-0 left-0 right-0 z-50 font-outfit">
       <div
         style={{
           backgroundColor: backgroundColor || "#FFFFFF",
@@ -156,7 +147,7 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={handleLogoClick}
             style={{ cursor: "pointer" }}
           >
-            <Link to={isLogged ? "/auth/Home" : "/"} className="font-medium text-xl flex items-center">
+            <div className="font-medium text-xl flex items-center">
               <img
                 src={BAPLogo}
                 alt="BAP Logo"
@@ -171,48 +162,31 @@ const Navbar: React.FC<NavbarProps> = ({
                   Arizona State University
                 </span>
               </div>
-            </Link>
+            </div>
           </div>
-          <div className="hidden md:flex space-x-6 z-10">
-            {isLogged ? (
-              <>
-               
-                <LogOut/>
-              
-              
-                  <Link
-                    to="/eventsPrivate"
-                    onClick={handleMenuItemClick()}
-                    className="hover:text-bapred text-xl font-medium"
-                  >
-                    Events
-                  </Link>
-                  <Link
-                    to="/networking"
-                    onClick={handleMenuItemClick()}
-                    className="hover:text-bapred text-xl font-medium"
-                  >
-                    Networking
-                  </Link>
-            
-               
-              </>
-            ): links.map((link) => (
-              
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6 z-10">
+            {/* Main navigation links */}
+            <div className="flex space-x-6">
+              {links.map((link) => (
                 <Link
+                  key={link.name}
                   to={link.href}
                   onClick={handleMenuItemClick(link.onClick)}
                   className="hover:text-bapred text-xl font-medium"
                 >
                   {link.name}
                 </Link>
+              ))}
+            </div>
             
-            ))}
-           
-            
-            
-          
+            {/* Login/Logout always on the right */}
+            <div className="ml-6">
+              {isLogged ? <LogOut /> : null}
+            </div>
           </div>
+          
           {/* Hamburger button - always visible on mobile */}
           <div className="md:hidden">
             <button
@@ -237,6 +211,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
+      
       {/* Mobile menu - with responsive behavior */}
       <div
         ref={menuRef}
@@ -277,36 +252,11 @@ const Navbar: React.FC<NavbarProps> = ({
             </svg>
           </button>
         )}
+        
         <div className="flex flex-col space-y-8 p-4 items-center pt-20">
           <ul className="space-y-8 text-center text-xl">
-            
-            
-            {isLogged ? (
-              <>
-                <li>
-                <LogOut/>
-                </li>
-                <li>
-                  <Link
-                    to="/eventsPrivate"
-                    onClick={handleMenuItemClick()}
-                    className="hover:text-bapred text-xl font-medium"
-                  >
-                    Events
-                  </Link>
-                </li>
-                <li>
-                <Link
-                    to="/networking"
-                    onClick={handleMenuItemClick()}
-                    className="hover:text-bapred text-xl font-medium"
-                  >
-                    Networking
-                  </Link>
-                </li>
-               
-              </>
-            ): links.map((link) => (
+            {/* Navigation links */}
+            {links.map((link) => (
               <li key={link.name}>
                 <Link
                   to={link.href}
@@ -317,11 +267,13 @@ const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               </li>
             ))}
-            <li>
-           
-            </li>
-
             
+            {/* Login/Logout at the bottom of mobile menu */}
+            {isLogged && (
+              <li className="pt-4 border-t border-gray-200">
+                <LogOut />
+              </li>
+            )}
           </ul>
         </div>
       </div>

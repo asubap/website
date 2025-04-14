@@ -1,24 +1,56 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import GoogleLogin from "../../components/auth/GoogleLogin";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-
 import BAPLogo from "../../assets/BAP_Logo.png";
+import { useAuth } from "../../context/auth/authProvider";
 
 const LogInPage = () => {
+    const { session, loading } = useAuth();
+    const navigate = useNavigate();
+    
+    useEffect(() => {
+        // If already logged in, redirect to home or saved page
+        if (session && !loading) {
+            const savedPath = localStorage.getItem('redirectAfterLogin');
+            if (savedPath) {
+                localStorage.removeItem('redirectAfterLogin');
+                navigate(savedPath);
+            } else {
+                navigate('/auth/Home');
+            }
+        }
+    }, [session, loading, navigate]);
+    
     const navLinks = [
         { name: "About Us", href: "/about" },
         { name: "Our Sponsors", href: "/sponsors" },
         { name: "Events", href: "/events" },
         { name: "Membership", href: "/membership" },
-        { name: "Log In", href: "/login" },
-      ];
+    ];
+
+    // If still loading, show loading indicator
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-bapred"></div>
+            </div>
+        );
+    }
+
+    // If already logged in, the useEffect will handle redirection
+    // This prevents flashing of the login page
+    if (session) {
+        return null;
+    }
 
     return (
         <div className="flex flex-col min-h-screen">
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-[72px]">
                 <Navbar
-                    isLogged = {false}
+                    isLogged={false}
                     links={navLinks}
                     title="Beta Alpha Psi | Beta Tau Chapter"
                     backgroundColor="#FFFFFF"
@@ -48,8 +80,6 @@ const LogInPage = () => {
                     </div>
                 </main>
 
-
-                
                 <Footer backgroundColor="#AF272F" />
             </div>
         </div>

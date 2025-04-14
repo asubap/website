@@ -53,17 +53,26 @@ const EventsPage: React.FC = () => {
     fetchEvents();
   }, [session]); // Re-fetch when session changes
 
-  // Define standard navigation links
-  const navLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Our Sponsors", href: "/sponsors" },
-    { name: "Events", href: "/events" },
-    { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
-    
-    // Log In link will be handled by Navbar if not logged in
-  ];
+  let navLinks;
 
+  if (session) {
+    // Links for logged-in users
+    navLinks = [
+      { name: "Network", href: "/network" },
+      { name: "Events", href: "/events" },
+      { name: "Dashboard", href: "/admin" },
+    ];
+  } else {
+    // Links for logged-out users
+    navLinks = [
+      { name: "About Us", href: "/about" },
+      { name: "Our Sponsors", href: "/sponsors" },
+      { name: "Events", href: "/events" },
+      { name: "Membership", href: "/membership" },
+      { name: "Log In", href: "/login" },
+    ];
+  }
+  
   // Split events into upcoming and past
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
@@ -79,7 +88,7 @@ const EventsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks} // Pass only standard links
+        links={navLinks} // Pass the conditionally defined links
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

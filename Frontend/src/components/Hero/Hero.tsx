@@ -67,13 +67,13 @@ export default function Hero() {
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-8 sm:px-16 lg:px-24 text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 font-arial">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 font-outfit">
           BETA ALPHA PSI
         </h1>
-        <h2 className="text-xl sm:text-2xl md:text-3xl mb-1 sm:mb-2 font-bold font-pt-serif">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-outfit">
           Beta Tau Chapter
         </h2>
-        <h3 className="text-lg sm:text-xl md:text-2xl font-bold font-pt-serif">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-outfit">
           Arizona State University
         </h3>
 

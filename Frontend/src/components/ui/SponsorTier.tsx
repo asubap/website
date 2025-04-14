@@ -17,7 +17,7 @@ const SponsorTier: React.FC<SponsorTierProps> = ({ tier, children }) => {
   return (
     <section className="mb-16 w-full max-w-7xl mx-auto px-4">
       <h2
-        className={`text-4xl font-bold font-arial ${tierColors[tier]} text-center mb-8`}
+        className={`text-4xl font-bold font-outfit ${tierColors[tier]} text-center mb-8`}
       >
         {tier}
       </h2>

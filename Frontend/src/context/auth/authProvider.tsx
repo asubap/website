@@ -16,68 +16,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Function to fetch user role
+  const fetchUserRole = async (token: string, email: string) => {
+    try {
+      const response = await fetch("https://asubap-backend.vercel.app/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_email: email }),
+      });
+      const data = await response.json();
+      console.log("User role data:", data);
+      setRole(data);
+    } catch (error) {
+      console.error("Error fetching role:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Check session on mount
-    const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      setSession(session);
-      if (session) {
-        // Fetch user role
-        const token = session.access_token;
-        fetch("https://asubap-backend.vercel.app/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ user_email: session.user.email }),
-        }).then((response) => response.json())
-          .then((data) => {
-            console.log(data);
-            // Check if data.role is an array and map over it to extract role values
-            setRole(data);
-          })
-          .catch((error) => console.error("Error fetching role:", error))
-          .finally(() => setLoading(false));
-      } else {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        
+        if (session?.user?.email) {
+          await fetchUserRole(session.access_token, session.user.email);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
         setLoading(false);
       }
     };
 
-    fetchUser();
+    initializeAuth();
 
     // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
-      setSession(session);
-      if (session) {
-        const token = session.access_token;
-        fetch("https://asubap-backend.vercel.app/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ user_email: session.user.email }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log(data)
-            // Check if data.role is an array and map over it to extract role values
-            setRole(data);
-          })
-          .catch((error) => console.error("Error fetching role:", error))
-          .finally(() => setLoading(false));
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log("Auth state changed:", event);
+      setSession(newSession);
+      
+      if (newSession?.user?.email) {
+        fetchUserRole(newSession.access_token, newSession.user.email);
       } else {
+        setRole(null);
         setLoading(false);
       }
     });
+
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
-  
 
   return (
     <AuthContext.Provider value={{ session, role, loading, setSession, setRole }}>

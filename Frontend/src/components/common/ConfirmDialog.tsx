@@ -1,0 +1,73 @@
+import Modal from "../ui/Modal";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
+
+interface ConfirmDialogProps {
+  isOpen: boolean;
+  onClose: (e?: React.MouseEvent) => void;
+  onConfirm: (e?: React.MouseEvent) => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  preventOutsideClick?: boolean;
+}
+
+const ConfirmDialog = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  preventOutsideClick = false
+}: ConfirmDialogProps) => {
+  // Ensure dialog cleans up after itself
+  useEffect(() => {
+    return () => {
+      // Clean up on unmount
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  // Wrap the onClose and onConfirm handlers with simpler versions
+  const handleClose = (e?: React.MouseEvent) => {
+    // Still stop propagation but don't prevent default
+    if (e) {
+      e.stopPropagation();
+    }
+    onClose(e);
+  };
+
+  const handleConfirm = (e?: React.MouseEvent) => {
+    // Still stop propagation but don't prevent default
+    if (e) {
+      e.stopPropagation();
+    }
+    onConfirm(e);
+  };
+
+  const content = (
+    <div onClick={e => e.stopPropagation()} className="confirm-dialog z-[10000]">
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={title}
+        onConfirm={handleConfirm}
+        confirmText={confirmText}
+        cancelText={cancelText}
+        size="sm"
+        hasUnsavedChanges={false}
+        preventOutsideClick={preventOutsideClick}
+      >
+        <p className="text-gray-700">{message}</p>
+      </Modal>
+    </div>
+  );
+
+  // Use createPortal to render the dialog directly to the document body
+  return createPortal(content, document.body);
+};
+
+export default ConfirmDialog; 

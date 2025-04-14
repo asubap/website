@@ -1,21 +1,29 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
+import { useToast } from "../../App";
+import CreateEventModal from "../../components/admin/CreateEventModal";
 
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
 
 const Admin = () => {
-    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const adminFormRef = useRef<HTMLFormElement>(null);
+    const sponsorFormRef = useRef<HTMLFormElement>(null);
+    
+    const [adminInputError, setAdminInputError] = useState(false);
+    const [sponsorInputError, setSponsorInputError] = useState(false);
+    const [showCreateEventModal, setShowCreateEventModal] = useState(false);
     
     const navLinks = [
-        
-        { name: "Event", href: "/eventsPrivate" },
-      ];
+        { name: "Network", href: "/network" },
+        { name: "Events", href: "/events" },
+        { name: "Dashboard", href: "/admin" },
+    ];
     
    
 
@@ -42,6 +50,25 @@ const Admin = () => {
    
     const [pastEvents, setPastEvents] = useState<Event[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+
+    // Reset input error state when clicking away from input
+    const handleInputFocus = (inputType: 'admin' | 'sponsor') => {
+        if (inputType === 'admin') {
+            setAdminInputError(false);
+        } else {
+            setSponsorInputError(false);
+        }
+    };
+
+    // Validate email function to reuse code
+    const validateEmail = (email: string): boolean => {
+        if (!email) {
+            return false;
+        }
+        
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    };
 
     useEffect(() => {
         const fetchAdmins = async () => {
@@ -107,23 +134,78 @@ const Admin = () => {
     }, [sponsorEmails, adminEmails]);
 
     const handleRoleSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
-        // TODO: Add admin email to the database
         e.preventDefault();
-
+        
+        // Get form and email value
+        const form = e.target as HTMLFormElement;
+        const emailInput = form.email as HTMLInputElement;
+        const email = emailInput.value.trim();
+        
+        // Set the appropriate error state to update UI based on role type
+        const isRoleAdmin = role === "e-board";
+        
+        // Validate email presence
+        if (!email) {
+            showToast("Please enter an email address", "error");
+            if (isRoleAdmin) {
+                setAdminInputError(true);
+            } else {
+                setSponsorInputError(true);
+            }
+            return;
+        }
+        
+        // Validate email format using regex
+        if (!validateEmail(email)) {
+            showToast("Please enter a valid email address", "error");
+            if (isRoleAdmin) {
+                setAdminInputError(true);
+            } else {
+                setSponsorInputError(true);
+            }
+            return;
+        }
+        
+        // If we got here, reset error state as email is valid
+        if (isRoleAdmin) {
+            setAdminInputError(false);
+        } else {
+            setSponsorInputError(false);
+        }
+        
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-            // Fetch user role
-            const token = session.access_token;
-            fetch("https://asubap-backend.vercel.app/users/add-user", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ user_email: (e.target as HTMLFormElement).email.value, role: role }),})
-                .then( () => window.location.reload())
-                .catch((error) => console.error("Error fetching role:", error));
-        }   
+            try {
+                // Fetch user role
+                const token = session.access_token;
+                const response = await fetch("https://asubap-backend.vercel.app/users/add-user", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ user_email: email, role: role }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to add user");
+                }
+                
+                // Update local state based on role
+                if (role === "e-board") {
+                    setAdminEmails([...adminEmails, email]);
+                    showToast("Admin added successfully", "success");
+                    if (adminFormRef.current) adminFormRef.current.reset();
+                } else if (role === "sponsor") {
+                    setSponsorEmails([...sponsorEmails, email]);
+                    showToast("Sponsor added successfully", "success");
+                    if (sponsorFormRef.current) sponsorFormRef.current.reset();
+                }
+            } catch (error) {
+                console.error("Error adding user:", error);
+                showToast("Failed to add user. Please try again.", "error");
+            }
+        }
     }
 
     const handleDelete = async (email: string) => {
@@ -148,9 +230,25 @@ const Admin = () => {
         }
     };
 
-   
+    // Handle a newly created event
+    const handleEventCreated = (newEvent: Event) => {
+        // Determine if it's upcoming or past
+        const isNewEventPast = isPastDate(newEvent.date);
+
+        // Update the correct list and sort it
+        if (!isNewEventPast) {
+            setUpcomingEvents(prevEvents => 
+                [...prevEvents, newEvent].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            );
+        } else {
+            setPastEvents(prevEvents => 
+                [...prevEvents, newEvent].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Past events descending
+            );
+        }
+    };
+
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen font-outfit">
             <Navbar
                 links={navLinks}
                 isLogged={true}
@@ -164,65 +262,100 @@ const Admin = () => {
             {/* Add padding-top to account for fixed navbar */}
             <div className="flex flex-col flex-grow pt-24">
                 <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
-                    <h1 className="text-4xl font-bold font-arial text-left w-full px-4 md:px-32 mb-6">Admin Dashboard</h1>
+                    <h1 className="text-4xl font-bold text-left w-full px-4 md:px-32 mb-6">Admin Dashboard</h1>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-4 md:px-32">
                         <div className="order-1 md:order-1">
-                            <div className="flex items-center">
-                                <h2 className="text-2xl font-semibold">Events</h2>
-                                <button className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" onClick={() => navigate("/admin/create-event")}>+ New Event</button>
+                            <div className="flex items-center mb-2">
+                                <h2 className="text-2xl font-semibold">Upcoming Events</h2>
+                                <button 
+                                    className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" 
+                                    onClick={() => setShowCreateEventModal(true)}
+                                >
+                                    + New Event
+                                </button>
                             </div>
-                            <div>
-                                <EventListShort events={upcomingEvents} />
-                            </div>
+                            {upcomingEvents.length > 0 ? (
+                                    <EventListShort events={upcomingEvents} />
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No upcoming events scheduled.</p>
+                                )}
                         </div>
 
                         <div className="order-3 md:order-2">
                             <h2 className="text-2xl font-semibold mb-2">Admin Users</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "e-board")}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "e-board")} ref={adminFormRef}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter admin email.." 
-                                    className="w-3/4 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+                                    className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
+                                        adminInputError 
+                                            ? 'border-red-500 bg-red-50' 
+                                            : 'border-gray-300'
+                                    }`}
                                     name="email"
+                                    onFocus={() => handleInputFocus('admin')}
                                 />
                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
                                     + Add Admin
                                 </button>
                             </form>
-                            <EmailList emails={adminEmails} onDelete={handleDelete} />
+                            <EmailList 
+                                emails={adminEmails} 
+                                onDelete={handleDelete} 
+                                userType="admin" 
+                            />
                         </div>
                         
                         <div className="order-2 md:order-3">
-                            <div className="flex items-center">
+                            <div className="flex items-center mb-2">
                                 <h2 className="text-2xl font-semibold">Past Events</h2>
                             </div>
-                            <div>
-                                <EventListShort events={pastEvents} />
-                            </div>
+                            {pastEvents.length > 0 ? (
+                                    <EventListShort events={pastEvents} />
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No past events found.</p>
+                                )}
                         </div>
                         
                         
                         
                         <div className="order-4 md:order-4">
                             <h2 className="text-2xl font-semibold mb-2">Sponsors</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")} ref={sponsorFormRef}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter sponsor email.." 
-                                    className="w-3/4 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+                                    className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
+                                        sponsorInputError 
+                                            ? 'border-red-500 bg-red-50' 
+                                            : 'border-gray-300'
+                                    }`}
                                     name="email"
+                                    onFocus={() => handleInputFocus('sponsor')}
                                 />
                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
                                     + Add Sponsor
                                 </button>
                             </form>
-                            <EmailList emails={sponsorEmails} onDelete={handleDelete} />
+                            <EmailList 
+                                emails={sponsorEmails} 
+                                onDelete={handleDelete} 
+                                userType="sponsor" 
+                            />
                         </div>
                     </div>
                 </main>
             </div>
 
             <Footer backgroundColor="#AF272F" />
+            
+            {/* Event Creation Modal */}
+            {showCreateEventModal && (
+                <CreateEventModal 
+                    onClose={() => setShowCreateEventModal(false)}
+                    onEventCreated={handleEventCreated}
+                />
+            )}
         </div>
     )
 }

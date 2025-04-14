@@ -8,12 +8,12 @@ interface NetworkingLayoutProps {
 
 const NetworkingLayout = ({ children }: NetworkingLayoutProps) => {
   const { session } = useAuth();
-
-  // Define the navigation links for the navbar
+  
+  // Define the navigation links for authenticated users in the networking section
   const navLinks = [
-    { name: "Home", href: "/auth/Home" },
+    { name: "Network", href: "/network" },
     { name: "Events", href: "/events" },
-    { name: "Network", href: "/networking" },
+    { name: "Dashboard", href: "/admin" }
   ];
 
   return (

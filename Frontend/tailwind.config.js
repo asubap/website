@@ -14,7 +14,8 @@ export default {
         baptan: "#C5C19D",
       },
       fontFamily: {
-        arial: ["Georgia","Times New Roman", "serif"],
+        "outfit": ["Outfit", "sans-serif"],
+        "montserrat": ["Montserrat", "sans-serif"],
       },
     },
   },

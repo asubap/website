@@ -161,7 +161,7 @@ export default function SponsorsPage() {
       />
 
       <main className="flex-grow container mx-auto px-4 mt-24 flex flex-col items-center">
-        <h1 className="text-5xl font-arial font-bold text-bapred text-center pt-4 sm:pt-8">
+        <h1 className="text-5xl font-outfit font-bold text-bapred text-center pt-4 sm:pt-8">
           Our Sponsors
         </h1>
         <p className="text-center text-bapgray text-xl pt-4 pb-4 px-8 sm:px-16 lg:px-24">
