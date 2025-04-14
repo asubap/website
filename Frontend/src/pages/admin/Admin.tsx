@@ -346,9 +346,9 @@ const Admin = () => {
     }
   };
 
-  const handleSponsorAdded = (newSponsor: NewSponsorResponse) => {
+  const handleSponsorAdded = (newSponsor: any) => {
     console.log("New sponsor:", newSponsor);
-    setSponsors([...sponsors, newSponsor.company_name]);
+    setSponsors([...sponsors, newSponsor.sponsors.sponsor_name]);
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
   };
