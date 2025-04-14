@@ -22,7 +22,6 @@ interface ProfileEditModalProps {
   }) => void;
   token: string;
   profileUrl: string;
-  onProfilePicChange: (url: string) => void;
   links?: string[];
 }
 
@@ -34,7 +33,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   onUpdate,
   token,
   profileUrl,
-  onProfilePicChange,
   links = [],
 }) => {
   // State variables
@@ -90,17 +88,12 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     setInitialAbout(sponsorDescription);
     // Reset file selection state when modal opens/closes
     setProfilePicFile(null);
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl); // Clean up previous preview
-    }
-    setPreviewImageUrl(null);
-
     // Reset change tracking when modal opens/closes
     hasChangesRef.current = {
       about: false,
       links: false,
     };
-  }, [previewImageUrl, links, profileUrl, sponsorDescription]);
+  }, [links, profileUrl, sponsorDescription]);
 
   const isValidUrl = (urlString: string) => {
     try {
@@ -298,8 +291,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       }
 
       setCurrentProfileUrl(data.photoUrl || data.url);
-      onProfilePicChange(data.photoUrl || data.url);
       setProfilePicFile(null);
+      // Mark changes after successful upload
+      hasChangesRef.current.about = true;
     } catch (error) {
       console.error("Error uploading profile picture:", error);
       alert(error instanceof Error ? error.message : "Upload failed");
@@ -353,7 +347,8 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       // Set default image or placeholder
       const placeholderUrl = "/placeholder-logo.png";
       setCurrentProfileUrl(placeholderUrl);
-      onProfilePicChange(placeholderUrl); // Update parent state via callback
+      // Mark changes after successful deletion
+      hasChangesRef.current.about = true;
     } catch (error) {
       console.error("Error deleting profile picture:", error);
       // Add user feedback here if desired (toast notification, etc.)
@@ -377,10 +372,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
 
-    // Revoke previous preview URL if it exists
+    // Revoke *previous* preview URL if it exists before creating a new one
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
-      setPreviewImageUrl(null);
     }
 
     setProfilePicFile(file);
@@ -389,7 +383,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       const newPreviewUrl = URL.createObjectURL(file);
       setPreviewImageUrl(newPreviewUrl);
       // Mark changes if a file is selected
-      hasChangesRef.current.about = hasChangesRef.current.about || true;
+      hasChangesRef.current.about = hasChangesRef.current.about || currentProfileUrl !== profileUrl;
     } else {
       // Mark changes if file selection is cleared (might revert to original)
       hasChangesRef.current.about =
@@ -748,6 +742,7 @@ const SponsorHome = () => {
     name?: string;
   } | null>(null);
   const [loadingResources, setLoadingResources] = useState(true);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [resourceToDelete, setResourceToDelete] = useState<{
@@ -952,6 +947,7 @@ const SponsorHome = () => {
     links: string[];
     newProfilePic: File | null;
   }) => {
+    setIsUpdatingProfile(true);
     let newProfileUrl = sponsorData.profileUrl; // Start with current URL
 
     // 1. Upload new profile picture if provided
@@ -966,6 +962,7 @@ const SponsorHome = () => {
           "Profile picture upload failed. Profile data not updated."
         );
         alert("Failed to upload profile picture. Please try again.");
+        setIsUpdatingProfile(false);
         return; // Stop the update process if PFP upload fails
       }
     }
@@ -983,7 +980,7 @@ const SponsorHome = () => {
       console.log("Sending update with body:", requestBody);
 
       // Make the API call to update sponsor details using the new endpoint pattern
-      const response = await axios.patch(
+      const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
           sponsorData.name
         }/details`,
@@ -1017,6 +1014,7 @@ const SponsorHome = () => {
         }));
       }
     }
+    setIsUpdatingProfile(false);
   };
 
   const handleResourceDelete = async (resource: {
@@ -1150,6 +1148,7 @@ const SponsorHome = () => {
                   description={sponsorData.description}
                   links={sponsorData.links}
                   onEditClick={() => setIsEditModalOpen(true)}
+                  isProfileUpdating={isUpdatingProfile}
                 />
               </div>
 
@@ -1268,9 +1267,6 @@ const SponsorHome = () => {
         onUpdate={handleProfileUpdate}
         token={session?.access_token || ""}
         profileUrl={sponsorData.profileUrl}
-        onProfilePicChange={(url) =>
-          setSponsorData((prevData) => ({ ...prevData, profileUrl: url }))
-        }
         links={sponsorData.links}
       />
 
