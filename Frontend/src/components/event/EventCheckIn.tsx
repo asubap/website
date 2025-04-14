@@ -6,7 +6,9 @@ interface EventCheckInProps {
 }
 
 const EventCheckIn: React.FC<EventCheckInProps> = ({ eventId }) => {
-  const [status, setStatus] = useState<"idle" | "locating" | "sending" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "locating" | "sending" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState<string>("");
   const { session } = useAuth();
 
@@ -29,17 +31,23 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({ eventId }) => {
 
         try {
           setStatus("sending");
-          console.log("Sending check-in request with token:", session.access_token);
+          console.log(
+            "Sending check-in request with token:",
+            session.access_token
+          );
 
-          const res = await fetch(`https://asubap-backend.vercel.app/events/checkin/${eventId}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${session.access_token}`
-            },
-            credentials: "include",
-            body: JSON.stringify({ latitude, longitude, accuracy }),
-          });
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/events/checkin/${eventId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              credentials: "include",
+              body: JSON.stringify({ latitude, longitude, accuracy }),
+            }
+          );
 
           const data = await res.json();
           console.log("Check-in response:", data);
@@ -100,9 +108,11 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({ eventId }) => {
           : "Check In"}
       </button>
       {message && (
-        <p className={`mt-1 text-xs ${
-          status === "success" ? "text-green-600" : "text-red-600"
-        }`}>
+        <p
+          className={`mt-1 text-xs ${
+            status === "success" ? "text-green-600" : "text-red-600"
+          }`}
+        >
           {message}
         </p>
       )}

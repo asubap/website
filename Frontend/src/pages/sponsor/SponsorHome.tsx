@@ -281,7 +281,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       formData.append("file", profilePicFile);
 
       const response = await fetch(
-        `https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`,
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
         {
           method: "POST",
           headers: {
@@ -317,14 +317,16 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     }
 
     console.log("Deleting profile picture...", {
-      endpoint: `https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`,
+      endpoint: `${
+        import.meta.env.VITE_BACKEND_URL
+      }/sponsors/${sponsorName}/pfp`,
       method: "DELETE",
     });
 
     try {
       // Use the API endpoint provided
       const response = await fetch(
-        `https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`,
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
         {
           method: "DELETE",
           headers: {
@@ -777,7 +779,7 @@ const SponsorHome = () => {
       let sponsorName = "";
 
       // 1. Try to get from role data (most reliable if available)
-      if (typeof role === "object" && role?.companyName) {
+      if (role && typeof role === "object" && "companyName" in role) {
         sponsorName = role.companyName;
       }
       // 2. Try localStorage if it was previously stored
@@ -796,7 +798,7 @@ const SponsorHome = () => {
       }
 
       const response = await axios.post(
-        "https://asubap-backend.vercel.app/sponsors/get-one-sponsor-info",
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/get-one-sponsor-info`,
         { sponsor_name: sponsorName },
         {
           headers: {
@@ -842,7 +844,9 @@ const SponsorHome = () => {
     setLoadingResources(true);
     try {
       const response = await axios.get(
-        `https://asubap-backend.vercel.app/sponsors/${sponsorData.name}/resources`,
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
+          sponsorData.name
+        }/resources`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -919,7 +923,7 @@ const SponsorHome = () => {
       formData.append("file", file);
 
       const response = await fetch(
-        `https://asubap-backend.vercel.app/sponsors/${sponsorData.name}/pfp`,
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/pfp`,
         {
           method: "POST",
           headers: {

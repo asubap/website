@@ -14,7 +14,7 @@ interface Filters {
 
 // Updated BackendMember interface based on user query
 interface BackendMember {
-  id: number; 
+  id: number;
   user_id?: string; // Keep if still used?
   user_email?: string | null;
   development_hours?: number;
@@ -43,9 +43,13 @@ const NetworkingPage = () => {
   const { session } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
-  const [networkEntities, setNetworkEntities] = useState<(Member | Sponsor)[]>([]);
-  const [filteredEntities, setFilteredEntities] = useState<(Member | Sponsor)[]>([]);
-  
+  const [networkEntities, setNetworkEntities] = useState<(Member | Sponsor)[]>(
+    []
+  );
+  const [filteredEntities, setFilteredEntities] = useState<
+    (Member | Sponsor)[]
+  >([]);
+
   const [isMembersLoading, setIsMembersLoading] = useState(true);
   const [isSponsorsLoading, setIsSponsorsLoading] = useState(true);
   const [membersError, setMembersError] = useState<string | null>(null);
@@ -67,7 +71,7 @@ const NetworkingPage = () => {
         }
 
         const response = await fetch(
-          "https://asubap-backend.vercel.app/member-info/",
+          "${import.meta.env.VITE_BACKEND_URL}/member-info/",
           {
             method: "GET",
             headers: {
@@ -85,34 +89,41 @@ const NetworkingPage = () => {
 
         // Transform member data based on new structure provided by user
         const transformedData = data.map((item: BackendMember): Member => {
-             // Determine name (prefer 'name', fallback to first/last)
-             const memberName = item.name || `${item.first_name || ""} ${item.last_name || ""}`.trim() || "Unknown Member";
-             // Parse links string safely
-             const memberLinks = (typeof item.links === 'string' && item.links.trim() !== '')
-                ? item.links.split(',').map((link: string) => link.trim()).filter((link: string) => link !== '')
-                : [];
-             // Determine about (prefer 'about', fallback to 'bio')
-             const memberAbout = item.about || item.bio || ""; 
-             // Determine photoUrl (prefer 'profile_photo_url', fallback to 'photo_url')
-             const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
-             
-             return {
-                id: item.id.toString(), // Use the primary id
-                type: 'member',
-                name: memberName,
-                email: item.user_email || "Not Provided",
-                hours: item.total_hours?.toString() ?? "0", // Use total_hours, default to "0"
-                links: memberLinks, // Parsed links array
-                major: item.major || "Not Provided",
-                about: memberAbout, // Use combined about/bio
-                graduationDate: item.graduating_year || item.year || "Not Provided", // Use graduating_year or year
-                role: item.role || "Not Provided", // Use role
-                photoUrl: memberPhotoUrl, // Use combined photo url
-                // Default/unused fields from Member type
-                phone: item.phone || "", 
-                status: item.role || "Not Provided", // Can also use role for status
-                internship: item.internship || "", 
-             };
+          // Determine name (prefer 'name', fallback to first/last)
+          const memberName =
+            item.name ||
+            `${item.first_name || ""} ${item.last_name || ""}`.trim() ||
+            "Unknown Member";
+          // Parse links string safely
+          const memberLinks =
+            typeof item.links === "string" && item.links.trim() !== ""
+              ? item.links
+                  .split(",")
+                  .map((link: string) => link.trim())
+                  .filter((link: string) => link !== "")
+              : [];
+          // Determine about (prefer 'about', fallback to 'bio')
+          const memberAbout = item.about || item.bio || "";
+          // Determine photoUrl (prefer 'profile_photo_url', fallback to 'photo_url')
+          const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
+
+          return {
+            id: item.id.toString(), // Use the primary id
+            type: "member",
+            name: memberName,
+            email: item.user_email || "Not Provided",
+            hours: item.total_hours?.toString() ?? "0", // Use total_hours, default to "0"
+            links: memberLinks, // Parsed links array
+            major: item.major || "Not Provided",
+            about: memberAbout, // Use combined about/bio
+            graduationDate: item.graduating_year || item.year || "Not Provided", // Use graduating_year or year
+            role: item.role || "Not Provided", // Use role
+            photoUrl: memberPhotoUrl, // Use combined photo url
+            // Default/unused fields from Member type
+            phone: item.phone || "",
+            status: item.role || "Not Provided", // Can also use role for status
+            internship: item.internship || "",
+          };
         });
 
         setMembers(transformedData);
@@ -132,14 +143,14 @@ const NetworkingPage = () => {
     const fetchSponsors = async () => {
       setIsSponsorsLoading(true);
       setSponsorsError(null);
-      
+
       try {
         const token = session?.access_token;
         if (!token) {
           setIsSponsorsLoading(false);
           return;
         }
-        
+
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/sponsors/get-all-sponsor-info`,
           {
@@ -150,31 +161,35 @@ const NetworkingPage = () => {
             },
           }
         );
-        
+
         if (!response.ok) {
           throw new Error(`Error fetching sponsors: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Transform sponsor data according to the API response structure
         const transformedSponsors = data.map((item: any): Sponsor => {
-            // Handle null or non-string links
-            const parsedLinks = (typeof item.links === 'string' && item.links.trim() !== '')
-                ? item.links.split(',').map((link: string) => link.trim()).filter((link: string) => link !== '')
-                : [];
-                        
-            return {
-                id: item.id?.toString(), // Convert number id to string if present
-                type: 'sponsor',
-                name: item.company_name || "Unknown Sponsor", // Use company_name
-                about: item.about || "No description available.", // Use about, provide fallback
-                links: parsedLinks, // Use parsed links
-                photoUrl: item.pfp_url || "/placeholder-logo.png", // Use pfp_url, provide fallback
-                resources: item.resources || [], // Use resources, provide fallback
-            };
+          // Handle null or non-string links
+          const parsedLinks =
+            typeof item.links === "string" && item.links.trim() !== ""
+              ? item.links
+                  .split(",")
+                  .map((link: string) => link.trim())
+                  .filter((link: string) => link !== "")
+              : [];
+
+          return {
+            id: item.id?.toString(), // Convert number id to string if present
+            type: "sponsor",
+            name: item.company_name || "Unknown Sponsor", // Use company_name
+            about: item.about || "No description available.", // Use about, provide fallback
+            links: parsedLinks, // Use parsed links
+            photoUrl: item.pfp_url || "/placeholder-logo.png", // Use pfp_url, provide fallback
+            resources: item.resources || [], // Use resources, provide fallback
+          };
         });
-        
+
         setAllSponsors(transformedSponsors);
       } catch (error) {
         console.error("Error fetching sponsors:", error);
@@ -183,7 +198,7 @@ const NetworkingPage = () => {
         setIsSponsorsLoading(false);
       }
     };
-    
+
     if (session?.access_token) {
       fetchSponsors();
     }
@@ -198,7 +213,7 @@ const NetworkingPage = () => {
   }, [members, allSponsors, isMembersLoading, isSponsorsLoading]);
 
   const handleSearch = (query: string, filters: Filters) => {
-    if (!query && Object.values(filters).every(val => !val)) {
+    if (!query && Object.values(filters).every((val) => !val)) {
       setFilteredEntities(networkEntities);
       return;
     }
@@ -208,29 +223,34 @@ const NetworkingPage = () => {
     // Apply text search if query exists - Check common field 'name'
     if (query) {
       const searchTerm = query.toLowerCase();
-      results = results.filter(entity =>
+      results = results.filter((entity) =>
         entity.name.toLowerCase().includes(searchTerm)
       );
     }
 
     // Apply filters - Type guard to ensure we only filter members
-    const isMember = (entity: Member | Sponsor): entity is Member => entity.type === 'member';
-    
+    const isMember = (entity: Member | Sponsor): entity is Member =>
+      entity.type === "member";
+
     if (filters.graduationYear) {
-      results = results.filter(entity => 
-        isMember(entity) && entity.graduationDate.includes(filters.graduationYear)
+      results = results.filter(
+        (entity) =>
+          isMember(entity) &&
+          entity.graduationDate.includes(filters.graduationYear)
       );
     }
 
     if (filters.major) {
-      results = results.filter(entity =>
-        isMember(entity) && entity.major.toLowerCase().includes(filters.major.toLowerCase())
+      results = results.filter(
+        (entity) =>
+          isMember(entity) &&
+          entity.major.toLowerCase().includes(filters.major.toLowerCase())
       );
     }
 
     if (filters.status) {
-      results = results.filter(entity => 
-        isMember(entity) && entity.status === filters.status
+      results = results.filter(
+        (entity) => isMember(entity) && entity.status === filters.status
       );
     }
 
@@ -245,22 +265,22 @@ const NetworkingPage = () => {
         <NetworkSearch onSearch={handleSearch} />
 
         {/* Combined Loading State */}
-        {(isMembersLoading || isSponsorsLoading) ? (
+        {isMembersLoading || isSponsorsLoading ? (
           <div className="flex justify-center items-center h-64">
-            <p className="text-lg">Loading network...</p> 
+            <p className="text-lg">Loading network...</p>
           </div>
-        /* Combined Error State */
-        ) : (membersError || sponsorsError) ? (
+        ) : /* Combined Error State */
+        membersError || sponsorsError ? (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-            <p>{membersError || sponsorsError}</p> 
+            <p>{membersError || sponsorsError}</p>
           </div>
-        /* No Results State */
-        ) : filteredEntities.length === 0 ? (
+        ) : /* No Results State */
+        filteredEntities.length === 0 ? (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4 mt-4">
             <p>No members or sponsors found matching your search criteria.</p>
           </div>
-        /* Display List */
         ) : (
+          /* Display List */
           <NetworkList entities={filteredEntities} />
         )}
       </div>

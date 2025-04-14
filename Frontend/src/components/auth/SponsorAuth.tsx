@@ -12,7 +12,7 @@ const SponsorAuth = () => {
     const fetchSponsors = async () => {
       try {
         const response = await fetch(
-          "https://asubap-backend.vercel.app/sponsors/names",
+          `${import.meta.env.VITE_BACKEND_URL}/sponsors/names`,
           {
             method: "GET",
             headers: {
@@ -92,10 +92,7 @@ const SponsorAuth = () => {
     }
 
     setSession(data.session);
-    setRole({
-      type: "sponsor",
-      companyName: companyName,
-    });
+    setRole("sponsor");
 
     // Store in localStorage as well for persistence
     localStorage.setItem("sponsorName", companyName);

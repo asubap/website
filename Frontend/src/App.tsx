@@ -20,10 +20,16 @@ import Toast from "./components/ui/Toast";
 
 // Define toast context
 interface ToastContextType {
-  showToast: (message: string, type?: 'success' | 'error' | 'info', duration?: number) => void;
+  showToast: (
+    message: string,
+    type?: "success" | "error" | "info",
+    duration?: number
+  ) => void;
 }
 
-export const ToastContext = createContext<ToastContextType | undefined>(undefined);
+export const ToastContext = createContext<ToastContextType | undefined>(
+  undefined
+);
 
 export function useToast() {
   const context = useContext(ToastContext);
@@ -37,13 +43,13 @@ function App() {
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
-    type: 'success' | 'error' | 'info';
+    type: "success" | "error" | "info";
     duration: number;
   } | null>(null);
 
   const showToast = (
-    message: string, 
-    type: 'success' | 'error' | 'info' = 'success',
+    message: string,
+    type: "success" | "error" | "info" = "success",
     duration: number = 3000
   ) => {
     setToast({ visible: true, message, type, duration });

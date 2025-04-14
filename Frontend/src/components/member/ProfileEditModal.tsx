@@ -1,59 +1,73 @@
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { ChevronDown } from "lucide-react"
-import { useAuth } from "../../context/auth/authProvider"
-import Modal from "../../components/ui/Modal"
-
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useAuth } from "../../context/auth/authProvider";
+import Modal from "../../components/ui/Modal";
 
 type ProfileData = {
-  name: string
-  email: string
-  phone: string
-  major: string
-  graduationDate: string
-  status: string
-  about: string
-  internship: string
-  photoUrl: string
-  hours: string
-}
+  name: string;
+  email: string;
+  phone: string;
+  major: string;
+  graduationDate: string;
+  status: string;
+  about: string;
+  internship: string;
+  photoUrl: string;
+  hours: string;
+};
 
 interface ProfileEditModalProps {
-  isOpen: boolean
-  onClose: () => void
-  profileData: ProfileData
-  onSave: (data: ProfileData) => void
+  isOpen: boolean;
+  onClose: () => void;
+  profileData: ProfileData;
+  onSave: (data: ProfileData) => void;
 }
 
 // Add environment variable for backend URL
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-export default function ProfileEditModal({ isOpen, onClose, profileData, onSave }: ProfileEditModalProps) {
-  const [formData, setFormData] = useState<ProfileData>(profileData)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(profileData.photoUrl || null)
-  const {session }= useAuth();
+export default function ProfileEditModal({
+  isOpen,
+  onClose,
+  profileData,
+  onSave,
+}: ProfileEditModalProps) {
+  const [formData, setFormData] = useState<ProfileData>(profileData);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(
+    profileData.photoUrl || null
+  );
+  const { session } = useAuth();
 
   // Check for unsaved changes
   const hasUnsavedChanges = () => {
-    return JSON.stringify(formData) !== JSON.stringify(profileData) || 
-           photoPreview !== profileData.photoUrl;
+    return (
+      JSON.stringify(formData) !== JSON.stringify(profileData) ||
+      photoPreview !== profileData.photoUrl
+    );
   };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (!event.target.files || event.target.files.length === 0) return;
     const file = event.target.files[0];
     try {
-      const token = session.access_token;
+      const token = session?.access_token;
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
       // Get the user's ID from the session or fetch it if needed
       // Use the actual user ID instead of email
       const response = await fetch(`${BACKEND_URL}/member-info/`, {
@@ -63,33 +77,36 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_email: profileData.email
+          user_email: profileData.email,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch user details");
       }
-      
+
       const userData = await response.json();
       const userId = userData[0]?.user_id;
-      
+
       if (!userId) {
         throw new Error("User ID not found");
       }
-      
+
       // Now use the actual user ID for uploading the photo
       const formDataWithId = new FormData();
-      formDataWithId.append('file', file);
-      formDataWithId.append('userId', userId);
-      
-      const uploadResponse = await fetch(`${BACKEND_URL}/profile-photo/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formDataWithId,
-      });
+      formDataWithId.append("file", file);
+      formDataWithId.append("userId", userId);
+
+      const uploadResponse = await fetch(
+        `${BACKEND_URL}/profile-photo/upload`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataWithId,
+        }
+      );
 
       if (!uploadResponse.ok) {
         throw new Error("Failed to upload photo");
@@ -104,8 +121,8 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
 
   const handlePhotoDelete = async () => {
     try {
-      const token = session.access_token;
-      
+      const token = session?.access_token;
+
       // Get the user's ID from the session or fetch it
       const response = await fetch(`${BACKEND_URL}/member-info/`, {
         method: "POST",
@@ -114,27 +131,30 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_email: profileData.email
+          user_email: profileData.email,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch user details");
       }
-      
+
       const userData = await response.json();
       const userId = userData[0]?.user_id;
-      
+
       if (!userId) {
         throw new Error("User ID not found");
       }
-      
-      const deleteResponse = await fetch(`${BACKEND_URL}/profile-photo/${userId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+
+      const deleteResponse = await fetch(
+        `${BACKEND_URL}/profile-photo/${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!deleteResponse.ok) {
         throw new Error("Failed to delete photo");
@@ -147,19 +167,16 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
   };
 
   const handleSubmit = async () => {
-    onSave(formData)
+    onSave(formData);
     // Send the updated data to the server
-  
-    
-    
 
     fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
-    method: "POST",
-    headers: {
+      method: "POST",
+      headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({
         user_email: formData.email,
         about: formData.about, // leave this empty ("") if not being changed
         internship_experience: formData.internship, // leave this empty ("") if not being changed
@@ -170,25 +187,27 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
         contact_me: formData.phone, // leave this empty ("") if not being changed
         graduation_year: "",
         member_status: formData.status, // leave this empty ("") if not being changed
-    }),
-    }).then((response) => response.json())
-    .then((data) => {
-        
-        
-        console.log(data);
-        
+      }),
     })
-    .catch((error) => console.error("Error editing:", error));
-        
-    onClose()
-   
-  }
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => console.error("Error editing:", error));
+
+    onClose();
+  };
 
   const formContent = (
     <div className="flex flex-col lg:flex-row">
       {/* Left Column - Edit Form */}
       <div className="w-full lg:w-1/2 p-6">
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
           <div className="mb-6">
             <h3 className="text-xl font-bold mb-4">Profile</h3>
             <input
@@ -246,8 +265,12 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
                   className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
                 >
                   <option value="">Status</option>
-                  <option value="Looking for Internship">Looking for Internship</option>
-                  <option value="Looking for Full-time">Looking for Full-time</option>
+                  <option value="Looking for Internship">
+                    Looking for Internship
+                  </option>
+                  <option value="Looking for Full-time">
+                    Looking for Full-time
+                  </option>
                   <option value="Not Looking">Not Looking</option>
                 </select>
                 <ChevronDown
@@ -273,7 +296,11 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
         <div className="relative">
           <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
             {photoPreview ? (
-              <img src={photoPreview} alt="Profile Preview" className="w-full h-full object-cover" />
+              <img
+                src={photoPreview}
+                alt="Profile Preview"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="text-center text-sm text-gray-500">
                 <div>No Photo</div>
@@ -292,8 +319,8 @@ export default function ProfileEditModal({ isOpen, onClose, profileData, onSave 
               />
             </label>
             {photoPreview && (
-              <button 
-                onClick={handlePhotoDelete} 
+              <button
+                onClick={handlePhotoDelete}
                 className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
               >
                 Delete Photo

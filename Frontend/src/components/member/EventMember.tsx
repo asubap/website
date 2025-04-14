@@ -14,24 +14,25 @@ const EventMember: React.FC = () => {
         if (!session?.access_token) return;
 
         const res = await fetch(`${BACKEND_URL}/events`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
           },
-          credentials: 'include'
+          credentials: "include",
         });
-        
+
         const data = await res.json();
-        
+
         // Sort events by date
-        const sortedEvents = data.sort((a: Event, b: Event) => 
-          new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+        const sortedEvents = data.sort(
+          (a: Event, b: Event) =>
+            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
         );
-        
+
         setEvents(sortedEvents);
       } catch (error) {
-        console.error('Error fetching events:', error);
+        console.error("Error fetching events:", error);
       }
     };
 
@@ -41,43 +42,45 @@ const EventMember: React.FC = () => {
   // Split events into upcoming and past
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-  
+
   const upcomingEvents = events
-    .filter(event => new Date(event.event_date) >= today)
-    .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
-    
+    .filter((event) => new Date(event.event_date) >= today)
+    .sort(
+      (a, b) =>
+        new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+    );
+
   const pastEvents = events
-    .filter(event => new Date(event.event_date) < today)
-    .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+    .filter((event) => new Date(event.event_date) < today)
+    .sort(
+      (a, b) =>
+        new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
+    );
 
   return (
     <div className="w-full lg:w-1/2">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Upcoming Events</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+        Upcoming Events
+      </h2>
 
       <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[400px] space-y-4">
         {upcomingEvents.length > 0 ? (
           upcomingEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              isPast={false}
-            />
+            <EventCard key={event.id} event={event} isPast={false} />
           ))
         ) : (
           <p className="text-gray-500">No upcoming events</p>
         )}
       </div>
 
-      <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Past Events</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+        Past Events
+      </h2>
 
       <div className="overflow-y-auto pr-2 sm:pr-4 max-h-[400px] space-y-4">
         {pastEvents.length > 0 ? (
           pastEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              isPast={true}
-            />
+            <EventCard key={event.id} event={event} isPast={true} />
           ))
         ) : (
           <p className="text-gray-500">No past events</p>
