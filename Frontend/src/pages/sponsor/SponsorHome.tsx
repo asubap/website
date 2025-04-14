@@ -383,7 +383,8 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       const newPreviewUrl = URL.createObjectURL(file);
       setPreviewImageUrl(newPreviewUrl);
       // Mark changes if a file is selected
-      hasChangesRef.current.about = hasChangesRef.current.about || currentProfileUrl !== profileUrl;
+      hasChangesRef.current.about =
+        hasChangesRef.current.about || currentProfileUrl !== profileUrl;
     } else {
       // Mark changes if file selection is cleared (might revert to original)
       hasChangesRef.current.about =
@@ -767,8 +768,7 @@ const SponsorHome = () => {
 
   const fetchSponsorData = useCallback(async () => {
     if (!token) return;
-    setLoadingSponsor(true);
-    setSponsorError(null);
+
     try {
       // Get sponsor name from multiple sources in order of reliability
       let sponsorName = "";
@@ -836,7 +836,7 @@ const SponsorHome = () => {
       setLoadingResources(false);
       return;
     }
-    setLoadingResources(true);
+
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${

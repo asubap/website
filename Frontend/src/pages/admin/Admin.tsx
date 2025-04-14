@@ -10,6 +10,23 @@ import AddSponsorModal from "../../components/admin/AddSponsorModal";
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
 
+// Define interfaces for API responses
+interface AdminInfo {
+  email: string;
+  role: string;
+}
+
+interface ApiSponsor {
+  sponsor: string;
+  email?: string;
+}
+
+interface NewSponsorResponse {
+  company_name: string;
+  email_list: string[];
+  passcode: string;
+}
+
 const Admin = () => {
   const { showToast } = useToast();
   const adminFormRef = useRef<HTMLFormElement>(null);
@@ -38,7 +55,7 @@ const Admin = () => {
   };
 
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
-  const [sponsors, setSponsors] = useState<any[]>([]);
+  const [sponsors, setSponsors] = useState<string[]>([]);
 
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
@@ -68,7 +85,7 @@ const Admin = () => {
       if (session) {
         // Fetch user role
         const token = session.access_token;
-        fetch("${import.meta.env.VITE_BACKEND_URL}/users", {
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -80,8 +97,8 @@ const Admin = () => {
             console.log("API response data:", data);
             // Process e-board members
             const admins = data
-              .filter((item: any) => item.role === "e-board")
-              .map((item: any) => item.email);
+              .filter((item: AdminInfo) => item.role === "e-board")
+              .map((item: AdminInfo) => item.email);
             console.log(admins);
             setAdminEmails(admins);
           })
@@ -99,7 +116,7 @@ const Admin = () => {
       } = await supabase.auth.getSession();
       if (session) {
         const token = session.access_token;
-        fetch("${import.meta.env.VITE_BACKEND_URL}/sponsors/", {
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -109,7 +126,7 @@ const Admin = () => {
           .then((response) => response.json())
           .then((data) => {
             console.log("Sponsors:", data);
-            const sponsors = data.map((sponsor: any) => sponsor.sponsor);
+            const sponsors = data.map((sponsor: ApiSponsor) => sponsor.sponsor);
             console.log("Sponsors:", sponsors);
             setSponsors(sponsors);
           })
@@ -125,7 +142,7 @@ const Admin = () => {
       } = await supabase.auth.getSession();
       if (session) {
         const token = session.access_token;
-        fetch("${import.meta.env.VITE_BACKEND_URL}/events", {
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -194,7 +211,7 @@ const Admin = () => {
         // Fetch user role
         const token = session.access_token;
         const response = await fetch(
-          "${import.meta.env.VITE_BACKEND_URL}/users/add-user",
+          `${import.meta.env.VITE_BACKEND_URL}/users/add-user`,
           {
             method: "POST",
             headers: {
@@ -215,7 +232,7 @@ const Admin = () => {
           showToast("Admin added successfully", "success");
           if (adminFormRef.current) adminFormRef.current.reset();
         } else if (role === "sponsor") {
-          setSponsors([...sponsors, { email: email }]);
+          setSponsors([...sponsors, email]);
           showToast("Sponsor added successfully", "success");
           if (sponsorFormRef.current) sponsorFormRef.current.reset();
         }
@@ -233,7 +250,7 @@ const Admin = () => {
     if (session) {
       const token = session.access_token;
       try {
-        await fetch("${import.meta.env.VITE_BACKEND_URL}/users/delete-user", {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/delete-user`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -243,7 +260,7 @@ const Admin = () => {
         });
         // Update the state to remove the deleted email
         setAdminEmails(adminEmails.filter((e) => e !== email));
-        setSponsors(sponsors.filter((e) => e.email !== email));
+        setSponsors(sponsors.filter((e) => e !== email));
       } catch (error) {
         console.error("Error deleting admin:", error);
       }
@@ -275,9 +292,9 @@ const Admin = () => {
     }
   };
 
-  const handleSponsorAdded = (newSponsor: any) => {
+  const handleSponsorAdded = (newSponsor: NewSponsorResponse) => {
     console.log("New sponsor:", newSponsor);
-    setSponsors([...sponsors, newSponsor.sponsors.sponsor_name]);
+    setSponsors([...sponsors, newSponsor.company_name]);
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
   };
