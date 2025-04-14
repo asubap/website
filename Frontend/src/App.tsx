@@ -71,10 +71,10 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/sponsors" element={<SponsorsPage />} />
                 <Route path="/" element={<Homepage />} />
+                <Route path="/events" element={<EventsPage />} />
 
                 {/* Protected routes */}
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/events" element={<EventsPage />} />
                   <Route path="/auth/Home" element={<AuthHome />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/sponsor" element={<SponsorHome />} />
