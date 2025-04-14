@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
@@ -710,7 +710,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 };
 
 const SponsorHome = () => {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   const token = session?.access_token;
 
   const navLinks = [
@@ -773,18 +773,42 @@ const SponsorHome = () => {
     setLoadingSponsor(true);
     setSponsorError(null);
     try {
-      const response = await axios.get(
-        "https://asubap-backend.vercel.app/get-one-sponsor-info/",
+      // Get sponsor name from multiple sources in order of reliability
+      let sponsorName = "";
+
+      // 1. Try to get from role data (most reliable if available)
+      if (typeof role === "object" && role?.companyName) {
+        sponsorName = role.companyName;
+      }
+      // 2. Try localStorage if it was previously stored
+      else if (localStorage.getItem("sponsorName")) {
+        sponsorName = localStorage.getItem("sponsorName") || "";
+      }
+      // 3. Fallback to email extraction if needed
+      else {
+        const email = session?.user?.email;
+        sponsorName = email ? email.split("@")[0] : "";
+
+        // Store for future use
+        if (sponsorName) {
+          localStorage.setItem("sponsorName", sponsorName);
+        }
+      }
+
+      const response = await axios.post(
+        "https://asubap-backend.vercel.app/sponsors/get-one-sponsor-info",
+        { sponsor_name: sponsorName },
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
       if (!response.data) throw new Error("Failed to fetch sponsor data");
       const data = response.data;
       setSponsorData({
-        name: data.company_name || "Sponsor Name Missing",
+        name: data.company_name || sponsorName || "Sponsor Name Missing",
         description:
           data.about || data.description || "No description provided.",
         profileUrl: data.pfp_url || data.profileUrl || "/placeholder-logo.png",
@@ -807,7 +831,7 @@ const SponsorHome = () => {
     } finally {
       setLoadingSponsor(false);
     }
-  }, [token]);
+  }, [token, session, role]);
 
   const fetchResources = useCallback(async () => {
     if (!sponsorData.name) {
@@ -817,16 +841,17 @@ const SponsorHome = () => {
     }
     setLoadingResources(true);
     try {
-      const response = await fetch(
-        `https://asubap-backend.vercel.app/sponsor-resources/${sponsorData.name}/`,
+      const response = await axios.get(
+        `https://asubap-backend.vercel.app/sponsors/${sponsorData.name}/resources`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
-      if (!response.ok) throw new Error("Failed to fetch resources");
-      const data = await response.json();
+      if (!response.data) throw new Error("Failed to fetch resources");
+      const data = response.data;
       const resourcesData = Array.isArray(data)
         ? data
         : data?.resources || data?.data || [];
