@@ -30,7 +30,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     const [editingLink, setEditingLink] = useState({ index: -1, value: "" });
     const [initialAbout, setInitialAbout] = useState(sponsorDescription);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
-    const [setUploadingProfilePic] = useState(false);
+    const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
     const [currentProfileUrl, setCurrentProfileUrl] = useState(profileUrl);
     const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -38,7 +38,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
     const [linkError, setLinkError] = useState("");
     const [showPicConfirmation, setShowPicConfirmation] = useState(false);
     const [showLinkWarning, setShowLinkWarning] = useState(false);
-    
+    console.log(uploadingProfilePic);
     // Use refs to reliably track changes 
     const hasChangesRef = useRef({
         about: false,
@@ -248,44 +248,44 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         }, 100);
     };
 
-    // const handleProfilePicUpload = async () => {
-    //     if (!profilePicFile || !token) return; // Also check for token
+    const handleProfilePicUpload = async () => {
+        if (!profilePicFile || !token) return; // Also check for token
         
-    //     setUploadingProfilePic(true);
-    //     console.log("Uploading profile picture...");
+        setUploadingProfilePic(true);
+        console.log("Uploading profile picture...");
         
-    //     try {
-    //         const formData = new FormData();
-    //         // Match the key expected by the backend ('Key' from Postman screenshot)
-    //         formData.append('Key', profilePicFile); 
+        try {
+            const formData = new FormData();
+            // Match the key expected by the backend ('Key' from Postman screenshot)
+            formData.append('Key', profilePicFile); 
             
-    //         // Use environment variable for backend URL and correct endpoint path
-    //         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`
-    //                 // Content-Type is set automatically by fetch for FormData
-    //             },
-    //             body: formData
-    //         });
+            // Use environment variable for backend URL and correct endpoint path
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Content-Type is set automatically by fetch for FormData
+                },
+                body: formData
+            });
             
-    //         if (!response.ok) {
-    //             const errorText = await response.text();
-    //             throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
-    //         }
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
+            }
             
-    //         const data = await response.json();
-    //         console.log("Upload successful:", data);
-    //         setCurrentProfileUrl(data.url);
-    //         onProfilePicChange(data.url); // Update parent state
-    //         setProfilePicFile(null); // Clear the selected file
-    //     } catch (error) {
-    //         console.error('Error uploading profile picture:', error);
-    //         // Add user feedback here if desired (e.g., toast notification)
-    //     } finally {
-    //         setUploadingProfilePic(false);
-    //     }
-    // };
+            const data = await response.json();
+            console.log("Upload successful:", data);
+            setCurrentProfileUrl(data.url);
+            onProfilePicChange(data.url); // Update parent state
+            setProfilePicFile(null); // Clear the selected file
+        } catch (error) {
+            console.error('Error uploading profile picture:', error);
+            // Add user feedback here if desired (e.g., toast notification)
+        } finally {
+            setUploadingProfilePic(false);
+        }
+    };
 
     const handleProfilePicDelete = async () => {
         if (!token) {
