@@ -1,17 +1,17 @@
 export type Event = {
-  attending_users: string[];
-  created_at: string;
-  created_by_id: string;
-  date: string;
-  description: string;
-  id: number;
-  location: string;
-  location_lat: number;
-  location_long: number;
-  name: string;
-  rsvp_users: string[];
-  sponsors: string[];
-  time: string;
+  id: string;
+  event_name: string;
+  event_description: string;
+  event_location: string;
+  event_lat: number;
+  event_long: number;
+  event_date: string;
+  event_time: string;
+  event_rsvped: string[];
+  event_attending: string[];
+  event_hours: number;
+  event_hours_type: string;
+  sponsors_attending: string[];
 };
 
 export interface Member {

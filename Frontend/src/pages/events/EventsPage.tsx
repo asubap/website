@@ -3,21 +3,24 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { EventCard } from "../../components/event/EventCard";
 import { useAuth } from "../../context/auth/authProvider";
-
-interface Event {
-  id: string;
-  name: string;
-  description: string | null;
-  date: string;
-  time: string | null;
-  location: string | null;
-  rsvp_users?: string[];
-  attending_users?: string[];
-}
+import { Event } from "../../types";
 
 const EventsPage: React.FC = () => {
-  const [events] = useState<Event[]>([]);
   const { session } = useAuth();
+  const [pastEvents, setPastEvents] = useState<Event[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+
+  const isPastDate = (dateString: string): boolean => {
+    // Parse the input date string into a Date object
+    const inputDate = new Date(dateString);
+  
+    // Get the current date and reset its time to midnight
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Set time to 00:00:00 for accurate comparison
+  
+    // Compare the input date with the current date
+    return inputDate < currentDate;
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -42,8 +45,13 @@ const EventsPage: React.FC = () => {
         }).then((response) => response.json())
           .then((data) => {
             console.log(data); 
-          })
+            setPastEvents(data.filter((event: Event) => isPastDate(event.event_date)));
+            setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.event_date)));
+        })
           .catch((error) => console.error("Error fetching role:", error))
+
+        console.log("Past Events: " + pastEvents);
+        console.log("Upcoming Events: " + upcomingEvents);
   
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -51,7 +59,7 @@ const EventsPage: React.FC = () => {
     };
 
     fetchEvents();
-  }, [session]); // Re-fetch when session changes
+  }, []); // Re-fetch when session changes
 
   let navLinks;
 
@@ -72,18 +80,6 @@ const EventsPage: React.FC = () => {
       { name: "Log In", href: "/login" },
     ];
   }
-  
-  // Split events into upcoming and past
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-  
-  const upcomingEvents = events
-    .filter(event => new Date(event.date) >= today)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
-  const pastEvents = events
-    .filter(event => new Date(event.date) < today)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -103,12 +99,7 @@ const EventsPage: React.FC = () => {
                 upcomingEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    eventId={event.id.toString()}
-                    title={event.name}
-                    description={event.description}
-                    location={event.location}
-                    date={event.date}
-                    time={event.time}
+                    event={event}
                     isPast={false}
                   />
                 ))
@@ -125,12 +116,7 @@ const EventsPage: React.FC = () => {
                 pastEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    eventId={event.id.toString()}
-                    title={event.name}
-                    description={event.description}
-                    location={event.location}
-                    date={event.date}
-                    time={event.time}
+                    event={event}
                     isPast={true}
                   />
                 ))
