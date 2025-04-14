@@ -22,12 +22,6 @@ interface ApiSponsor {
   passcode: string;
 }
 
-interface NewSponsorResponse {
-  company_name: string;
-  email_list: string[];
-  passcode: string;
-}
-
 const Admin = () => {
   const { showToast } = useToast();
   const adminFormRef = useRef<HTMLFormElement>(null);
