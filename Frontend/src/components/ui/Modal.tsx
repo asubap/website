@@ -33,7 +33,7 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [showUnsavedChangesConfirmation, setShowUnsavedChangesConfirmation] = useState(false);
-  const [null, setCloseTrigger] = useState<'x' | 'outside' | 'button' | 'keyboard' | null>(null);
+  const [closeTrigger, setCloseTrigger] = useState<'x' | 'outside' | 'button' | 'keyboard' | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
