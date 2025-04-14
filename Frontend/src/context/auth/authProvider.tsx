@@ -42,10 +42,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
+        console.log("Session data:", session);
         
         if (session?.user?.email) {
           await fetchUserRole(session.access_token, session.user.email);
+          console.log("User role data:", role);
+          console.log("access_token: " + session.access_token);
+          console.log("user.email: " + session.user.email);
         } else {
           setLoading(false);
         }

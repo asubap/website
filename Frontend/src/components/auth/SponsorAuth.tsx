@@ -4,9 +4,9 @@ import { useAuth } from "../../context/auth/authProvider";
 
 const SponsorAuth = () => {
     const { session } = useAuth();
-    const { setSession, setRole } = useAuth();
 
     const [sponsors, setSponsors] = useState<string[]>([]);
+    const {setSession, setRole} = useAuth();
 
     useEffect(() => {
         const fetchSponsors = async () => {
@@ -69,27 +69,23 @@ const SponsorAuth = () => {
         console.log(companyName, passcode);
 
         // After backend says "auth success" and sends token
-        const res = await fetch("https://asubap-backend.vercel.app/sponsors/auth", {
-            method: "POST",
-            body: JSON.stringify({ companyName, passcode }),
-            headers: { "Content-Type": "application/json" },
-        });
-        
-        const { token } = await res.json();
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: `${companyName.toLowerCase()}@example.com`,
+            password: `${passcode}`,
+        })
 
-        console.log(token);
-        
-        // Tell Supabase to use this token for future requests
-        await supabase.auth.setSession({
-            access_token: token,
-            refresh_token: "", // empty if you're not handling refresh logic
-        });
+        console.log(data);
 
-        
-        setSession(token);
+        if (error) {
+        console.error("Error signing in:", error);
+        return;
+        }
+
+        setSession(data.session);
         setRole("sponsor");
 
-        window.location.href = `${baseUrl}/auth/Home`;
+        console.log("Sign in successful");
+        
     };
 
     return (
