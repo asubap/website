@@ -219,7 +219,7 @@ const Admin = () => {
         }
     }
 
-    const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
+    const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const form = e.target as HTMLFormElement;
@@ -240,7 +240,7 @@ const Admin = () => {
         if (session) {
             try {
                 const token = session.access_token;
-                const response = await fetch("https://asubap-backend.vercel.app/users/add-user", {
+                await fetch("https://asubap-backend.vercel.app/users/add-user", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -392,7 +392,7 @@ const Admin = () => {
 
                         <div className="order-5 md:order-5">
                             <h2 className="text-2xl font-semibold mb-2">General Members</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleMemberSubmit(e, "member")} ref={memberFormRef}>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleMemberSubmit(e)} ref={memberFormRef}>
                                 <input 
                                     type="text" 
                                     placeholder="Enter member email.." 
