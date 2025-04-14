@@ -24,11 +24,11 @@ export const EventListShort: React.FC<EventListShortProps> = ({ events }) => {
             {events.map((event) => (
                 <div key={event.id} className="w-full border border-gray-200 rounded-lg px-4 py-3 flex flex-col shadow-sm">
                     <div className="flex justify-between items-center mb-1">
-                        <h3 className="text-base font-semibold text-gray-800">{event.name || "[No Title]"}</h3>
-                        <span className="text-xs text-gray-500">{event.date ? formatDate(event.date) : "[No Date]"}</span>
+                        <h3 className="text-base font-semibold text-gray-800">{event.event_name || "[No Title]"}</h3>
+                        <span className="text-xs text-gray-500">{event.event_date ? formatDate(event.event_date) : "[No Date]"}</span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">
-                        {event.description ? `Description: ${event.description}` : <span className="text-gray-400 italic">[No Description Provided]</span>}
+                        {event.event_description ? `Description: ${event.event_description}` : <span className="text-gray-400 italic">[No Description Provided]</span>}
                     </p>
                     <div className="ml-auto flex gap-2 mt-1">
                         <button 
