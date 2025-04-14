@@ -1,3 +1,4 @@
+import React from "react";
 import { ProcessStep } from "../../components/ui/ProcessStep";
 import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
@@ -6,7 +7,7 @@ import { useAuth } from "../../context/auth/authProvider";
 
 export const ProcessFlow = () => {
   const { session } = useAuth();
-  
+
   // Define navigation links
   const navLinks = [
     { name: "About Us", href: "/about" },
@@ -14,12 +15,12 @@ export const ProcessFlow = () => {
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
   ];
-  
+
   // Add login link only if user is not logged in
   if (!session) {
     navLinks.push({ name: "Log In", href: "/login" });
   }
-  
+
   const steps = [
     {
       title: "W.P. Carey Student",
@@ -51,7 +52,7 @@ export const ProcessFlow = () => {
   ];
 
   return (
-    <div className="flex flex-col mt-20 min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar
         isLogged={!!session}
         links={navLinks}
@@ -60,34 +61,62 @@ export const ProcessFlow = () => {
         outlineColor="#AF272F"
       />
 
-      <main className="flex flex-col items-center mt-10 px-5 py-10 max-sm:py-5">
-        <div className="flex justify-between items-start w-full max-w-[1400px] max-md:flex-col max-md:gap-10">
+      <main className="flex-grow container mx-auto px-4 mt-24 flex flex-col items-center">
+        <h1 className="text-5xl font-outfit font-bold text-bapred text-center pb-4 pt-4 sm:pt-8">
+          Membership Process
+        </h1>
+
+        {/* Desktop view with arrows between cards */}
+        <div className="hidden md:flex justify-center items-stretch gap-8 mb-16">
           {steps.map((step, index) => (
-            <div key={index} className="flex flex-1 items-start">
-              <ProcessStep {...step} />
+            <React.Fragment key={index}>
+              <div className="flex-1 max-w-md">
+                <ProcessStep {...step} />
+              </div>
               {index < steps.length - 1 && (
-                <div className="flex mt-[200px]">
+                <div className="flex items-center justify-center w-10">
                   <ProcessArrow />
                 </div>
               )}
-            </div>
+            </React.Fragment>
           ))}
         </div>
 
-        <button
-          className="text-white text-5xl font-bold w-full max-w-[785px] h-[100px] bg-[#AF272F] cursor-pointer mt-10 rounded-[10px] hover:bg-[#8f1f25] transition-colors"
-          onClick={() => (window.location.href = "/apply")}
-        >
-          Click Here To Apply!
-        </button>
+        {/* Mobile view as vertical cards with arrows between them */}
+        <div className="md:hidden space-y-6 mb-12">
+          {steps.map((step, index) => (
+            <React.Fragment key={index}>
+              <ProcessStep {...step} />
+              {index < steps.length - 1 && (
+                <div className="py-2 flex justify-center">
+                  <div className="w-10 transform rotate-90">
+                    <ProcessArrow />
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
 
-        <div className="text-black text-2xl max-w-[1619px] text-center mt-10">
-          * have completed at least one major course (accounting, finance,
-          business analytics or digital technology or corresponding to major
-          area) beyond the principles or introductory level (for transfer
-          students, the most recent qualifying course must be at the initiating
-          institution). Do not need for candidate status, but need to have
-          completed to reach member status.
+        <div className="text-center mt-8">
+          <button
+            className="text-white text-xl md:text-2xl font-bold px-8 py-4 bg-[#AF272F] hover:bg-[#8f1f25] transition-colors rounded-md shadow-md"
+            onClick={() => (window.location.href = "/apply")}
+          >
+            Click Here To Apply!
+          </button>
+        </div>
+
+        <div className="mt-16 mb-16 max-w-4xl mx-auto px-4 py-6 border-t border-gray-200">
+          <p className="text-gray-700 text-base md:text-lg leading-relaxed font-light italic">
+            <span className="text-[#AF272F] font-medium mr-1">*</span>
+            Have completed at least one major course (accounting, finance,
+            business analytics or digital technology or corresponding to major
+            area) beyond the principles or introductory level (for transfer
+            students, the most recent qualifying course must be at the
+            initiating institution). Do not need for candidate status, but need
+            to have completed to reach member status.
+          </p>
         </div>
       </main>
       <Footer backgroundColor="#AF272F" />

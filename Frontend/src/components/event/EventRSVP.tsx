@@ -6,7 +6,9 @@ interface EventRSVPProps {
 }
 
 const EventRSVP: React.FC<EventRSVPProps> = ({ eventId }) => {
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState<string>("");
   const { session } = useAuth();
 
@@ -19,14 +21,17 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId }) => {
 
     try {
       setStatus("sending");
-      const res = await fetch(`https://asubap-backend.vercel.app/events/rsvp/${eventId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        credentials: "include"
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/events/rsvp/${eventId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          credentials: "include",
+        }
+      );
 
       const data = await res.json();
 
@@ -68,9 +73,11 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId }) => {
           : "RSVP"}
       </button>
       {message && (
-        <p className={`mt-1 text-xs ${
-          status === "success" ? "text-green-600" : "text-red-600"
-        }`}>
+        <p
+          className={`mt-1 text-xs ${
+            status === "success" ? "text-green-600" : "text-red-600"
+          }`}
+        >
           {message}
         </p>
       )}
@@ -78,4 +85,4 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId }) => {
   );
 };
 
-export default EventRSVP; 
+export default EventRSVP;

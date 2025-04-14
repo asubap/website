@@ -18,7 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({
   backgroundColor,
   outlineColor,
   onClick,
-  isLogged
+  isLogged,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -44,7 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({
       window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
-  
+
   // Use useCallback to prevent unnecessary re-renders
   const toggleMenu = useCallback((): void => {
     // Prevent double-clicks by adding a debounce
@@ -126,7 +126,7 @@ const Navbar: React.FC<NavbarProps> = ({
     e.preventDefault();
     // Force navigation to homepage regardless of current route
     window.location.href = "/";
-    
+
     if (onClick) onClick();
   };
 
@@ -164,7 +164,7 @@ const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
           </div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 z-10">
             {/* Main navigation links */}
@@ -180,13 +180,11 @@ const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               ))}
             </div>
-            
+
             {/* Login/Logout always on the right */}
-            <div className="ml-6">
-              {isLogged ? <LogOut /> : null}
-            </div>
+            <div className="ml-6">{isLogged ? <LogOut /> : null}</div>
           </div>
-          
+
           {/* Hamburger button - always visible on mobile */}
           <div className="md:hidden">
             <button
@@ -211,7 +209,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu - with responsive behavior */}
       <div
         ref={menuRef}
@@ -252,7 +250,7 @@ const Navbar: React.FC<NavbarProps> = ({
             </svg>
           </button>
         )}
-        
+
         <div className="flex flex-col space-y-8 p-4 items-center pt-20">
           <ul className="space-y-8 text-center text-xl">
             {/* Navigation links */}
@@ -267,7 +265,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               </li>
             ))}
-            
+
             {/* Login/Logout at the bottom of mobile menu */}
             {isLogged && (
               <li className="pt-4 border-t border-gray-200">

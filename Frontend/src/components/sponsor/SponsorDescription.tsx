@@ -1,17 +1,26 @@
+import React from "react";
+import { Pencil, Link as LinkIcon } from "lucide-react";
+import LoadingSpinner from "../common/LoadingSpinner";
+
 interface SponsorDescriptionProps {
     profileUrl: string;
     name: string;
     description: string;
     links?: string[];
     onEditClick?: () => void;
+    isProfileUpdating: boolean;
 }
 
-const SponsorDescription: React.FC<SponsorDescriptionProps> = ({ profileUrl, name, description, links = [], onEditClick }) => {
+const SponsorDescription: React.FC<SponsorDescriptionProps> = ({ profileUrl, name, description, links = [], onEditClick, isProfileUpdating }) => {
     return (
         <div className="flex flex-col w-full h-full gap-8">
             <div className="flex items-center gap-8">
-                <div className="w-24 h-24 rounded-md flex items-center justify-center bg-white overflow-hidden">
-                    <img src={profileUrl} alt="Sponsor Logo" className="max-w-full max-h-full object-contain p-1" />
+                <div className="relative w-32 h-32 flex items-center justify-center border rounded-md shadow-sm overflow-hidden">
+                    {isProfileUpdating ? (
+                        <LoadingSpinner text="" size="md" />
+                    ) : (
+                        <img src={profileUrl || "/placeholder-logo.png"} alt={`${name} Logo`} className="max-w-full max-h-full object-contain p-2" />
+                    )}
                 </div>
                 <h1 className="text-4xl font-bold">{name}</h1>
             </div>
