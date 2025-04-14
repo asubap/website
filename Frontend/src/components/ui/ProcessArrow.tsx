@@ -1,25 +1,18 @@
 export const ProcessArrow = () => {
   return (
-    <div>
+    <div className="flex items-center justify-center w-full">
       <svg
-        width="58"
-        height="58"
-        viewBox="0 0 58 58"
+        width="40"
+        height="60"
+        viewBox="0 0 40 60"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-[50px] h-[50px] flex-shrink-[0]"
+        className="w-full"
       >
         <path
-          d="M4 29L54 29"
+          d="M5 5L30 30L5 55"
           stroke="#AF272F"
-          strokeWidth="7.14286"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M29 4L54 29L29 54"
-          stroke="#AF272F"
-          strokeWidth="7.14286"
+          strokeWidth="8"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
