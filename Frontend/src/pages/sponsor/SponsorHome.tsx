@@ -705,13 +705,13 @@ const SponsorHome = () => {
         
         try {
             // Fetch dynamic data using the passcode endpoint
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-sponsor-info`, 
-                { passcode: passcode }, // Request body
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-one-sponsor-info`, 
+                { sponsor_name: "Google" }, // Request body
                 {
                     headers: {
                         'Content-Type': 'application/json',
                         // Add Authorization header if this endpoint requires it
-                        // Authorization: `Bearer ${token}` 
+                        Authorization: `Bearer ${token}` 
                     }
                 }
             );
