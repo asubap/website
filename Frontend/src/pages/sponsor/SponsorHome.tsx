@@ -4,7 +4,7 @@ import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
 import axios from "axios";
 import { useAuth } from "../../context/auth/authProvider";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X, Pencil, Check } from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -256,15 +256,14 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         
         try {
             const formData = new FormData();
-            // Match the key expected by the backend ('Key' from Postman screenshot)
+            // Match the key expected by the backend
             formData.append('Key', profilePicFile); 
             
-            // Use environment variable for backend URL and correct endpoint path
+            // Use the API endpoint provided
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
-                    // Content-Type is set automatically by fetch for FormData
                 },
                 body: formData
             });
@@ -294,13 +293,13 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         }
         
         console.log("Deleting profile picture...", {
-            endpoint: `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
+            endpoint: `https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`,
             method: 'DELETE'
         });
         
         try {
-            // Use environment variable for backend URL and correct endpoint path
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
+            // Use the API endpoint provided
+            const response = await fetch(`https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -428,6 +427,16 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                     
                     <div className="flex flex-col">
                         <h4 className="text-xl font-bold">{sponsorName}</h4>
+                        
+                        {profilePicFile && (
+                            <button 
+                                onClick={handleProfilePicUpload}
+                                disabled={uploadingProfilePic}
+                                className="px-3 py-1 bg-bapred text-white rounded-md text-sm mt-2 w-fit hover:bg-opacity-80 transition-colors disabled:opacity-50"
+                            >
+                                {uploadingProfilePic ? 'Uploading...' : 'Upload New Picture'}
+                            </button>
+                        )}
                         
                         {!profilePicFile && (
                             <button 
@@ -673,14 +682,21 @@ const SponsorHome = () => {
     });
     const [loadingSponsor, setLoadingSponsor] = useState(true);
     const [sponsorError, setSponsorError] = useState<string | null>(null);
-    const [resources, setResources] = useState<{id: number, name: string, url: string, uploadDate: string}[]>([]);
+    const [resources, setResources] = useState<{id?: number, label: string, url: string, uploadDate?: string}[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [resourceName, setResourceName] = useState("");
     const [uploading, setUploading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [previewResource, setPreviewResource] = useState<{id: number, name: string, url: string} | null>(null);
+    const [previewResource, setPreviewResource] = useState<{id?: number, label: string, url: string, name?: string} | null>(null);
     const [loadingResources, setLoadingResources] = useState(true);
-    const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
+    
+    // State for editing resource labels
+    const [editingResource, setEditingResource] = useState<{id?: number, label: string, url: string} | null>(null);
+    const [newLabel, setNewLabel] = useState("");
+    const [updatingLabel, setUpdatingLabel] = useState(false);
+    const [showLabelConfirmation, setShowLabelConfirmation] = useState(false);
+    const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
+    const [originalLabel, setOriginalLabel] = useState("");
 
     // Helper function to format dates properly
     const formatDate = (dateString: string) => {
@@ -761,14 +777,26 @@ const SponsorHome = () => {
         // Fetch data when component mounts and when token changes
         if (token) {
             fetchSponsorData();
-            fetchResources();
         }
     }, [token]);
 
+    // Separate effect for fetching resources once sponsor data is available
+    useEffect(() => {
+        if (token && sponsorData.name) {
+            fetchResources();
+        }
+    }, [token, sponsorData.name]);
+
     const fetchResources = async () => {
+        if (!sponsorData.name) {
+            console.log("Skipping resource fetch - sponsor name not available yet");
+            setLoadingResources(false);
+            return;
+        }
+        
         setLoadingResources(true);
         try {
-            // Use the correct API endpoint with environment variable
+            // Use the correct API endpoint with environment variable and proper slash
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -813,11 +841,9 @@ const SponsorHome = () => {
         }
     };
 
-    // Separate function to upload profile picture
     const uploadProfilePicture = async (file: File): Promise<string | null> => {
         if (!token) return null;
 
-        setUploadingProfilePic(true); // Use a specific state for PFP upload
         console.log("Uploading profile picture (from parent)...");
 
         try {
@@ -844,13 +870,12 @@ const SponsorHome = () => {
             console.error('Error uploading profile picture:', error);
             // Add user feedback (e.g., toast notification)
             return null; // Indicate failure
-        } finally {
-            setUploadingProfilePic(false);
         }
     };
 
     const handleProfileUpdate = async (updatedProfile: { description: string; links: string[]; newProfilePic: File | null }) => {
         let newProfileUrl = sponsorData.profileUrl; // Start with current URL
+        const passcode = "1324"; // Use the same passcode used for fetching sponsor data
 
         // 1. Upload new profile picture if provided
         if (updatedProfile.newProfilePic) {
@@ -859,30 +884,70 @@ const SponsorHome = () => {
                 newProfileUrl = uploadedUrl; // Update URL if upload succeeded
             } else {
                 console.error("Profile picture upload failed. Profile data not updated.");
-                // Optional: Show error to user
+                alert('Failed to upload profile picture. Please try again.');
                 return; // Stop the update process if PFP upload fails
             }
         }
 
         // 2. Update other profile data (description, links)
-        // TODO: Implement API call to update description and links, potentially passing newProfileUrl if it changed
-        console.log("Updating profile description and links (API call needed)", {
-            description: updatedProfile.description,
-            links: updatedProfile.links,
-            profilePicUrl: newProfileUrl // Use the potentially updated URL
-        });
-
-        // For now, just update local state (replace with API call + state update on success)
-        setSponsorData(prevData => ({
-            ...prevData,
-            description: updatedProfile.description,
-            links: updatedProfile.links,
-            profileUrl: newProfileUrl // Update local state with new URL
-        }));
+        try {
+            console.log("Updating sponsor details...");
+            
+            // Format the request body to match exactly what the API expects
+            // Links should be an empty string when empty or joined with commas if there are links
+            const linksForApi = Array.isArray(updatedProfile.links) && updatedProfile.links.length > 0 
+                ? updatedProfile.links.join(',') 
+                : "";
+            
+            const requestBody = {
+                passcode: passcode,
+                about: updatedProfile.description,
+                links: linksForApi
+            };
+            
+            console.log("Sending update with body:", requestBody);
+            
+            // Make the API call to update sponsor details
+            const response = await axios.patch(
+                `${import.meta.env.VITE_BACKEND_URL}/sponsors/details`, 
+                requestBody,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            
+            console.log("Sponsor details updated successfully:", response.data);
+            
+            // Update local state on success
+            setSponsorData(prevData => ({
+                ...prevData,
+                description: updatedProfile.description,
+                links: updatedProfile.links,
+                profileUrl: newProfileUrl
+            }));
+            
+        } catch (error) {
+            console.error('Error updating sponsor details:', error);
+            alert('Failed to update sponsor details. Please try again.');
+            
+            // Optional: Still update profile picture in local state since that was successful
+            if (newProfileUrl !== sponsorData.profileUrl) {
+                setSponsorData(prevData => ({
+                    ...prevData,
+                    profileUrl: newProfileUrl
+                }));
+            }
+        }
     };
 
-    const handleResourceDelete = async (resourceId: number) => {
-        if (!token) return;
+    const handleResourceDelete = async (resourceId?: number) => {
+        if (!token || resourceId === undefined) {
+            console.error('Cannot delete resource: missing token or resource ID');
+            return;
+        }
         
         try {
             // Use the correct API endpoint with environment variable
@@ -898,8 +963,114 @@ const SponsorHome = () => {
         }
     };
 
+    // Function to start editing a resource label
+    const startEditResourceLabel = (resource: {id?: number, label: string, url: string}) => {
+        setEditingResource(resource);
+        setNewLabel(resource.label);
+        setOriginalLabel(resource.label);
+    };
+    
+    // Function to cancel editing a resource label
+    const cancelEditResourceLabel = () => {
+        // Check if there are unsaved changes
+        if (newLabel.trim() !== originalLabel.trim()) {
+            // Show confirmation dialog
+            setShowDiscardConfirmation(true);
+        } else {
+            // No changes, safe to exit edit mode
+            exitEditMode();
+        }
+    };
+    
+    // Function to actually exit edit mode
+    const exitEditMode = () => {
+        setEditingResource(null);
+        setNewLabel("");
+        setShowDiscardConfirmation(false);
+    };
+    
+    // Function to handle keydown events on the label input field
+    const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (newLabel.trim() !== originalLabel.trim()) {
+                confirmLabelUpdate();
+            } else {
+                cancelEditResourceLabel();
+            }
+        } else if (e.key === 'Escape') {
+            cancelEditResourceLabel();
+        }
+    };
+    
+    // Function to show label update confirmation
+    const confirmLabelUpdate = () => {
+        if (!newLabel.trim()) {
+            alert('Please enter a valid label');
+            return;
+        }
+        
+        if (newLabel.trim() === originalLabel.trim()) {
+            cancelEditResourceLabel();
+            return;
+        }
+        
+        setShowLabelConfirmation(true);
+    };
+    
+    // Function to update a resource label
+    const updateResourceLabel = async () => {
+        if (!token || !editingResource || !editingResource.id) {
+            console.error('Cannot update resource: missing token or resource data');
+            setShowLabelConfirmation(false);
+            return;
+        }
+        
+        if (!newLabel.trim()) {
+            alert('Please enter a valid label');
+            setShowLabelConfirmation(false);
+            return;
+        }
+        
+        setUpdatingLabel(true);
+        setShowLabelConfirmation(false);
+        
+        try {
+            // Send the update to the backend
+            await axios.put(
+                `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources/${editingResource.id}`, 
+                { label: newLabel },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            
+            // Update local state
+            setResources(prevResources => 
+                prevResources.map(res => 
+                    res.id === editingResource.id 
+                        ? { ...res, label: newLabel } 
+                        : res
+                )
+            );
+            
+            // Reset edit state
+            setEditingResource(null);
+            setNewLabel("");
+            
+        } catch (error) {
+            console.error('Error updating resource label:', error);
+            alert('Failed to update label. Please try again.');
+        } finally {
+            setUpdatingLabel(false);
+        }
+    };
+
     // Function to handle showing resource preview
-    const showResourcePreview = (resource: {id: number, name: string, url: string}) => {
+    const showResourcePreview = (resource: {id?: number, label: string, url: string}) => {
         setPreviewResource(resource);
     };
 
@@ -1000,10 +1171,47 @@ const SponsorHome = () => {
                                     ) : Array.isArray(resources) && resources.length > 0 ? (
                                         <div className="flex flex-col gap-3">
                                             {resources.map(resource => (
-                                                <div key={resource.id} className="flex justify-between items-center border-b pb-2">
+                                                <div key={resource.id || resource.url} className="flex justify-between items-center border-b pb-2">
                                                     <div>
-                                                        <p className="font-medium">{resource.name}</p>
-                                                        <p className="text-sm text-gray-500">Uploaded on {formatDate(resource.uploadDate)}</p>
+                                                        {editingResource && editingResource.id === resource.id ? (
+                                                            <div className="flex gap-2 items-center mb-1">
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={newLabel} 
+                                                                    onChange={(e) => setNewLabel(e.target.value)}
+                                                                    onKeyDown={handleLabelKeyDown}
+                                                                    className="px-2 py-1 border rounded"
+                                                                    autoFocus
+                                                                />
+                                                                <button 
+                                                                    onClick={confirmLabelUpdate}
+                                                                    disabled={updatingLabel}
+                                                                    className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                                                    title="Save"
+                                                                >
+                                                                    <Check size={18} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={cancelEditResourceLabel}
+                                                                    className="text-gray-600 hover:text-gray-800"
+                                                                    title="Cancel"
+                                                                >
+                                                                    <X size={18} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center mb-1">
+                                                                <p className="font-medium">{resource.label}</p>
+                                                                <button 
+                                                                    onClick={() => startEditResourceLabel(resource)}
+                                                                    className="text-gray-500 hover:text-gray-700 ml-2"
+                                                                    title="Edit label"
+                                                                >
+                                                                    <Pencil size={14} />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        <p className="text-sm text-gray-500">Uploaded on {formatDate(resource.uploadDate || '')}</p>
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <button 
@@ -1013,7 +1221,7 @@ const SponsorHome = () => {
                                                             View
                                                         </button>
                                                         <button 
-                                                            onClick={() => handleResourceDelete(resource.id)}
+                                                            onClick={() => resource.id !== undefined && handleResourceDelete(resource.id)}
                                                             className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
                                                         >
                                                             Delete
@@ -1053,7 +1261,7 @@ const SponsorHome = () => {
                 <Modal
                     isOpen={!!previewResource}
                     onClose={closePreview}
-                    title={previewResource.name}
+                    title={previewResource.label}
                     showFooter={true}
                     confirmText="Close"
                     onConfirm={closePreview}
@@ -1086,7 +1294,7 @@ const SponsorHome = () => {
                                     <iframe 
                                         src={`${previewResource.url}#toolbar=0`} 
                                         className="w-full h-full border-none shadow-md"
-                                        title={previewResource.name}
+                                        title={previewResource.label}
                                         loading="eager"
                                     />
                                 </div>
@@ -1097,7 +1305,7 @@ const SponsorHome = () => {
                                 >
                                     <img 
                                         src={previewResource.url} 
-                                        alt={previewResource.name} 
+                                        alt={previewResource.label} 
                                         style={{ 
                                             maxWidth: '100%', // Respect container width initially
                                             maxHeight: '100%', // Respect container height initially
@@ -1117,6 +1325,34 @@ const SponsorHome = () => {
                         </div>
                     </div>
                 </Modal>
+            )}
+
+            {/* Label Update Confirmation Dialog */}
+            {showLabelConfirmation && (
+                <ConfirmDialog
+                    isOpen={showLabelConfirmation}
+                    onClose={() => setShowLabelConfirmation(false)}
+                    onConfirm={updateResourceLabel}
+                    title="Confirm Label Update"
+                    message={`Are you sure you want to change the label from "${originalLabel}" to "${newLabel}"?`}
+                    confirmText="Update"
+                    cancelText="Cancel"
+                    preventOutsideClick={true}
+                />
+            )}
+            
+            {/* Discard Changes Confirmation Dialog */}
+            {showDiscardConfirmation && (
+                <ConfirmDialog
+                    isOpen={showDiscardConfirmation}
+                    onClose={() => setShowDiscardConfirmation(false)}
+                    onConfirm={exitEditMode}
+                    title="Discard Changes"
+                    message="You have unsaved changes to this resource label. Are you sure you want to discard them?"
+                    confirmText="Discard Changes"
+                    cancelText="Continue Editing"
+                    preventOutsideClick={true}
+                />
             )}
         </div>
     );
