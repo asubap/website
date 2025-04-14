@@ -16,7 +16,8 @@ const Admin = () => {
     const { showToast } = useToast();
     const adminFormRef = useRef<HTMLFormElement>(null);
     const sponsorFormRef = useRef<HTMLFormElement>(null);
-    
+    const memberFormRef = useRef<HTMLFormElement>(null);
+
     const [adminInputError, setAdminInputError] = useState(false);
     const [showCreateEventModal, setShowCreateEventModal] = useState(false);
     const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
@@ -49,6 +50,7 @@ const Admin = () => {
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
     const [sponsors, setSponsors] = useState<any[]>([]);
+    const [members, setMembers] = useState<any[]>([]);
    
     const [pastEvents, setPastEvents] = useState<Event[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
@@ -88,7 +90,12 @@ const Admin = () => {
                     // Process e-board members
                     const admins = data.filter((item:any) => item.role === "e-board").map((item: any) => item.email);
                     console.log(admins);
-                    setAdminEmails(admins);                
+                    setAdminEmails(admins);    
+                    
+                    // Process general members
+                    const members = data.filter((item:any) => item.role === "general-member").map((item: any) => item.email);
+                    console.log(members);
+                    setMembers(members);
                 })
                 .catch((error) => console.error("Error fetching member info:", error));
             }
@@ -208,6 +215,42 @@ const Admin = () => {
             } catch (error) {
                 console.error("Error adding user:", error);
                 showToast("Failed to add user. Please try again.", "error");
+            }
+        }
+    }
+
+    const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
+        e.preventDefault();
+
+        const form = e.target as HTMLFormElement;
+        const emailInput = form.email as HTMLInputElement;
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            showToast("Please enter an email address", "error");
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            showToast("Please enter a valid email address", "error");
+            return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            try {
+                const token = session.access_token;
+                const response = await fetch("https://asubap-backend.vercel.app/users/add-user", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ user_email: email, role: "general-member" }),
+                });
+            } catch (error) {
+                console.error("Error adding member:", error);
+                showToast("Failed to add member. Please try again.", "error");
             }
         }
     }
@@ -344,6 +387,31 @@ const Admin = () => {
                                 emails={sponsors} 
                                 onDelete={handleDelete} 
                                 userType="sponsor" 
+                            />
+                        </div>
+
+                        <div className="order-5 md:order-5">
+                            <h2 className="text-2xl font-semibold mb-2">General Members</h2>
+                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleMemberSubmit(e, "member")} ref={memberFormRef}>
+                                <input 
+                                    type="text" 
+                                    placeholder="Enter member email.." 
+                                    className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
+                                        adminInputError 
+                                            ? 'border-red-500 bg-red-50' 
+                                            : 'border-gray-300'
+                                    }`}
+                                    name="email"
+                                    onFocus={() => handleInputFocus('admin')}
+                                />
+                                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
+                                    + Add Member
+                                </button>
+                            </form>
+                            <EmailList 
+                                emails={members} 
+                                onDelete={handleDelete} 
+                                userType="admin" 
                             />
                         </div>
                     </div>
