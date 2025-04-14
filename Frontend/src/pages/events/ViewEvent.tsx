@@ -102,17 +102,17 @@ const ViewEvent = () => {
                 <main className="flex-grow flex flex-col items-center justify-center h-full w-full">
                     <div className="border border-bapgray rounded-md p-4 mx-4   ">
                         <div className="flex flex-row justify-between">
-                            <h1 className="text-2xl font-bold">{event.name}</h1>
+                            <h1 className="text-2xl font-bold">{event.event_name}</h1>
                             <div className="flex flex-row gap-2">
-                                <p className="text-sm">{event.location}</p>
-                                <p className="text-sm">{event.date}</p>
-                                <p className="text-sm">{event.time}</p>
+                                <p className="text-sm">{event.event_location}</p>
+                                <p className="text-sm">{event.event_date}</p>
+                                <p className="text-sm">{event.event_time}</p>
                             </div>
                         </div>
-                        <p className="text-sm">Description: {event.description}</p>
-                        <p className="text-sm">{event.sponsors}</p>
-                        <p className="text-sm">{event.attending_users}</p>
-                        <p className="text-sm">{event.rsvp_users}</p>
+                        <p className="text-sm">Description: {event.event_description}</p>
+                        <p className="text-sm">{event.sponsors_attending}</p>
+                        <p className="text-sm">{event.event_attending}</p>
+                        <p className="text-sm">{event.event_rsvped}</p>
                     </div>
                 </main>
             </div>
