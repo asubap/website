@@ -12,7 +12,7 @@ import SponsorsPage from "./pages/sponsors/SponsorsPage";
 import SponsorHome from "./pages/sponsor/SponsorHome";
 import Admin from "./pages/admin/Admin";
 import MemberView from "./pages/member/MemberView";
-import NetworkingPage from "./pages/networking/NetworkingPage";
+import NetworkingPage from "./pages/network/NetworkingPage";
 import NotFound from "./pages/notfound/NotFound";
 import ViewEvent from "./pages/events/ViewEvent";
 import { useState, createContext, useContext } from "react";

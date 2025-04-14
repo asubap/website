@@ -4,7 +4,7 @@ import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
 import axios from "axios";
 import { useAuth } from "../../context/auth/authProvider";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X} from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -248,44 +248,39 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         }, 100);
     };
 
-    // const handleProfilePicUpload = async () => {
-    //     if (!profilePicFile || !token) return; // Also check for token
+    const handleProfilePicUpload = async () => {
+        if (!profilePicFile || !token) return;
         
-    //     setUploadingProfilePic(true);
-    //     console.log("Uploading profile picture...");
+        setUploadingProfilePic(true);
         
-    //     try {
-    //         const formData = new FormData();
-    //         // Match the key expected by the backend ('Key' from Postman screenshot)
-    //         formData.append('Key', profilePicFile); 
+        try {
+            const formData = new FormData();
+            formData.append('file', profilePicFile);
             
-    //         // Use environment variable for backend URL and correct endpoint path
-    //         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`
-    //                 // Content-Type is set automatically by fetch for FormData
-    //             },
-    //             body: formData
-    //         });
+            const response = await fetch(`https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
             
-    //         if (!response.ok) {
-    //             const errorText = await response.text();
-    //             throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
-    //         }
+            const data = await response.json();
             
-    //         const data = await response.json();
-    //         console.log("Upload successful:", data);
-    //         setCurrentProfileUrl(data.url);
-    //         onProfilePicChange(data.url); // Update parent state
-    //         setProfilePicFile(null); // Clear the selected file
-    //     } catch (error) {
-    //         console.error('Error uploading profile picture:', error);
-    //         // Add user feedback here if desired (e.g., toast notification)
-    //     } finally {
-    //         setUploadingProfilePic(false);
-    //     }
-    // };
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            setCurrentProfileUrl(data.photoUrl || data.url);
+            onProfilePicChange(data.photoUrl || data.url);
+            setProfilePicFile(null);
+        } catch (error) {
+            console.error('Error uploading profile picture:', error);
+            alert(error instanceof Error ? error.message : 'Upload failed');
+        } finally {
+            setUploadingProfilePic(false);
+        }
+    };
 
     const handleProfilePicDelete = async () => {
         if (!token) {
@@ -294,13 +289,13 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
         }
         
         console.log("Deleting profile picture...", {
-            endpoint: `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
+            endpoint: `https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`,
             method: 'DELETE'
         });
         
         try {
-            // Use environment variable for backend URL and correct endpoint path
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`, {
+            // Use the API endpoint provided
+            const response = await fetch(`https://asubap-backend.vercel.app/sponsors/${sponsorName}/pfp`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -428,6 +423,16 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, sp
                     
                     <div className="flex flex-col">
                         <h4 className="text-xl font-bold">{sponsorName}</h4>
+                        
+                        {profilePicFile && (
+                            <button 
+                                onClick={handleProfilePicUpload}
+                                disabled={uploadingProfilePic}
+                                className="px-3 py-1 bg-bapred text-white rounded-md text-sm mt-2 w-fit hover:bg-opacity-80 transition-colors disabled:opacity-50"
+                            >
+                                {uploadingProfilePic ? 'Uploading...' : 'Upload New Picture'}
+                            </button>
+                        )}
                         
                         {!profilePicFile && (
                             <button 
@@ -659,29 +664,30 @@ const SponsorHome = () => {
         { name: "Dashboard", href: "/sponsor" },
       ];
 
-    // Replace hardcoded states with dynamic loading
     const [sponsorData, setSponsorData] = useState<{
-        name: string; // Name will be fetched
+        name: string;
         description: string;
         profileUrl: string;
         links: string[];
     }>({
-        name: "", // Start with empty name
+        name: "",
         description: "",
         profileUrl: "",
         links: []
     });
     const [loadingSponsor, setLoadingSponsor] = useState(true);
     const [sponsorError, setSponsorError] = useState<string | null>(null);
-    const [resources, setResources] = useState<{id: number, name: string, url: string, uploadDate: string}[]>([]);
+    const [resources, setResources] = useState<{id?: number, label: string, url: string, uploadDate?: string}[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [resourceName, setResourceName] = useState("");
     const [uploading, setUploading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [previewResource, setPreviewResource] = useState<{id: number, name: string, url: string} | null>(null);
+    const [previewResource, setPreviewResource] = useState<{id?: number, label: string, url: string, name?: string} | null>(null);
     const [loadingResources, setLoadingResources] = useState(true);
-    const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
-    console.log(uploadingProfilePic);
+    
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [resourceToDelete, setResourceToDelete] = useState<{id?: number, label: string, url: string} | null>(null);
+
     // Helper function to format dates properly
     const formatDate = (dateString: string) => {
         if (!dateString) return "Unknown date";
@@ -700,18 +706,14 @@ const SponsorHome = () => {
     const fetchSponsorData = async () => {
         setLoadingSponsor(true);
         setSponsorError(null);
-        // const sponsorName = "Deloitte"; // No longer needed
-     // Passcode for the endpoint
         
         try {
             // Fetch dynamic data using the passcode endpoint
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-one-sponsor-info`, 
-                { sponsor_name: "Google" }, // Request body
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/get-all-sponsor-info`, 
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        // Add Authorization header if this endpoint requires it
-                        Authorization: `Bearer ${token}` 
+                        Authorization: `Bearer ${token}`
                     }
                 }
             );
@@ -761,14 +763,26 @@ const SponsorHome = () => {
         // Fetch data when component mounts and when token changes
         if (token) {
             fetchSponsorData();
-            fetchResources();
         }
     }, [token]);
 
+    // Separate effect for fetching resources once sponsor data is available
+    useEffect(() => {
+        if (token && sponsorData.name) {
+            fetchResources();
+        }
+    }, [token, sponsorData.name]);
+
     const fetchResources = async () => {
+        if (!sponsorData.name) {
+            console.log("Skipping resource fetch - sponsor name not available yet");
+            setLoadingResources(false);
+            return;
+        }
+        
         setLoadingResources(true);
         try {
-            // Use the correct API endpoint with environment variable
+            // Use the correct API endpoint with environment variable and proper slash
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -794,11 +808,13 @@ const SponsorHome = () => {
             const formData = new FormData();
             formData.append('resourceLabel', resourceName);
             formData.append('file', file);
+            
+            console.log("Uploading resource with key 'file'");
 
             // Use the correct API endpoint with environment variable
             await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    // Do not set Content-Type, axios will set it automatically with proper boundary
                     'Authorization': `Bearer ${token}`
                 }
             });
@@ -813,44 +829,38 @@ const SponsorHome = () => {
         }
     };
 
-    // Separate function to upload profile picture
     const uploadProfilePicture = async (file: File): Promise<string | null> => {
         if (!token) return null;
-
-        setUploadingProfilePic(true); // Use a specific state for PFP upload
-        console.log("Uploading profile picture (from parent)...");
-
+        
         try {
             const formData = new FormData();
-            formData.append('Key', file);
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/pfp`, {
+            formData.append('file', file);
+            
+            const response = await fetch(`https://asubap-backend.vercel.app/sponsors/${sponsorData.name}/pfp`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
                 body: formData
             });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to upload profile picture: ${response.status} ${errorText}`);
-            }
-
+            
             const data = await response.json();
-            console.log("Upload successful:", data);
-            return data.url; // Return the new URL
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            return data.photoUrl || data.url;
         } catch (error) {
             console.error('Error uploading profile picture:', error);
-            // Add user feedback (e.g., toast notification)
-            return null; // Indicate failure
-        } finally {
-            setUploadingProfilePic(false);
+            alert(error instanceof Error ? error.message : 'Upload failed');
+            return null;
         }
     };
 
     const handleProfileUpdate = async (updatedProfile: { description: string; links: string[]; newProfilePic: File | null }) => {
         let newProfileUrl = sponsorData.profileUrl; // Start with current URL
+        const passcode = "1324"; // Use the same passcode used for fetching sponsor data
 
         // 1. Upload new profile picture if provided
         if (updatedProfile.newProfilePic) {
@@ -859,47 +869,118 @@ const SponsorHome = () => {
                 newProfileUrl = uploadedUrl; // Update URL if upload succeeded
             } else {
                 console.error("Profile picture upload failed. Profile data not updated.");
-                // Optional: Show error to user
+                alert('Failed to upload profile picture. Please try again.');
                 return; // Stop the update process if PFP upload fails
             }
         }
 
         // 2. Update other profile data (description, links)
-        // TODO: Implement API call to update description and links, potentially passing newProfileUrl if it changed
-        console.log("Updating profile description and links (API call needed)", {
-            description: updatedProfile.description,
-            links: updatedProfile.links,
-            profilePicUrl: newProfileUrl // Use the potentially updated URL
-        });
-
-        // For now, just update local state (replace with API call + state update on success)
-        setSponsorData(prevData => ({
-            ...prevData,
-            description: updatedProfile.description,
-            links: updatedProfile.links,
-            profileUrl: newProfileUrl // Update local state with new URL
-        }));
+        try {
+            console.log("Updating sponsor details...");
+            
+            // Format the request body to match exactly what the API expects
+            // Links should be an empty string when empty or joined with commas if there are links
+            const linksForApi = Array.isArray(updatedProfile.links) && updatedProfile.links.length > 0 
+                ? updatedProfile.links.join(',') 
+                : "";
+            
+            const requestBody = {
+                passcode: passcode,
+                about: updatedProfile.description,
+                links: linksForApi
+            };
+            
+            console.log("Sending update with body:", requestBody);
+            
+            // Make the API call to update sponsor details
+            const response = await axios.patch(
+                `${import.meta.env.VITE_BACKEND_URL}/sponsors/details`, 
+                requestBody,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            
+            console.log("Sponsor details updated successfully:", response.data);
+            
+            // Update local state on success
+            setSponsorData(prevData => ({
+                ...prevData,
+                description: updatedProfile.description,
+                links: updatedProfile.links,
+                profileUrl: newProfileUrl
+            }));
+            
+        } catch (error) {
+            console.error('Error updating sponsor details:', error);
+            alert('Failed to update sponsor details. Please try again.');
+            
+            // Optional: Still update profile picture in local state since that was successful
+            if (newProfileUrl !== sponsorData.profileUrl) {
+                setSponsorData(prevData => ({
+                    ...prevData,
+                    profileUrl: newProfileUrl
+                }));
+            }
+        }
     };
 
-    const handleResourceDelete = async (resourceId: number) => {
-        if (!token) return;
+    const handleResourceDelete = async (resource: {id?: number, label: string, url: string}) => {
+        console.log("handleResourceDelete called for resource URL:", resource.url);
+        
+        if (!token || !resource.url) {
+            console.error('Cannot delete resource: missing token or resource URL');
+            return;
+        }
         
         try {
-            // Use the correct API endpoint with environment variable
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources/${resourceId}`, {
+            console.log(`Attempting to delete resource with URL: ${resource.url}`);
+            // Use the endpoint DELETE /sponsors/:companyName/resources
+            // Send resourceUrl in the request body
+            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorData.name}/resources`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' // Important for sending data in body
+                },
+                data: { // Use 'data' key for request body in axios.delete
+                    resourceUrl: resource.url 
                 }
             });
+            console.log(`Successfully sent delete request for resource URL: ${resource.url}`);
             // Refresh resource list after deletion
             fetchResources();
         } catch (error) {
             console.error('Error deleting resource:', error);
+            alert(`Failed to delete resource: ${resource.label}. Please try again.`);
         }
+    };
+    
+    // Function to trigger delete confirmation
+    const confirmResourceDelete = (resource: {id?: number, label: string, url: string}) => {
+        setResourceToDelete(resource);
+        setShowDeleteConfirmation(true);
+    };
+    
+    // Function to execute deletion after confirmation
+    const executeDelete = () => {
+        if (resourceToDelete) {
+            handleResourceDelete(resourceToDelete);
+        }
+        setShowDeleteConfirmation(false);
+        setResourceToDelete(null);
+    };
+    
+    // Function to cancel deletion
+    const cancelDelete = () => {
+        setShowDeleteConfirmation(false);
+        setResourceToDelete(null);
     };
 
     // Function to handle showing resource preview
-    const showResourcePreview = (resource: {id: number, name: string, url: string}) => {
+    const showResourcePreview = (resource: {id?: number, label: string, url: string}) => {
         setPreviewResource(resource);
     };
 
@@ -1000,10 +1081,12 @@ const SponsorHome = () => {
                                     ) : Array.isArray(resources) && resources.length > 0 ? (
                                         <div className="flex flex-col gap-3">
                                             {resources.map(resource => (
-                                                <div key={resource.id} className="flex justify-between items-center border-b pb-2">
+                                                <div key={resource.id || resource.url} className="flex justify-between items-center border-b pb-2">
                                                     <div>
-                                                        <p className="font-medium">{resource.name}</p>
-                                                        <p className="text-sm text-gray-500">Uploaded on {formatDate(resource.uploadDate)}</p>
+                                                        <div className="flex items-center mb-1">
+                                                            <p className="font-medium">{resource.label}</p>
+                                                        </div>
+                                                        <p className="text-sm text-gray-500">Uploaded on {formatDate(resource.uploadDate || '')}</p>
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <button 
@@ -1013,7 +1096,14 @@ const SponsorHome = () => {
                                                             View
                                                         </button>
                                                         <button 
-                                                            onClick={() => handleResourceDelete(resource.id)}
+                                                            onClick={() => {
+                                                                console.log("Delete button clicked for resource:", resource);
+                                                                if (resource.url) {
+                                                                    confirmResourceDelete(resource); // Trigger confirmation
+                                                                } else {
+                                                                    console.log("Resource URL is missing, cannot delete");
+                                                                }
+                                                            }}
                                                             className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
                                                         >
                                                             Delete
@@ -1049,74 +1139,98 @@ const SponsorHome = () => {
             />
 
             {/* Resource Preview Modal */}
-            {previewResource && (
-                <Modal
-                    isOpen={!!previewResource}
-                    onClose={closePreview}
-                    title={previewResource.name}
-                    showFooter={true}
-                    confirmText="Close"
-                    onConfirm={closePreview}
-                    size="lg"
-                >
-                    <div className="w-full h-[70vh] flex flex-col items-center">
-                         {/* Header row for Open in New Tab button only */}
-                         <div className="w-full mb-4 flex justify-end items-center">
-                            <a 
-                                href={previewResource.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="px-3 py-1 bg-bapred text-white rounded text-sm"
+            {previewResource && (() => { // Use IIFE to calculate variable within JSX scope
+                const isPreviewable = previewResource.url.endsWith('.pdf') || 
+                                      previewResource.url.match(/\.(jpe?g|png|gif|svg|webp)$/i);
+                
+                return (
+                    <Modal
+                        isOpen={!!previewResource}
+                        onClose={closePreview}
+                        title={previewResource.label}
+                        showFooter={true}
+                        confirmText="Close"
+                        onConfirm={closePreview}
+                        size="lg"
+                    >
+                        <div className="w-full h-[70vh] flex flex-col items-center">
+                             {/* Header row for Open in New Tab / Download button */}
+                             <div className="w-full mb-4 flex justify-end items-center">
+                                <a 
+                                    href={previewResource.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 bg-bapred text-white rounded text-sm"
+                                    {...(!isPreviewable && { download: previewResource.label || 'download' })} // Add download attribute conditionally
+                                >
+                                    {isPreviewable ? 'Open in New Tab' : 'Download'} {/* Conditional text */}
+                                </a>
+                            </div>
+                            
+                            {/* Scrollable container for preview content */}
+                            <div 
+                                className="w-full flex-1 overflow-auto border border-gray-200 bg-gray-50"
+                                style={{ maxHeight: 'calc(70vh - 60px)' }} // Adjust height based on controls row height
                             >
-                                Open in New Tab
-                            </a>
+                                {isPreviewable ? (
+                                    previewResource.url.endsWith('.pdf') ? (
+                                        // PDF container
+                                        <div 
+                                            className="w-full h-full flex justify-center"
+                                            style={{ minHeight: '100%' }} // Ensure PDF takes full height
+                                        >
+                                            <iframe 
+                                                src={`${previewResource.url}#toolbar=0`} 
+                                                className="w-full h-full border-none shadow-md"
+                                                title={previewResource.label}
+                                                loading="eager"
+                                            />
+                                        </div>
+                                    ) : (
+                                        // Image container
+                                        <div 
+                                            className="w-full h-full flex items-center justify-center p-4"
+                                        >
+                                            <img 
+                                                src={previewResource.url} 
+                                                alt={previewResource.label} 
+                                                style={{ 
+                                                    maxWidth: '100%', // Respect container width initially
+                                                    maxHeight: '100%', // Respect container height initially
+                                                    width: 'auto', 
+                                                    height: 'auto',
+                                                    display: 'block' // Helps with centering/sizing
+                                                }}
+                                                className="block shadow-md"
+                                                loading="eager"
+                                            />
+                                        </div>
+                                    )
+                                ) : (
+                                    // Message for non-previewable files
+                                    <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                                        <p className="mb-4">This file type cannot be previewed in-browser.</p>
+                                        <p className="text-sm text-gray-500">Click the 'Download' button above to save the file.</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        
-                        {/* Scrollable container for preview content */}
-                        <div 
-                            className="w-full flex-1 overflow-auto border border-gray-200 bg-gray-50"
-                            style={{ maxHeight: 'calc(70vh - 60px)' }} // Adjust height based on controls row height
-                        >
-                            {previewResource.url.endsWith('.pdf') ? (
-                                // PDF container
-                                <div 
-                                    className="w-full h-full flex justify-center"
-                                    style={{ minHeight: '100%' }} // Ensure PDF takes full height
-                                >
-                                    <iframe 
-                                        src={`${previewResource.url}#toolbar=0`} 
-                                        className="w-full h-full border-none shadow-md"
-                                        title={previewResource.name}
-                                        loading="eager"
-                                    />
-                                </div>
-                            ) : previewResource.url.match(/\.(jpe?g|png|gif|svg|webp)$/i) ? (
-                                // Image container
-                                <div 
-                                    className="w-full h-full flex items-center justify-center p-4"
-                                >
-                                    <img 
-                                        src={previewResource.url} 
-                                        alt={previewResource.name} 
-                                        style={{ 
-                                            maxWidth: '100%', // Respect container width initially
-                                            maxHeight: '100%', // Respect container height initially
-                                            width: 'auto', 
-                                            height: 'auto',
-                                            display: 'block' // Helps with centering/sizing
-                                        }}
-                                        className="block shadow-md"
-                                        loading="eager"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center">
-                                    <p className="mb-4">This file type cannot be previewed in-browser.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </Modal>
+                    </Modal>
+                );
+            })()}
+
+            {/* Delete Resource Confirmation Dialog */}
+            {showDeleteConfirmation && resourceToDelete && (
+                <ConfirmDialog
+                    isOpen={showDeleteConfirmation}
+                    onClose={cancelDelete}
+                    onConfirm={executeDelete}
+                    title="Confirm Deletion"
+                    message={`Are you sure you want to delete the resource: "${resourceToDelete.label}"? This action cannot be undone.`}
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    preventOutsideClick={true}
+                />
             )}
         </div>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Filters {
   graduationYear: string;
@@ -6,12 +6,12 @@ interface Filters {
   status: string;
 }
 
-interface MemberSearchProps {
+interface NetworkSearchProps {
   onSearch: (query: string, filters: Filters) => void;
 }
 
-const MemberSearch: React.FC<MemberSearchProps> = ({ onSearch }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch }) => {
+  const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     graduationYear: "",
@@ -22,18 +22,19 @@ const MemberSearch: React.FC<MemberSearchProps> = ({ onSearch }) => {
   // Use useEffect to trigger search whenever searchQuery or filters change
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      onSearch(searchQuery, filters);
+      onSearch(query, filters);
     }, 300); // 300ms debounce to prevent too many searches while typing
 
     return () => clearTimeout(delayDebounce);
-  }, [searchQuery, filters, onSearch]);
+  }, [query, filters, onSearch]);
 
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    triggerSearch(e.target.value, filters);
   };
 
   const handleReset = () => {
-    setSearchQuery("");
+    setQuery("");
     setFilters({
       graduationYear: "",
       major: "",
@@ -43,10 +44,13 @@ const MemberSearch: React.FC<MemberSearchProps> = ({ onSearch }) => {
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const newFilters = { ...filters, [name]: value };
+    setFilters(newFilters);
+    triggerSearch(query, newFilters);
+  };
+
+  const triggerSearch = (currentQuery: string, currentFilters: Filters) => {
+    onSearch(currentQuery, currentFilters);
   };
 
   return (
@@ -74,8 +78,8 @@ const MemberSearch: React.FC<MemberSearchProps> = ({ onSearch }) => {
               type="text"
               placeholder="Search by name, major, or email..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              value={searchQuery}
-              onChange={handleSearchInputChange}
+              value={query}
+              onChange={handleInputChange}
             />
           </div>
           <div className="flex gap-2">
@@ -182,4 +186,4 @@ const MemberSearch: React.FC<MemberSearchProps> = ({ onSearch }) => {
   );
 };
 
-export default MemberSearch;
+export default NetworkSearch;
