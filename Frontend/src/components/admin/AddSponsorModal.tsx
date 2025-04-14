@@ -83,7 +83,7 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
     }
   };
 
-  const handleCreateEvent = async () => {
+  const handleAddSponsor = async () => {
     const newErrors: FormErrors = {};
 
     // --- Validation ---
@@ -114,15 +114,15 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
 
       const token = session.access_token;
 
-      const eventData = {
+      const sponsorData = {
         sponsor_name: sponsor.trim(),
         emailList: emailList,
         passcode: passcode,
       };
 
-      // error if passcode is not 6 characters
-      if (passcode.length !== 6) {
-        showToast("Passcode must be 6 characters long", "error");
+      // error if passcode is not at least 6 characters
+      if (passcode.length < 6) {
+        showToast("Passcode must be at least 6 characters long", "error");
         setIsLoading(false);
         return;
       }
@@ -135,22 +135,22 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(eventData),
+          body: JSON.stringify(sponsorData),
         }
       );
 
       if (!response.ok) {
         const errorData = await response
           .json()
-          .catch(() => ({ message: "Failed to create event" }));
+          .catch(() => ({ message: "Failed to add sponsor" }));
         console.error("Backend error:", errorData);
         showToast(
-          `Error: ${errorData.message || "Failed to create event"}`,
+          `Error: ${errorData.message || "Failed to add sponsor"}`,
           "error"
         ); // Keep toast for server errors
         // Potentially set server-side validation errors here if backend provides field-specific errors
         // setErrors(mapBackendErrorsToFormErrors(errorData));
-        throw new Error(errorData.message || "Failed to create event");
+        throw new Error(errorData.message || "Failed to add sponsor");
       }
 
       const data = await response.json();
@@ -159,10 +159,10 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
       showToast("Sponsor added successfully", "success"); // Keep toast for success
       onClose(); // Close directly on success (no unsaved changes confirmation needed)
     } catch (error) {
-      console.error("Error creating event:", error);
+      console.error("Error adding sponsor:", error);
       // Avoid showing generic toast if specific one was shown above
       if (!`${error}`.includes("Error: ")) {
-        showToast("Failed to create event. Please try again.", "error");
+        showToast("Failed to add sponsor. Please try again.", "error");
       }
     } finally {
       setIsLoading(false);
@@ -315,7 +315,7 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
               Cancel
             </button>
             <button
-              onClick={handleCreateEvent}
+              onClick={handleAddSponsor}
               className={`px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors flex items-center justify-center ${
                 isLoading ? "opacity-75 cursor-not-allowed" : ""
               }`}
