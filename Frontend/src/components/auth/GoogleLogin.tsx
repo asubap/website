@@ -46,13 +46,11 @@ const GoogleLogin = () => {
   }, [session, getRedirectUrl]);
 
   return (
-    <div className="flex flex-col items-center gap-4 p-8">
-      <h1 className="text-4xl font-bold font-outfit">
-        Welcome Back<span className="text-bapred">.</span>
-      </h1>
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-outfit mb-4">Members</h1>
       <button
         onClick={handleGoogleLogin}
-        className="p-4 md:p-6 rounded-lg text-l md:text-xl flex items-center justify-center gap-4 bg-white text-black hover:bg-gray-100 transition-colors"
+        className="p-2 md:p-4 rounded-lg text-xl flex items-center justify-center gap-4 bg-white text-black hover:bg-gray-100 transition-colors"
       >
         <img
           src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"

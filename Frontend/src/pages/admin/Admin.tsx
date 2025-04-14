@@ -5,6 +5,8 @@ import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
 import { useToast } from "../../App";
 import CreateEventModal from "../../components/admin/CreateEventModal";
+import AddSponsorModal from "../../components/admin/AddSponsorModal";
+
 
 
 import { Event } from "../../types";
@@ -16,8 +18,8 @@ const Admin = () => {
     const sponsorFormRef = useRef<HTMLFormElement>(null);
     
     const [adminInputError, setAdminInputError] = useState(false);
-    const [sponsorInputError, setSponsorInputError] = useState(false);
     const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+    const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
     
     const navLinks = [
         { name: "Network", href: "/network" },
@@ -46,17 +48,15 @@ const Admin = () => {
    
 
     const [adminEmails, setAdminEmails] = useState<string[]>([]);
-    const [sponsorEmails, setSponsorEmails] = useState<string[]>([]);
+    const [sponsors, setSponsors] = useState<any[]>([]);
    
     const [pastEvents, setPastEvents] = useState<Event[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
 
     // Reset input error state when clicking away from input
-    const handleInputFocus = (inputType: 'admin' | 'sponsor') => {
+    const handleInputFocus = (inputType: 'admin') => {
         if (inputType === 'admin') {
             setAdminInputError(false);
-        } else {
-            setSponsorInputError(false);
         }
     };
 
@@ -88,22 +88,36 @@ const Admin = () => {
                     // Process e-board members
                     const admins = data.filter((item:any) => item.role === "e-board").map((item: any) => item.email);
                     console.log(admins);
-                    setAdminEmails(admins);
-                    
-                    // Process sponsors
-                    const sponsors = data.filter((item: any) => item.role === "sponsor").map((item: any) => item.email);
-                    console.log("Sponsor emails:", sponsors);
-                    setSponsorEmails(sponsors);
-                    
-                    // Process general members - use consistent property name
-                  
-                
+                    setAdminEmails(admins);                
                 })
                 .catch((error) => console.error("Error fetching member info:", error));
             }
         };
 
         fetchAdmins();
+
+        const fetchSponsors = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const token = session.access_token;
+                fetch("https://asubap-backend.vercel.app/sponsors/", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }).then((response) => response.json())
+                .then((data) => {
+                    console.log("Sponsors:", data);
+                    const sponsors = data.map((sponsor: any) => sponsor.sponsor);
+                    console.log("Sponsors:", sponsors);
+                    setSponsors(sponsors);
+                })
+                .catch((error) => console.error("Error fetching sponsors:", error));
+            }
+        }
+
+        fetchSponsors();
 
         const fetchEvents = async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -118,8 +132,8 @@ const Admin = () => {
                 }).then((response) => response.json())
                 .then((data) => {
                     console.log("Events:", data);
-                    setPastEvents(data.filter((event: Event) => isPastDate(event.date)));
-                    setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.date)));
+                    setPastEvents(data.filter((event: Event) => isPastDate(event.event_date)));
+                    setUpcomingEvents(data.filter((event: Event) => !isPastDate(event.event_date)));
                 })
                 .catch((error) => console.error("Error fetching events:", error));
             }
@@ -128,10 +142,6 @@ const Admin = () => {
         fetchEvents();
         
     }, []);
-
-    useEffect(() => {
-        console.log("Updated sponsorEmails state:", sponsorEmails);
-    }, [sponsorEmails, adminEmails]);
 
     const handleRoleSubmit = async (e: React.FormEvent<HTMLFormElement>, role: string) => {
         e.preventDefault();
@@ -149,8 +159,6 @@ const Admin = () => {
             showToast("Please enter an email address", "error");
             if (isRoleAdmin) {
                 setAdminInputError(true);
-            } else {
-                setSponsorInputError(true);
             }
             return;
         }
@@ -160,8 +168,6 @@ const Admin = () => {
             showToast("Please enter a valid email address", "error");
             if (isRoleAdmin) {
                 setAdminInputError(true);
-            } else {
-                setSponsorInputError(true);
             }
             return;
         }
@@ -169,8 +175,6 @@ const Admin = () => {
         // If we got here, reset error state as email is valid
         if (isRoleAdmin) {
             setAdminInputError(false);
-        } else {
-            setSponsorInputError(false);
         }
         
         const { data: { session } } = await supabase.auth.getSession();
@@ -197,7 +201,7 @@ const Admin = () => {
                     showToast("Admin added successfully", "success");
                     if (adminFormRef.current) adminFormRef.current.reset();
                 } else if (role === "sponsor") {
-                    setSponsorEmails([...sponsorEmails, email]);
+                    setSponsors([...sponsors, { email: email }]);
                     showToast("Sponsor added successfully", "success");
                     if (sponsorFormRef.current) sponsorFormRef.current.reset();
                 }
@@ -223,7 +227,7 @@ const Admin = () => {
                 });
                 // Update the state to remove the deleted email
                 setAdminEmails(adminEmails.filter(e => e !== email));
-                setSponsorEmails(sponsorEmails.filter(e => e !== email));
+                setSponsors(sponsors.filter(e => e.email !== email));
             } catch (error) {
                 console.error("Error deleting admin:", error);
             }
@@ -233,18 +237,25 @@ const Admin = () => {
     // Handle a newly created event
     const handleEventCreated = (newEvent: Event) => {
         // Determine if it's upcoming or past
-        const isNewEventPast = isPastDate(newEvent.date);
+        const isNewEventPast = isPastDate(newEvent.event_date);
 
         // Update the correct list and sort it
         if (!isNewEventPast) {
             setUpcomingEvents(prevEvents => 
-                [...prevEvents, newEvent].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                [...prevEvents, newEvent].sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
             );
         } else {
             setPastEvents(prevEvents => 
-                [...prevEvents, newEvent].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Past events descending
+                [...prevEvents, newEvent].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()) // Past events descending
             );
         }
+    };
+
+    const handleSponsorAdded = (newSponsor: any) => {
+        console.log("New sponsor:", newSponsor);
+        setSponsors([...sponsors, newSponsor.sponsors.sponsor_name]);
+        showToast("Sponsor added successfully", "success");
+        if (sponsorFormRef.current) sponsorFormRef.current.reset();
     };
 
     return (
@@ -320,25 +331,17 @@ const Admin = () => {
                         
                         
                         <div className="order-4 md:order-4">
-                            <h2 className="text-2xl font-semibold mb-2">Sponsors</h2>
-                            <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleRoleSubmit(e, "sponsor")} ref={sponsorFormRef}>
-                                <input 
-                                    type="text" 
-                                    placeholder="Enter sponsor email.." 
-                                    className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
-                                        sponsorInputError 
-                                            ? 'border-red-500 bg-red-50' 
-                                            : 'border-gray-300'
-                                    }`}
-                                    name="email"
-                                    onFocus={() => handleInputFocus('sponsor')}
-                                />
-                                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
-                                    + Add Sponsor
+                            <div className="flex items-center mb-2">
+                                <h2 className="text-2xl font-semibold">Sponsors</h2>
+                                <button 
+                                    className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors" 
+                                    onClick={() => setShowAddSponsorModal(true)}
+                                >
+                                    + New Sponsor
                                 </button>
-                            </form>
+                            </div>
                             <EmailList 
-                                emails={sponsorEmails} 
+                                emails={sponsors} 
                                 onDelete={handleDelete} 
                                 userType="sponsor" 
                             />
@@ -354,6 +357,13 @@ const Admin = () => {
                 <CreateEventModal 
                     onClose={() => setShowCreateEventModal(false)}
                     onEventCreated={handleEventCreated}
+                />
+            )}
+
+            {showAddSponsorModal && (
+                <AddSponsorModal 
+                    onClose={() => setShowAddSponsorModal(false)}
+                    onSponsorAdded={handleSponsorAdded}
                 />
             )}
         </div>

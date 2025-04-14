@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Member, Sponsor } from "../../types";
 import NetworkProfileModal from "./NetworkProfileModal";
 import SponsorProfileModal from "./SponsorProfileModal";
-import { Briefcase, GraduationCap, Link as LinkIcon, Mail, Timer, Clock, Info, User } from 'lucide-react';
+import { Briefcase, GraduationCap, Link as LinkIcon, Mail, Clock, Info, User } from 'lucide-react';
 
 interface NetworkListProps {
   entities: (Member | Sponsor)[];
