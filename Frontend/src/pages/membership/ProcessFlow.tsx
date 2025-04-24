@@ -101,7 +101,7 @@ export const ProcessFlow = () => {
         <div className="text-center mt-8">
           <button
             className="text-white text-xl md:text-2xl font-bold px-8 py-4 bg-[#AF272F] hover:bg-[#8f1f25] transition-colors rounded-md shadow-md"
-            onClick={() => (window.location.href = "/apply")}
+            onClick={() => (window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSciA9BqK7uwVXsjTAId5EJIw-kIvseIxHPeoCo7oGNWy6t3Wg/closedform")}
           >
             Click Here To Apply!
           </button>
