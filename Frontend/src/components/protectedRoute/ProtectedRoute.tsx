@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/auth/authProvider";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 const ProtectedRoute = () => {
   const { session, loading, role } = useAuth();
@@ -44,7 +45,7 @@ const ProtectedRoute = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-bapred"></div>
+        <LoadingSpinner text="Loading..." size="lg" />
       </div>
     );
   }

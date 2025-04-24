@@ -6,6 +6,7 @@ import EmailList from "../../components/admin/EmailList";
 import { useToast } from "../../App";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
@@ -57,6 +58,11 @@ const Admin = () => {
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
 
+  const [loadingAdmins, setLoadingAdmins] = useState(true);
+  const [loadingSponsors, setLoadingSponsors] = useState(true);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
   // Reset input error state when clicking away from input
   const handleInputFocus = (inputType: "admin") => {
     if (inputType === "admin") {
@@ -76,6 +82,7 @@ const Admin = () => {
 
   useEffect(() => {
     const fetchAdmins = async () => {
+      setLoadingAdmins(true);
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -103,16 +110,21 @@ const Admin = () => {
               .map((item: any) => item.email);
             console.log(members);
             setMembers(members);
+            setLoadingAdmins(false);
+            setLoadingMembers(false);
           })
-          .catch((error) =>
-            console.error("Error fetching member info:", error)
-          );
+          .catch((error) => {
+            console.error("Error fetching member info:", error);
+            setLoadingAdmins(false);
+            setLoadingMembers(false);
+          });
       }
     };
 
     fetchAdmins();
 
     const fetchSponsors = async () => {
+      setLoadingSponsors(true);
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -131,14 +143,19 @@ const Admin = () => {
             const sponsors = data.map((sponsor: ApiSponsor) => sponsor.company_name);
             console.log("Sponsors:", sponsors);
             setSponsors(sponsors);
+            setLoadingSponsors(false);
           })
-          .catch((error) => console.error("Error fetching sponsors:", error));
+          .catch((error) => {
+            console.error("Error fetching sponsors:", error);
+            setLoadingSponsors(false);
+          });
       }
     };
 
     fetchSponsors();
 
     const fetchEvents = async () => {
+      setLoadingEvents(true);
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -160,12 +177,24 @@ const Admin = () => {
             setUpcomingEvents(
               data.filter((event: Event) => !isPastDate(event.event_date))
             );
+            setLoadingEvents(false);
           })
-          .catch((error) => console.error("Error fetching events:", error));
+          .catch((error) => {
+            console.error("Error fetching events:", error);
+            setLoadingEvents(false);
+          });
       }
     };
 
     fetchEvents();
+
+    // For members
+    setLoadingMembers(true);
+    fetchAdmins();
+    fetchSponsors();
+    fetchEvents();
+    // Set loadingMembers to false after fetchAdmins completes
+    // (since members are fetched in fetchAdmins)
   }, []);
 
   const handleRoleSubmit = async (
@@ -374,7 +403,9 @@ const Admin = () => {
                   + New Event
                 </button>
               </div>
-              {upcomingEvents.length > 0 ? (
+              {loadingEvents ? (
+                <LoadingSpinner text="Loading upcoming events..." size="md" />
+              ) : upcomingEvents.length > 0 ? (
                 <EventListShort events={upcomingEvents} />
               ) : (
                 <p className="text-gray-500 text-sm">
@@ -405,18 +436,24 @@ const Admin = () => {
                   + Add Admin
                 </button>
               </form>
-              <EmailList
-                emails={adminEmails}
-                onDelete={handleDelete}
-                userType="admin"
-              />
+              {loadingAdmins ? (
+                <LoadingSpinner text="Loading admin users..." size="md" />
+              ) : (
+                <EmailList
+                  emails={adminEmails}
+                  onDelete={handleDelete}
+                  userType="admin"
+                />
+              )}
             </div>
 
             <div className="order-2 md:order-3">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Past Events</h2>
               </div>
-              {pastEvents.length > 0 ? (
+              {loadingEvents ? (
+                <LoadingSpinner text="Loading past events..." size="md" />
+              ) : pastEvents.length > 0 ? (
                 <EventListShort events={pastEvents} />
               ) : (
                 <p className="text-gray-500 text-sm">No past events found.</p>
@@ -433,11 +470,15 @@ const Admin = () => {
                   + New Sponsor
                 </button>
               </div>
-              <EmailList
-                emails={sponsors}
-                onDelete={handleDelete}
-                userType="sponsor"
-              />
+              {loadingSponsors ? (
+                <LoadingSpinner text="Loading sponsors..." size="md" />
+              ) : (
+                <EmailList
+                  emails={sponsors}
+                  onDelete={handleDelete}
+                  userType="sponsor"
+                />
+              )}
             </div>
 
             <div className="order-5 md:order-5">
@@ -458,11 +499,15 @@ const Admin = () => {
                                      + Add Member
                                  </button>
                              </form>
-                             <EmailList 
-                                 emails={members} 
-                                 onDelete={handleDelete} 
-                userType="admin"
-              />
+                             {loadingMembers ? (
+                               <LoadingSpinner text="Loading members..." size="md" />
+                             ) : (
+                               <EmailList 
+                                   emails={members} 
+                                   onDelete={handleDelete} 
+                                   userType="admin"
+                               />
+                             )}
             </div>
           </div>
         </main>

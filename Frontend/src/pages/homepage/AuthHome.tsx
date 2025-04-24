@@ -1,7 +1,7 @@
-
 import { useAuth } from "../../context/auth/authProvider";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 export default function AuthHome() {    
     const { role } = useAuth(); // Call hooks at the top level
@@ -38,7 +38,7 @@ export default function AuthHome() {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen">
-          <p className="text-xl">Loading your dashboard...</p>
+          <LoadingSpinner text="Loading your dashboard..." size="md" />
         </div>
       );
     }

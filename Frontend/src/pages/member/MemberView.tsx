@@ -4,6 +4,7 @@ import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
 import { supabase } from "../../context/auth/supabaseClient";
 import MemberDescription from "../../components/member/MemberDescription";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 // Add environment variable for backend URL
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -107,7 +108,7 @@ const MemberView = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <p>Loading user information...</p>
+          <LoadingSpinner text="Loading user information..." size="md" />
         </div>
       ) : error ? (
         <div className="flex justify-center items-center h-64 text-red-500">

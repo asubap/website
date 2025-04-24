@@ -5,6 +5,7 @@ import NetworkSearch from "../../components/network/NetworkSearch";
 import NetworkingLayout from "../../components/network/NetworkingLayout";
 import { Member, Sponsor } from "../../types";
 import NetworkList from "../../components/network/NetworkList";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 interface Filters {
   graduationYear: string;
@@ -336,7 +337,7 @@ const NetworkingPage = () => {
         {/* Combined Loading State */}
         {isMembersLoading || isSponsorsLoading ? (
           <div className="flex justify-center items-center h-64">
-            <p className="text-lg">Loading network...</p>
+            <LoadingSpinner text="Loading network..." size="md" />
           </div>
         ) : /* Combined Error State */
         membersError || sponsorsError ? (

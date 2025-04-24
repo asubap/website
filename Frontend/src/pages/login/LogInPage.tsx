@@ -6,6 +6,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import { useAuth } from "../../context/auth/authProvider";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const LogInPage = () => {
     const { session, loading } = useAuth();
@@ -35,7 +36,7 @@ const LogInPage = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-bapred"></div>
+                <LoadingSpinner text="Loading..." size="lg" />
             </div>
         );
     }

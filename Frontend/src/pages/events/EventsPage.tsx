@@ -4,11 +4,13 @@ import Footer from "../../components/layout/Footer";
 import { EventCard } from "../../components/event/EventCard";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const EventsPage: React.FC = () => {
   const { session } = useAuth();
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const isPastDate = (dateString: string): boolean => {
     // Parse the input date string into a Date object
@@ -39,26 +41,28 @@ const EventsPage: React.FC = () => {
           headers["Authorization"] = `Bearer ${session.access_token}`;
         }
 
+        setLoading(true);
         fetch(endpoint, {
           method: "GET",
           headers: headers,
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log(data);
             setPastEvents(
               data.filter((event: Event) => isPastDate(event.event_date))
             );
             setUpcomingEvents(
               data.filter((event: Event) => !isPastDate(event.event_date))
             );
+            setLoading(false);
           })
-          .catch((error) => console.error("Error fetching role:", error));
-
-        console.log("Past Events: " + pastEvents);
-        console.log("Upcoming Events: " + upcomingEvents);
+          .catch((error) => {
+            console.error("Error fetching role:", error);
+            setLoading(false);
+          });
       } catch (error) {
         console.error("Error fetching events:", error);
+        setLoading(false);
       }
     };
 
@@ -99,7 +103,9 @@ const EventsPage: React.FC = () => {
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
             <div className="space-y-4">
-              {upcomingEvents.length > 0 ? (
+              {loading ? (
+                <LoadingSpinner text="Loading upcoming events..." size="md" />
+              ) : upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => (
                   <EventCard key={event.id} event={event} isPast={false} />
                 ))
@@ -112,7 +118,9 @@ const EventsPage: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold mb-6">Past Events</h2>
             <div className="space-y-4">
-              {pastEvents.length > 0 ? (
+              {loading ? (
+                <LoadingSpinner text="Loading past events..." size="md" />
+              ) : pastEvents.length > 0 ? (
                 pastEvents.map((event) => (
                   <EventCard key={event.id} event={event} isPast={true} />
                 ))
