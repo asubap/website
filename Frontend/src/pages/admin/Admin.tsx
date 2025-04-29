@@ -315,6 +315,30 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteSponsor = async (email: string) => {
+    console.log("Deleting sponsor:", email);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      const token = session.access_token;
+      try {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/delete-sponsor`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ sponsor_name: email }),
+        });
+        setSponsors(sponsors.filter((e) => e !== email));
+        showToast("Sponsor deleted successfully", "success");
+      } catch (error) {
+        console.error("Error deleting sponsor:", error);
+      }
+    }
+  };
+
   // Handle a newly created event
   const handleEventCreated = (newEvent: Event) => {
     // Determine if it's upcoming or past
@@ -435,7 +459,7 @@ const Admin = () => {
               </div>
               <EmailList
                 emails={sponsors}
-                onDelete={handleDelete}
+                onDelete={handleDeleteSponsor}
                 userType="sponsor"
               />
             </div>
