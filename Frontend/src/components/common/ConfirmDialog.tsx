@@ -58,7 +58,6 @@ const ConfirmDialog = ({
         confirmText={confirmText}
         cancelText={cancelText}
         size="sm"
-        hasUnsavedChanges={false}
         preventOutsideClick={preventOutsideClick}
       >
         <p className="text-gray-700">{message}</p>

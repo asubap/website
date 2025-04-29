@@ -123,7 +123,6 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
       showFooter={true}
       cancelText="Close"
       preventOutsideClick={false}
-      hasUnsavedChanges={false}
     >
       {profileContent}
     </Modal>

@@ -40,14 +40,6 @@ export default function ProfileEditModal({
   );
   const { session } = useAuth();
 
-  // Check for unsaved changes
-  const hasUnsavedChanges = () => {
-    return (
-      JSON.stringify(formData) !== JSON.stringify(profileData) ||
-      photoPreview !== profileData.photoUrl
-    );
-  };
-
   if (!isOpen) return null;
 
   const handleChange = (
@@ -337,7 +329,6 @@ export default function ProfileEditModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Update Profile"
-      hasUnsavedChanges={hasUnsavedChanges()}
       onConfirm={handleSubmit}
       confirmText="Save Changes"
       showFooter={true}

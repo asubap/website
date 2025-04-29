@@ -6,7 +6,7 @@ import EmailList from "../../components/admin/EmailList";
 import { useToast } from "../../App";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import ResourceManagement from "../../components/admin/ResourceManagement";
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
@@ -140,7 +140,9 @@ const Admin = () => {
           .then((response) => response.json())
           .then((data) => {
             console.log("Sponsors:", data);
-            const sponsors = data.map((sponsor: ApiSponsor) => sponsor.company_name);
+            const sponsors = data.map(
+              (sponsor: ApiSponsor) => sponsor.company_name
+            );
             console.log("Sponsors:", sponsors);
             setSponsors(sponsors);
             setLoadingSponsors(false);
@@ -284,7 +286,7 @@ const Admin = () => {
       showToast("Please enter an email address", "error");
       return;
     }
-    
+
     if (!validateEmail(email)) {
       showToast("Please enter a valid email address", "error");
       return;
@@ -296,14 +298,17 @@ const Admin = () => {
       } = await supabase.auth.getSession();
       if (session) {
         const token = session.access_token;
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/add-user`, {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/users/add-user`,
+          {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ user_email: email, role: "general-member" }),
-        });
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to add member");
@@ -340,6 +345,33 @@ const Admin = () => {
         setMembers(members.filter((e) => e !== email));
       } catch (error) {
         console.error("Error deleting admin:", error);
+      }
+    }
+  };
+
+  const handleDeleteSponsor = async (email: string) => {
+    console.log("Deleting sponsor:", email);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      const token = session.access_token;
+      try {
+        await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/sponsors/delete-sponsor`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ sponsor_name: email }),
+          }
+        );
+        setSponsors(sponsors.filter((e) => e !== email));
+        showToast("Sponsor deleted successfully", "success");
+      } catch (error) {
+        console.error("Error deleting sponsor:", error);
       }
     }
   };
@@ -470,44 +502,44 @@ const Admin = () => {
                   + New Sponsor
                 </button>
               </div>
-              {loadingSponsors ? (
-                <LoadingSpinner text="Loading sponsors..." size="md" />
-              ) : (
-                <EmailList
-                  emails={sponsors}
-                  onDelete={handleDelete}
-                  userType="sponsor"
-                />
-              )}
+              <EmailList
+                emails={sponsors}
+                onDelete={handleDeleteSponsor}
+                userType="sponsor"
+              />
             </div>
 
             <div className="order-5 md:order-5">
-                             <h2 className="text-2xl font-semibold mb-2">General Members</h2>
-                             <form className="flex gap-4 justify-between items-center" onSubmit={(e) => handleMemberSubmit(e)} ref={memberFormRef}>
-                                 <input 
-                                     type="text" 
-                                     placeholder="Enter member email.." 
-                                     className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
-                                         adminInputError 
-                                             ? 'border-red-500 bg-red-50' 
-                                             : 'border-gray-300'
-                                     }`}
-                                     name="email"
-                                     onFocus={() => handleInputFocus('admin')}
-                                 />
-                                 <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
-                                     + Add Member
-                                 </button>
-                             </form>
-                             {loadingMembers ? (
-                               <LoadingSpinner text="Loading members..." size="md" />
-                             ) : (
-                               <EmailList 
-                                   emails={members} 
-                                   onDelete={handleDelete} 
-                                   userType="admin"
-                               />
-                             )}
+              <h2 className="text-2xl font-semibold mb-2">General Members</h2>
+              <form
+                className="flex gap-4 justify-between items-center"
+                onSubmit={(e) => handleMemberSubmit(e)}
+                ref={memberFormRef}
+              >
+                <input
+                  type="text"
+                  placeholder="Enter member email.."
+                  className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
+                    adminInputError
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                  name="email"
+                  onFocus={() => handleInputFocus("admin")}
+                />
+                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
+                  + Add Member
+                </button>
+              </form>
+              <EmailList
+                emails={members}
+                onDelete={handleDelete}
+                userType="admin"
+              />
+            </div>
+
+            <div className="order-6 md:order-6 col-span-1 md:col-span-2">
+              <ResourceManagement />
             </div>
           </div>
         </main>

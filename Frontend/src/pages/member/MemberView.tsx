@@ -12,7 +12,11 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const MemberView = () => {
   const { session } = useAuth();
   const email = session?.user?.email || "";
-  const navLinks = [{ name: "Events", href: "/events" }];
+  const navLinks = [
+    { name: "Events", href: "/events" },
+    { name: "Resources", href: "/resources" },
+    { name: "Network", href: "/network" },
+  ];
 
   const [sponsorProfileUrl] = useState(
     "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"

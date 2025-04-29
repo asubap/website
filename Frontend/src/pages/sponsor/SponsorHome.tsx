@@ -57,30 +57,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     links: false,
   });
 
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = () => {
-    // Check links and bio directly
-    const areLinksChanged = hasChangesRef.current.links;
-    const isBioChanged = hasChangesRef.current.about;
-    const hasNewProfilePic = profilePicFile !== null;
-    const isEditingALink = editingLink.index !== -1;
-
-    // Determine if there are any changes
-    const hasChanges =
-      areLinksChanged || isBioChanged || hasNewProfilePic || isEditingALink;
-
-    console.log("hasUnsavedChanges check:", {
-      areLinksChanged,
-      isBioChanged,
-      hasNewProfilePic,
-      isEditingALink,
-      hasChanges,
-      refState: { ...hasChangesRef.current },
-    });
-
-    return hasChanges;
-  };
-
   useEffect(() => {
     setAbout(sponsorDescription);
     setLinksList(links);
@@ -694,7 +670,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       isOpen={isOpen}
       onClose={handleModalClose}
       title="Edit Profile"
-      hasUnsavedChanges={hasUnsavedChanges}
       onConfirm={handleSave}
       confirmText="Save Changes"
       cancelText="Cancel"
