@@ -6,7 +6,6 @@ import EmailList from "../../components/admin/EmailList";
 import { useToast } from "../../App";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
-import ResourceManagement from "../../components/admin/ResourceManagement";
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
@@ -486,12 +485,8 @@ const Admin = () => {
                              <EmailList 
                                  emails={members} 
                                  onDelete={handleDelete} 
-                                 userType="admin"
-                             />
-            </div>
-
-            <div className="order-6 md:order-6 col-span-1 md:col-span-2">
-              <ResourceManagement />
+                userType="admin"
+              />
             </div>
           </div>
         </main>
