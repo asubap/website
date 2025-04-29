@@ -94,7 +94,6 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
       showFooter={true}
       cancelText="Close"
       preventOutsideClick={false}
-      hasUnsavedChanges={false}
     >
       {profileContent}
     </Modal>

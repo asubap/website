@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Trash2, Download } from 'lucide-react';
 import { useAuth } from '../../context/auth/authProvider';
 import { toast } from 'react-hot-toast';
 import Modal from '../ui/Modal';
@@ -164,30 +164,6 @@ const ResourceManagement: React.FC = () => {
     } catch (error) {
       console.error('Error updating category:', error);
       toast.error('Failed to update category');
-    }
-  };
-
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (!session?.access_token || !window.confirm('Are you sure you want to delete this category and all its resources?')) return;
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${categoryId}/delete`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to delete category');
-
-      toast.success('Category deleted successfully');
-      fetchResources();
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      toast.error('Failed to delete category');
     }
   };
 

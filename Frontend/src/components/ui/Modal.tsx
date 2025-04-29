@@ -10,6 +10,10 @@ interface ModalProps {
   children: React.ReactNode;
   onConfirm?: () => void;
   confirmText?: string;
+  cancelText?: string;
+  showFooter?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  preventOutsideClick?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -18,9 +22,25 @@ const Modal: React.FC<ModalProps> = ({
   title,
   children,
   onConfirm,
-  confirmText = 'Confirm'
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  showFooter = true,
+  size = 'md',
+  preventOutsideClick = false
 }) => {
   if (!isOpen) return null;
+
+  const handleBackgroundClick = () => {
+    if (!preventOutsideClick) {
+      onClose();
+    }
+  };
+
+  const sizeClasses = {
+    sm: 'sm:max-w-lg',
+    md: 'sm:max-w-2xl',
+    lg: 'sm:max-w-4xl'
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -28,11 +48,11 @@ const Modal: React.FC<ModalProps> = ({
         {/* Background overlay */}
         <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          onClick={onClose}
+          onClick={handleBackgroundClick}
         />
 
         {/* Modal panel */}
-        <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+        <div className={`inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full ${sizeClasses[size]} sm:align-middle`}>
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="sm:flex sm:items-start">
               <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
@@ -51,24 +71,26 @@ const Modal: React.FC<ModalProps> = ({
               </div>
             </div>
           </div>
-          <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-            {onConfirm && (
+          {showFooter && (
+            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+              {onConfirm && (
+                <button
+                  type="button"
+                  onClick={onConfirm}
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-bapred px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  {confirmText}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={onConfirm}
-                className="inline-flex w-full justify-center rounded-md border border-transparent bg-bapred px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={onClose}
+                className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               >
-                {confirmText}
+                {cancelText}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Cancel
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
