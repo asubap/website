@@ -1,19 +1,12 @@
-import React from 'react';
-import { X } from 'lucide-react';
-
 {/*Resource Management Modal*/}
 import React from 'react';
 import { X } from 'lucide-react';
-
-{/*Resource Management Modal*/}
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onClose: () => void;
   title: string;
   children: React.ReactNode;
-  onConfirm?: () => void;
   onConfirm?: () => void;
   confirmText?: string;
   cancelText?: string;
