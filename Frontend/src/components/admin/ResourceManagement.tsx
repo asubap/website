@@ -9,7 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   Eye,
-  MoreVertical,
+  MoreHorizontal,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
@@ -622,7 +622,7 @@ const ResourceManagement: React.FC = () => {
                                 className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
                                 title="Edit Resource"
                               >
-                                <MoreVertical size={18} />
+                                <MoreHorizontal size={18} />
                               </button>
                               <button
                                 onClick={() =>

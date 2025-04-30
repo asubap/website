@@ -7,54 +7,69 @@ import { Event } from "../../types";
 interface EventCardProps {
   event: Event;
   isPast: boolean;
+  isHighlighted?: boolean;
+  registerRef?: (element: HTMLDivElement | null) => void;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
-  event,  
+  event,
   isPast,
+  isHighlighted,
+  registerRef,
 }) => {
   const { session, role, loading } = useAuth();
 
   useEffect(() => {
-    console.log('Auth state:', {
+    console.log("Auth state:", {
       session: !!session,
       role,
       loading,
-      roleType: typeof role
+      roleType: typeof role,
     });
   }, [session, role, loading]);
 
   const formatDateTime = (date?: string, time?: string | null) => {
     if (!date) return null;
     const eventDate = new Date(date);
-    const formattedDate = eventDate.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    const formattedDate = eventDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
     return time ? `${formattedDate} at ${time}` : formattedDate;
   };
 
   // Role checking logic - Check for string role names
   const isMember = Array.isArray(role) && role.includes("general-member"); // Role ID 3
-  const isSponsor = Array.isArray(role) && role.includes("sponsor");      // Role ID 2
+  const isSponsor = Array.isArray(role) && role.includes("sponsor"); // Role ID 2
   const isLoggedIn = !!session;
 
   // Debug log for role checks
-  console.log('Role checks (updated):', {
+  console.log("Role checks (updated):", {
     rawRole: role,
     isMember,
     isSponsor,
     isLoggedIn,
-    shouldShowButtons: !isPast && isLoggedIn && !loading
+    shouldShowButtons: !isPast && isLoggedIn && !loading,
   });
 
+  // Define highlight classes using Tailwind ring utility - focusing on color transition
+  const highlightClasses = isHighlighted
+    ? "ring-bapred" // Apply red ring color when highlighted
+    : "ring-transparent"; // Use transparent ring color when not highlighted
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200 grid grid-cols-2">
+    <div
+      ref={registerRef}
+      // Apply base styles, border, always-on ring-2/inset, transition-colors, and conditional ring color
+      className={`p-6 bg-white rounded-lg shadow-md grid grid-cols-2 border border-gray-200 ring-2 ring-inset transition-colors duration-250 ease-in-out ${highlightClasses}`}
+    >
       <div className="col-span-1">
-        <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">{event.event_name}</h3>
-        
+        <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">
+          {event.event_name}
+        </h3>
+
         <div className="space-y-2 mb-4">
           {event.event_location && (
             <div>
@@ -65,13 +80,15 @@ export const EventCard: React.FC<EventCardProps> = ({
           {event.event_date && (
             <div>
               <span className="font-semibold text-gray-700">Date/Time: </span>
-              <span className="text-gray-600">{formatDateTime(event.event_date, event.event_time)}</span>
+              <span className="text-gray-600">
+                {formatDateTime(event.event_date, event.event_time)}
+              </span>
             </div>
           )}
         </div>
 
         <p className="text-gray-600 text-sm mb-4">
-          {event.event_description || 'No description available'}
+          {event.event_description || "No description available"}
         </p>
       </div>
 
@@ -79,37 +96,40 @@ export const EventCard: React.FC<EventCardProps> = ({
         {event.event_hours_type && (
           <div>
             <span className="font-semibold text-gray-700">Hours: </span>
-            <span className="text-gray-600">{event.event_hours} {event.event_hours_type}</span>
+            <span className="text-gray-600">
+              {event.event_hours} {event.event_hours_type}
+            </span>
           </div>
         )}
 
         {event.sponsors_attending && (
           <div>
             <span className="font-semibold text-gray-700">Sponsors: </span>
-            <span className="text-gray-600">{event.sponsors_attending.join(', ')}</span>
+            <span className="text-gray-600">
+              {event.sponsors_attending.join(", ")}
+            </span>
           </div>
         )}
 
         {event.event_rsvped && (
           <div>
             <span className="font-semibold text-gray-700">RSVPed: </span>
-            <span className="text-gray-600">RSVPed: {event.event_rsvped.join(', ')}</span>
+            <span className="text-gray-600">
+              RSVPed: {event.event_rsvped.join(", ")}
+            </span>
           </div>
         )}
 
         {event.event_attending && (
           <div>
             <span className="font-semibold text-gray-700">Attending: </span>
-            <span className="text-gray-600">Attending: {event.event_attending.join(', ')}</span>
+            <span className="text-gray-600">
+              Attending: {event.event_attending.join(", ")}
+            </span>
           </div>
         )}
-        
-        
-        
-        
       </div>
-      
-      
+
       {!isPast && isLoggedIn && !loading && (
         <div className="flex justify-end space-x-4">
           {(isMember || isSponsor) && (

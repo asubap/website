@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { EventCard } from "../../components/event/EventCard";
@@ -11,6 +12,9 @@ const EventsPage: React.FC = () => {
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const location = useLocation();
 
   const isPastDate = (dateString: string): boolean => {
     // Parse the input date string into a Date object
@@ -24,50 +28,75 @@ const EventsPage: React.FC = () => {
     return inputDate < currentDate;
   };
 
+  // Effect 1: Fetch Events on mount or session change
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Choose endpoint based on authentication status
         const endpoint = session?.access_token
           ? `${import.meta.env.VITE_BACKEND_URL}/events`
           : `${import.meta.env.VITE_BACKEND_URL}/events/public`;
-
-        const headers: HeadersInit = {
-          "Content-Type": "application/json",
-        };
-
-        // Add authorization header if authenticated
+        const headers: HeadersInit = { "Content-Type": "application/json" };
         if (session?.access_token) {
           headers["Authorization"] = `Bearer ${session.access_token}`;
         }
 
         setLoading(true);
-        fetch(endpoint, {
-          method: "GET",
-          headers: headers,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            setPastEvents(
-              data.filter((event: Event) => isPastDate(event.event_date))
-            );
-            setUpcomingEvents(
-              data.filter((event: Event) => !isPastDate(event.event_date))
-            );
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching role:", error);
-            setLoading(false);
-          });
+        const response = await fetch(endpoint, { method: "GET", headers });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        setPastEvents(
+          data.filter((event: Event) => isPastDate(event.event_date))
+        );
+        setUpcomingEvents(
+          data.filter((event: Event) => !isPastDate(event.event_date))
+        );
       } catch (error) {
         console.error("Error fetching events:", error);
+        // Handle error state if needed
+        setPastEvents([]); // Clear data on error
+        setUpcomingEvents([]);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchEvents();
-  }, []); // Re-fetch when session changes
+  }, [session]); // Depend only on session for re-fetching
+
+  // Effect 2: Handle highlighting when location state changes or loading finishes
+  useEffect(() => {
+    const highlightEventId = location.state?.highlightEventId;
+
+    // Only proceed if not loading and we have an ID to highlight
+    if (!loading && highlightEventId) {
+      console.log(
+        "Highlighting effect triggered (loading finished): ID",
+        highlightEventId
+      );
+
+      // Use setTimeout to ensure DOM is ready after state update
+      const timer = setTimeout(() => {
+        const element = eventRefs.current.get(highlightEventId);
+        if (element) {
+          console.log("Element found, scrolling and highlighting:", element);
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          setHighlightedId(highlightEventId);
+          // Clear highlight after a delay
+          setTimeout(() => setHighlightedId(null), 2000); // Highlight for 2 seconds
+        } else {
+          console.log("Element not found in refs for ID:", highlightEventId);
+        }
+      }, 100); // Increased delay slightly just in case
+
+      // Cleanup the main timer if effect re-runs or component unmounts
+      return () => clearTimeout(timer);
+    }
+
+    // No cleanup needed for the inner setTimeout, it handles itself
+  }, [location.state, loading]); // Now depends on loading status correctly
 
   let navLinks;
 
@@ -108,7 +137,16 @@ const EventsPage: React.FC = () => {
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
               ) : upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => (
-                  <EventCard key={event.id} event={event} isPast={false} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    isPast={false}
+                    isHighlighted={event.id === highlightedId}
+                    registerRef={(el: HTMLDivElement | null) => {
+                      if (el) eventRefs.current.set(event.id, el);
+                      else eventRefs.current.delete(event.id);
+                    }}
+                  />
                 ))
               ) : (
                 <p className="text-gray-500">No upcoming events</p>
@@ -123,7 +161,16 @@ const EventsPage: React.FC = () => {
                 <LoadingSpinner text="Loading past events..." size="md" />
               ) : pastEvents.length > 0 ? (
                 pastEvents.map((event) => (
-                  <EventCard key={event.id} event={event} isPast={true} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    isPast={true}
+                    isHighlighted={event.id === highlightedId}
+                    registerRef={(el: HTMLDivElement | null) => {
+                      if (el) eventRefs.current.set(event.id, el);
+                      else eventRefs.current.delete(event.id);
+                    }}
+                  />
                 ))
               ) : (
                 <p className="text-gray-500">No past events</p>
