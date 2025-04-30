@@ -72,6 +72,7 @@ const Footer: React.FC<FooterProps> = ({ backgroundColor }) => {
                 <Link
                   key={link.name}
                   to={link.href}
+                  target="_blank"
                   className="text-white hover:opacity-80 transition-opacity"
                 >
                   {link.name}

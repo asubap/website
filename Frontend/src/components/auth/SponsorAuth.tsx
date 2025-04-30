@@ -101,33 +101,49 @@ const SponsorAuth = () => {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full max-w-xs">
       <h1 className="text-2xl font-outfit mb-4">Sponsors</h1>
       <form
-        className="flex flex-col gap-2 items-center"
+        className="flex flex-col gap-2 items-center w-full"
         onSubmit={handleSubmit}
       >
-        <select
-          name="sponsor"
-          id="sponsor"
-          className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
-        >
-          {sponsors.map((sponsor) => (
-            <option key={sponsor} value={sponsor}>
-              {sponsor}
+        <div className="relative w-full">
+          <select
+            name="sponsor"
+            id="sponsor"
+            defaultValue=""
+            required
+            className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred appearance-none"
+          >
+            <option value="" disabled>
+              Choose your sponsor...
             </option>
-          ))}
-        </select>
+            {sponsors.map((sponsor) => (
+              <option key={sponsor} value={sponsor}>
+                {sponsor}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg
+              className="fill-current h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+            </svg>
+          </div>
+        </div>
         <input
           name="passcode"
           id="passcode"
           type="password"
           placeholder="Enter passcode"
-          className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
+          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred"
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-bapred text-white rounded-md hover:bg-bapreddark transition-colors"
+          className="w-full px-4 py-2 bg-bapred text-white rounded-md hover:bg-bapreddark transition-colors"
         >
           Login
         </button>

@@ -50,7 +50,7 @@ const GoogleLogin = () => {
       <h1 className="text-2xl font-outfit mb-4">Members</h1>
       <button
         onClick={handleGoogleLogin}
-        className="p-2 md:p-4 rounded-lg text-xl flex items-center justify-center gap-4 bg-white text-black hover:bg-gray-100 transition-colors"
+        className="w-full px-4 py-3 rounded-lg text-xl flex items-center justify-center gap-4 bg-white text-black hover:bg-gray-100 transition-colors border border-gray-300 shadow-sm"
       >
         <img
           src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
