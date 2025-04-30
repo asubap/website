@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../../context/auth/supabaseClient";
-import { useToast } from "../../App";
+import { useToast } from "../../context/toast/ToastContext";
 import ConfirmationModal from "../common/ConfirmationModal";
 import { Event } from "../../types";
 interface CreateEventModalProps {
