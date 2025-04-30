@@ -224,7 +224,7 @@ const Navbar: React.FC<NavbarProps> = ({
           bottom: 0,
           borderLeft:
             !isSmallScreen && outlineColor
-              ? `1px solid ${outlineColor}`
+              ? `3px solid ${outlineColor}`
               : "none",
         }}
       >
