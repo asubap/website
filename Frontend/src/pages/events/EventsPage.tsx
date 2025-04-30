@@ -77,6 +77,12 @@ const EventsPage: React.FC = () => {
         highlightEventId
       );
 
+      // Clear the state immediately after detecting it to prevent re-trigger on back navigation
+      window.history.replaceState(
+        { ...location.state, highlightEventId: null },
+        ""
+      );
+
       // Use setTimeout to ensure DOM is ready after state update
       const timer = setTimeout(() => {
         const element = eventRefs.current.get(highlightEventId);
