@@ -6,17 +6,14 @@ import {
   Eye,
   MoreVertical,
   Trash2,
-  Download,
-  ExternalLink,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
 } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import { toast } from "react-hot-toast";
-import Modal from "../ui/Modal";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ConfirmationModal from "../common/ConfirmationModal";
+import CategoryModal from "./CategoryModal";
+import ResourceModal from "./ResourceModal";
+import ResourcePreviewModal from "../ui/ResourcePreviewModal";
 
 interface Resource {
   id: string;
@@ -42,15 +39,6 @@ interface ResourceFormData {
   file: File | null;
   categoryId: string;
 }
-
-// List of common image MIME types for preview
-const IMAGE_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-];
 
 // Utility function to format date
 const formatDate = (dateString: string): string => {
@@ -82,15 +70,23 @@ const ResourceManagement: React.FC = () => {
   );
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showResourceModal, setShowResourceModal] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", description: "" });
-  const [newResource, setNewResource] = useState<ResourceFormData>({
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: "",
+    description: "",
+  });
+  const [resourceFormData, setResourceFormData] = useState<ResourceFormData>({
     name: "",
     description: "",
     file: null,
     categoryId: "",
   });
-  const initialCategoryStateRef = useRef(newCategory);
-  const initialResourceStateRef = useRef(newResource);
+  const initialCategoryStateRef = useRef({ name: "", description: "" });
+  const initialResourceStateRef = useRef<ResourceFormData>({
+    name: "",
+    description: "",
+    file: null,
+    categoryId: "",
+  });
   const [showConfirmCategoryClose, setShowConfirmCategoryClose] =
     useState(false);
   const [showConfirmResourceClose, setShowConfirmResourceClose] =
@@ -99,7 +95,6 @@ const ResourceManagement: React.FC = () => {
   const [resourceToPreview, setResourceToPreview] = useState<Resource | null>(
     null
   );
-  const [imageZoomLevel, setImageZoomLevel] = useState(1);
 
   const fetchResources = async () => {
     console.log("Fetching resources...");
@@ -168,9 +163,34 @@ const ResourceManagement: React.FC = () => {
     });
   };
 
-  const handleAddCategory = async () => {
-    if (!session?.access_token) return;
+  const handleOpenAddCategoryModal = () => {
+    setSelectedCategory(null);
+    const initialState = { name: "", description: "" };
+    setCategoryFormData(initialState);
+    initialCategoryStateRef.current = { ...initialState };
+    setShowCategoryModal(true);
+  };
 
+  const handleOpenEditCategoryModal = (category: Category) => {
+    setSelectedCategory(category);
+    const initialState = {
+      name: category.name,
+      description: category.description,
+    };
+    setCategoryFormData(initialState);
+    initialCategoryStateRef.current = { ...initialState };
+    setShowCategoryModal(true);
+  };
+
+  const handleCategoryDataChange = (
+    field: "name" | "description",
+    value: string
+  ) => {
+    setCategoryFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddCategorySubmit = async () => {
+    if (!session?.access_token) return;
     try {
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources/add-category`,
@@ -180,18 +200,12 @@ const ResourceManagement: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            name: newCategory.name,
-            description: newCategory.description,
-          }),
+          body: JSON.stringify(categoryFormData),
         }
       );
-
       if (!response.ok) throw new Error("Failed to add category");
-
       toast.success("Category added successfully");
-      setShowCategoryModal(false);
-      setNewCategory({ name: "", description: "" });
+      closeAndResetCategoryModal();
       fetchResources();
     } catch (error) {
       console.error("Error adding category:", error);
@@ -199,9 +213,8 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  const handleEditCategory = async () => {
+  const handleEditCategorySubmit = async () => {
     if (!session?.access_token || !selectedCategory) return;
-
     try {
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources/${
@@ -213,19 +226,12 @@ const ResourceManagement: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            name: newCategory.name,
-            description: newCategory.description,
-          }),
+          body: JSON.stringify(categoryFormData),
         }
       );
-
       if (!response.ok) throw new Error("Failed to update category");
-
       toast.success("Category updated successfully");
-      setShowCategoryModal(false);
-      setSelectedCategory(null);
-      setNewCategory({ name: "", description: "" });
+      closeAndResetCategoryModal();
       fetchResources();
     } catch (error) {
       console.error("Error updating category:", error);
@@ -233,15 +239,57 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  const handleAddResource = async () => {
-    if (!session?.access_token || !selectedCategory || !newResource.file)
+  const handleOpenAddResourceModal = (category: Category) => {
+    setSelectedCategory(category);
+    setSelectedResource(null);
+    const initialState: ResourceFormData = {
+      name: "",
+      description: "",
+      file: null,
+      categoryId: category.id,
+    };
+    setResourceFormData(initialState);
+    initialResourceStateRef.current = { ...initialState };
+    setShowResourceModal(true);
+  };
+
+  const handleOpenEditResourceModal = (
+    resource: Resource,
+    category: Category
+  ) => {
+    setSelectedResource(resource);
+    setSelectedCategory(category);
+    const initialState: ResourceFormData = {
+      name: resource.name,
+      description: resource.description,
+      file: null,
+      categoryId: category.id,
+    };
+    setResourceFormData(initialState);
+    initialResourceStateRef.current = { ...initialState, file: null };
+    setShowResourceModal(true);
+  };
+
+  const handleResourceDataChange = (
+    field: "name" | "description",
+    value: string
+  ) => {
+    setResourceFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleResourceFileChange = (file: File | null) => {
+    setResourceFormData((prev) => ({ ...prev, file }));
+  };
+
+  const handleAddResourceSubmit = async () => {
+    if (!session?.access_token || !selectedCategory || !resourceFormData.file)
       return;
 
     try {
       const formData = new FormData();
-      formData.append("name", newResource.name);
-      formData.append("description", newResource.description);
-      formData.append("file", newResource.file);
+      formData.append("name", resourceFormData.name);
+      formData.append("description", resourceFormData.description);
+      formData.append("file", resourceFormData.file);
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources/${
@@ -259,13 +307,7 @@ const ResourceManagement: React.FC = () => {
       if (!response.ok) throw new Error("Failed to add resource");
 
       toast.success("Resource added successfully");
-      setShowResourceModal(false);
-      setNewResource({
-        name: "",
-        description: "",
-        file: null,
-        categoryId: "",
-      });
+      closeAndResetResourceModal();
       fetchResources();
     } catch (error) {
       console.error("Error adding resource:", error);
@@ -273,20 +315,24 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  const handleEditResource = async () => {
+  const handleEditResourceSubmit = async () => {
     if (
       !session?.access_token ||
       !selectedCategory ||
       !selectedResource ||
-      !newResource.file
-    )
+      !resourceFormData.file
+    ) {
+      if (!resourceFormData.file) {
+        toast.error("Please select a file to update the resource.");
+      }
       return;
+    }
 
     try {
       const formData = new FormData();
-      formData.append("name", newResource.name);
-      formData.append("description", newResource.description);
-      formData.append("file", newResource.file);
+      formData.append("name", resourceFormData.name);
+      formData.append("description", resourceFormData.description);
+      formData.append("file", resourceFormData.file);
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources/${
@@ -304,14 +350,7 @@ const ResourceManagement: React.FC = () => {
       if (!response.ok) throw new Error("Failed to update resource");
 
       toast.success("Resource updated successfully");
-      setShowResourceModal(false);
-      setSelectedResource(null);
-      setNewResource({
-        name: "",
-        description: "",
-        file: null,
-        categoryId: "",
-      });
+      closeAndResetResourceModal();
       fetchResources();
     } catch (error) {
       console.error("Error updating resource:", error);
@@ -352,24 +391,22 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  // --- Functions to check for unsaved changes ---
   const hasCategoryChanges = () => {
     return (
-      JSON.stringify(newCategory) !==
+      JSON.stringify(categoryFormData) !==
       JSON.stringify(initialCategoryStateRef.current)
     );
   };
 
   const hasResourceChanges = () => {
-    // Compare name, description, and if a file has been selected (vs initially null)
     return (
-      newResource.name !== initialResourceStateRef.current.name ||
-      newResource.description !== initialResourceStateRef.current.description ||
-      !!newResource.file !== !!initialResourceStateRef.current.file // Check if file presence changed
+      resourceFormData.name !== initialResourceStateRef.current.name ||
+      resourceFormData.description !==
+        initialResourceStateRef.current.description ||
+      !!resourceFormData.file
     );
   };
 
-  // --- Functions to handle close attempts ---
   const handleCategoryCloseAttempt = () => {
     if (hasCategoryChanges()) {
       setShowConfirmCategoryClose(true);
@@ -386,31 +423,39 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  // --- Functions to actually close and reset modals ---
   const closeAndResetCategoryModal = () => {
     setShowCategoryModal(false);
     setSelectedCategory(null);
-    setNewCategory({ name: "", description: "" }); // Reset state
+    setCategoryFormData({ name: "", description: "" });
+    initialCategoryStateRef.current = { name: "", description: "" };
   };
 
   const closeAndResetResourceModal = () => {
     setShowResourceModal(false);
-    setSelectedCategory(null); // Also reset selected category if relevant
+    setSelectedCategory(null);
     setSelectedResource(null);
-    setNewResource({ name: "", description: "", file: null, categoryId: "" }); // Reset state
+    setResourceFormData({
+      name: "",
+      description: "",
+      file: null,
+      categoryId: "",
+    });
+    initialResourceStateRef.current = {
+      name: "",
+      description: "",
+      file: null,
+      categoryId: "",
+    };
   };
 
-  // --- Zoom Handlers ---
-  const handleZoomIn = () => {
-    setImageZoomLevel((prev) => Math.min(prev + 0.2, 3)); // Max zoom 3x
+  const handleOpenPreviewModal = (resource: Resource) => {
+    setResourceToPreview(resource);
+    setShowPreviewModal(true);
   };
 
-  const handleZoomOut = () => {
-    setImageZoomLevel((prev) => Math.max(prev - 0.2, 0.5)); // Min zoom 0.5x
-  };
-
-  const handleResetZoom = () => {
-    setImageZoomLevel(1); // Reset to 1x
+  const handleClosePreviewModal = () => {
+    setShowPreviewModal(false);
+    setResourceToPreview(null);
   };
 
   return (
@@ -418,12 +463,7 @@ const ResourceManagement: React.FC = () => {
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Resource Management</h2>
         <button
-          onClick={() => {
-            setSelectedCategory(null);
-            setNewCategory({ name: "", description: "" });
-            initialCategoryStateRef.current = { name: "", description: "" }; // Store initial state
-            setShowCategoryModal(true);
-          }}
+          onClick={handleOpenAddCategoryModal}
           className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90"
         >
           <Plus className="inline-block mr-2" size={20} />
@@ -431,7 +471,6 @@ const ResourceManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* Conditionally render spinner or content */}
       {isLoading ? (
         <LoadingSpinner text="Loading resources..." size="md" />
       ) : (
@@ -453,23 +492,15 @@ const ResourceManagement: React.FC = () => {
                   </div>
                   <div className="space-x-2">
                     <button
-                      onClick={() => {
-                        setSelectedCategory(category);
-                        setNewResource({
-                          name: "",
-                          description: "",
-                          file: null,
-                          categoryId: category.id,
-                        });
-                        initialResourceStateRef.current = {
-                          name: "",
-                          description: "",
-                          file: null,
-                          categoryId: category.id,
-                        }; // Store initial state
-                        setShowResourceModal(true);
-                      }}
-                      className="bg-bapred text-white px-3 py-1 rounded-md hover:bg-opacity-90"
+                      onClick={() => handleOpenEditCategoryModal(category)}
+                      className="bg-gray-200 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-300 text-sm"
+                      title="Edit Category"
+                    >
+                      Edit Category
+                    </button>
+                    <button
+                      onClick={() => handleOpenAddResourceModal(category)}
+                      className="bg-bapred text-white px-3 py-1 rounded-md hover:bg-opacity-90 text-sm"
                     >
                       Add Resource
                     </button>
@@ -495,12 +526,8 @@ const ResourceManagement: React.FC = () => {
                               </p>
                             </div>
                             <div className="flex items-center space-x-2 flex-shrink-0">
-                              {/* Preview Icon Button */}
                               <button
-                                onClick={() => {
-                                  setResourceToPreview(resource);
-                                  setShowPreviewModal(true);
-                                }}
+                                onClick={() => handleOpenPreviewModal(resource)}
                                 className={`p-1.5 rounded-md text-gray-600 hover:bg-gray-100 ${
                                   !resource.signed_url
                                     ? "opacity-50 cursor-not-allowed"
@@ -515,29 +542,18 @@ const ResourceManagement: React.FC = () => {
                               >
                                 <Eye size={18} />
                               </button>
-                              {/* Edit Icon Button */}
                               <button
-                                onClick={() => {
-                                  setSelectedResource(resource);
-                                  setSelectedCategory(category);
-                                  const currentResourceState = {
-                                    name: resource.name,
-                                    description: resource.description,
-                                    file: null, // Reset file on edit intent
-                                    categoryId: category.id,
-                                  };
-                                  setNewResource(currentResourceState);
-                                  initialResourceStateRef.current = {
-                                    ...currentResourceState,
-                                  }; // Store initial state for edit
-                                  setShowResourceModal(true);
-                                }}
+                                onClick={() =>
+                                  handleOpenEditResourceModal(
+                                    resource,
+                                    category
+                                  )
+                                }
                                 className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
                                 title="Edit Resource"
                               >
                                 <MoreVertical size={18} />
                               </button>
-                              {/* Delete Icon Button */}
                               <button
                                 onClick={() =>
                                   handleDeleteResource(category.id, resource.id)
@@ -563,256 +579,37 @@ const ResourceManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Category Modal */}
-      <Modal
+      <CategoryModal
         isOpen={showCategoryModal}
         onClose={handleCategoryCloseAttempt}
-        title={selectedCategory ? "Edit Category" : "Add Category"}
-        onConfirm={selectedCategory ? handleEditCategory : handleAddCategory}
-        confirmText={selectedCategory ? "Update" : "Add"}
-      >
-        <div className="space-y-4">
-          {/* Category Name Input */}
-          <div>
-            <label
-              htmlFor="categoryName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="categoryName"
-              value={newCategory.name}
-              onChange={(e) =>
-                setNewCategory({ ...newCategory, name: e.target.value })
-              }
-              className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-              placeholder="Enter category name..."
-              required
-            />
-          </div>
+        onConfirm={
+          selectedCategory ? handleEditCategorySubmit : handleAddCategorySubmit
+        }
+        isEditing={!!selectedCategory}
+        categoryData={categoryFormData}
+        onCategoryDataChange={handleCategoryDataChange}
+      />
 
-          {/* Category Description Input */}
-          <div>
-            <label
-              htmlFor="categoryDescription"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Description
-            </label>
-            <textarea
-              id="categoryDescription"
-              value={newCategory.description}
-              onChange={(e) =>
-                setNewCategory({ ...newCategory, description: e.target.value })
-              }
-              rows={3}
-              className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-              placeholder="Enter description (optional)..."
-            />
-          </div>
-        </div>
-      </Modal>
-
-      {/* Resource Modal */}
-      <Modal
+      <ResourceModal
         isOpen={showResourceModal}
         onClose={handleResourceCloseAttempt}
-        title={selectedResource ? "Edit Resource" : "Add Resource"}
-        onConfirm={selectedResource ? handleEditResource : handleAddResource}
-        confirmText={selectedResource ? "Update" : "Add"}
-      >
-        <div className="space-y-4">
-          {/* Resource Name Input */}
-          <div>
-            <label
-              htmlFor="resourceName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="resourceName"
-              value={newResource.name}
-              onChange={(e) =>
-                setNewResource({ ...newResource, name: e.target.value })
-              }
-              className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-              placeholder="Enter resource name..."
-              required
-            />
-          </div>
+        onConfirm={
+          selectedResource ? handleEditResourceSubmit : handleAddResourceSubmit
+        }
+        isEditing={!!selectedResource}
+        resourceData={resourceFormData}
+        onResourceDataChange={handleResourceDataChange}
+        onFileChange={handleResourceFileChange}
+      />
 
-          {/* Resource Description Input */}
-          <div>
-            <label
-              htmlFor="resourceDescription"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Description
-            </label>
-            <textarea
-              id="resourceDescription"
-              value={newResource.description}
-              onChange={(e) =>
-                setNewResource({ ...newResource, description: e.target.value })
-              }
-              rows={3}
-              className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-              placeholder="Enter description (optional)..."
-            />
-          </div>
-
-          {/* Resource File Input - Keeping original styling for file input button */}
-          <div>
-            <label
-              htmlFor="resourceFile"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              File <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="resourceFile"
-              type="file"
-              onChange={(e) =>
-                setNewResource({
-                  ...newResource,
-                  file: e.target.files?.[0] || null,
-                })
-              }
-              className="block w-full text-sm text-gray-500 
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-bapred file:text-white
-                hover:file:bg-opacity-90"
-            />
-          </div>
-        </div>
-      </Modal>
-
-      {/* Preview Modal */}
       {showPreviewModal && resourceToPreview && (
-        <Modal
+        <ResourcePreviewModal
           isOpen={showPreviewModal}
-          onClose={() => {
-            setResourceToPreview(null);
-            setImageZoomLevel(1); // Reset zoom on close
-            setShowPreviewModal(false);
-          }}
-          title={resourceToPreview.name}
-          showFooter={false} // Hide default footer, rely on X button
-          size="lg" // Use a larger size for potential images
-        >
-          <div className="mt-4 space-y-4">
-            {/* Buttons moved to top-right */}
-            {resourceToPreview.signed_url && (
-              <div className="flex justify-end space-x-2 mb-4">
-                {/* Open in New Tab Button */}
-                <a
-                  href={resourceToPreview.signed_url!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
-                  title="Open file in a new tab"
-                >
-                  <ExternalLink size={16} />
-                  Open
-                </a>
-                {/* Download Button */}
-                <a
-                  href={resourceToPreview.signed_url!}
-                  download={resourceToPreview.name} // Suggest original filename for download
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                  title="Download file"
-                  target="_blank"
-                >
-                  <Download size={16} />
-                  Download
-                </a>
-              </div>
-            )}
-
-            {resourceToPreview.signed_url ? (
-              <div>
-                {IMAGE_MIME_TYPES.includes(resourceToPreview.mime_type) ? (
-                  // Display Image with Zoom container
-                  <div
-                    className="overflow-auto text-center"
-                    style={{ maxHeight: "65vh" }}
-                  >
-                    {" "}
-                    {/* Container for zoom scroll */}
-                    <img
-                      src={resourceToPreview.signed_url}
-                      alt={`Preview of ${resourceToPreview.name}`}
-                      className="object-contain mx-auto block transition-transform duration-150"
-                      style={{
-                        transform: `scale(${imageZoomLevel})`,
-                        transformOrigin: "center",
-                        // Remove max-h from image itself, let container handle scroll
-                      }}
-                    />
-                  </div>
-                ) : (
-                  // Attempt to display other file types in an iframe
-                  <iframe
-                    src={resourceToPreview.signed_url}
-                    title={`Preview of ${resourceToPreview.name}`}
-                    className="w-full h-[70vh] border-0"
-                    // sandbox // Consider adding sandbox attribute for security if needed
-                  >
-                    Your browser does not support previews for this file type.
-                    Use the buttons above to download or open it.
-                  </iframe>
-                )}
-              </div>
-            ) : (
-              <p className="text-center text-red-600 p-4">
-                Preview URL is missing for this resource.
-              </p>
-            )}
-
-            {/* Zoom Controls - Only show for images */}
-            {resourceToPreview.signed_url &&
-              IMAGE_MIME_TYPES.includes(resourceToPreview.mime_type) && (
-                <div className="flex justify-center items-center space-x-2 pt-3 mt-3 border-t border-gray-200">
-                  <button
-                    onClick={handleZoomOut}
-                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                    disabled={imageZoomLevel <= 0.5}
-                    title="Zoom Out"
-                  >
-                    <ZoomOut size={20} />
-                  </button>
-                  <span className="text-sm text-gray-700 min-w-[40px] text-center">
-                    {(imageZoomLevel * 100).toFixed(0)}%
-                  </span>
-                  <button
-                    onClick={handleZoomIn}
-                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                    disabled={imageZoomLevel >= 3}
-                    title="Zoom In"
-                  >
-                    <ZoomIn size={20} />
-                  </button>
-                  <button
-                    onClick={handleResetZoom}
-                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                    disabled={imageZoomLevel === 1}
-                    title="Reset Zoom"
-                  >
-                    <RotateCcw size={18} />
-                  </button>
-                </div>
-              )}
-          </div>
-        </Modal>
+          onClose={handleClosePreviewModal}
+          resource={resourceToPreview}
+        />
       )}
 
-      {/* Confirmation Modals for Unsaved Changes */}
       {showConfirmCategoryClose && (
         <ConfirmationModal
           isOpen={showConfirmCategoryClose}
@@ -820,9 +617,9 @@ const ResourceManagement: React.FC = () => {
           message="You have unsaved changes. Are you sure you want to discard them?"
           onConfirm={() => {
             setShowConfirmCategoryClose(false);
-            closeAndResetCategoryModal(); // Proceed to close
+            closeAndResetCategoryModal();
           }}
-          onClose={() => setShowConfirmCategoryClose(false)} // Handles cancel
+          onClose={() => setShowConfirmCategoryClose(false)}
           confirmText="Discard"
           cancelText="Cancel"
         />
@@ -835,9 +632,9 @@ const ResourceManagement: React.FC = () => {
           message="You have unsaved changes. Are you sure you want to discard them?"
           onConfirm={() => {
             setShowConfirmResourceClose(false);
-            closeAndResetResourceModal(); // Proceed to close
+            closeAndResetResourceModal();
           }}
-          onClose={() => setShowConfirmResourceClose(false)} // Handles cancel
+          onClose={() => setShowConfirmResourceClose(false)}
           confirmText="Discard"
           cancelText="Cancel"
         />

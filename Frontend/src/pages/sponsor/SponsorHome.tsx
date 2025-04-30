@@ -1,688 +1,28 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
 import axios from "axios";
 import { useAuth } from "../../context/auth/authProvider";
-import { MoreHorizontal, X, Download, ExternalLink } from "lucide-react";
-import Modal from "../../components/ui/Modal";
+import {} from "lucide-react";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import ProfileEditModal from "../../components/sponsor/ProfileEditModal";
+import ResourceUploadForm from "../../components/sponsor/ResourceUploadForm";
+import ResourceList from "../../components/sponsor/ResourceList";
+import ResourcePreviewModal from "../../components/ui/ResourcePreviewModal";
 
-// Define common image regex (similar purpose to IMAGE_MIME_TYPES but works with URL)
-const IMAGE_URL_REGEX = /\.(jpe?g|png|gif|svg|webp)$/i;
-
-// Edit Profile Modal Component
-interface ProfileEditModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  sponsorName: string;
-  sponsorDescription: string;
-  onUpdate: (updatedProfile: {
-    description: string;
-    links: string[];
-    newProfilePic: File | null;
-  }) => void;
-  token: string;
-  profileUrl: string;
-  links?: string[];
+// Define Resource type consistently
+interface SponsorResource {
+  id?: number | string;
+  label: string;
+  url: string;
+  uploadDate?: string;
+  mime_type?: string;
 }
 
-const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
-  isOpen,
-  onClose,
-  sponsorName,
-  sponsorDescription,
-  onUpdate,
-  token,
-  profileUrl,
-  links = [],
-}) => {
-  // State variables
-  const [about, setAbout] = useState(sponsorDescription);
-  const [linksList, setLinksList] = useState<string[]>(links);
-  const [newLink, setNewLink] = useState("");
-  const [editingLink, setEditingLink] = useState({ index: -1, value: "" });
-  const [initialAbout, setInitialAbout] = useState(sponsorDescription);
-  const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
-  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
-  const [currentProfileUrl, setCurrentProfileUrl] = useState(profileUrl);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [linkToRemove, setLinkToRemove] = useState("");
-  const [linkError, setLinkError] = useState("");
-  const [showPicConfirmation, setShowPicConfirmation] = useState(false);
-  const [showLinkWarning, setShowLinkWarning] = useState(false);
-
-  // Use refs to reliably track changes
-  const hasChangesRef = useRef({
-    about: false,
-    links: false,
-  });
-
-  useEffect(() => {
-    setAbout(sponsorDescription);
-    setLinksList(links);
-    setCurrentProfileUrl(profileUrl);
-    setInitialAbout(sponsorDescription);
-    // Reset file selection state when modal opens/closes
-    setProfilePicFile(null);
-    // Reset change tracking when modal opens/closes
-    hasChangesRef.current = {
-      about: false,
-      links: false,
-    };
-  }, [links, profileUrl, sponsorDescription]);
-
-  const isValidUrl = (urlString: string) => {
-    try {
-      const url = new URL(urlString);
-      return url.protocol === "http:" || url.protocol === "https:";
-    } catch (error) {
-      console.error("Error validating URL:", error);
-      return false;
-    }
-  };
-
-  const handleAddLink = () => {
-    if (!newLink.trim()) {
-      setLinkError("Please enter a valid URL");
-      return;
-    }
-
-    if (!isValidUrl(newLink)) {
-      setLinkError(
-        "Please enter a valid URL starting with http:// or https://"
-      );
-      return;
-    }
-
-    // Add link and set change state
-    const newLinksList = [...linksList, newLink];
-    setLinksList(newLinksList);
-    hasChangesRef.current.links = true;
-
-    console.log("Link added, changes set to true:", hasChangesRef.current);
-
-    setNewLink("");
-    setLinkError("");
-  };
-
-  const startEditLink = (index: number) => {
-    console.log("Starting to edit link at index:", index);
-    setEditingLink({ index, value: linksList[index] });
-    // Just starting to edit is enough to mark as having unsaved changes
-    hasChangesRef.current.links = true;
-    console.log(
-      "Started editing link, changes set to true:",
-      hasChangesRef.current
-    );
-  };
-
-  const saveEditLink = () => {
-    if (!isValidUrl(editingLink.value)) {
-      setLinkError(
-        "Please enter a valid URL starting with http:// or https://"
-      );
-      return;
-    }
-
-    // Edit link and set change state
-    const newLinks = [...linksList];
-    newLinks[editingLink.index] = editingLink.value;
-    setLinksList(newLinks);
-    hasChangesRef.current.links = true;
-
-    setEditingLink({ index: -1, value: "" });
-    setLinkError("");
-  };
-
-  const cancelEditLink = () => {
-    setEditingLink({ index: -1, value: "" });
-    setLinkError("");
-  };
-
-  const confirmRemoveLink = (linkToRemove: string, e?: React.MouseEvent) => {
-    // Only stop propagation but not preventDefault
-    if (e) {
-      e.stopPropagation();
-    }
-    setLinkToRemove(linkToRemove);
-    setShowConfirmation(true);
-  };
-
-  const handleRemoveLink = (e?: React.MouseEvent) => {
-    console.log("Removing link:", linkToRemove);
-
-    // Only stop propagation but not preventDefault
-    if (e) {
-      e.stopPropagation();
-    }
-
-    // Remove the link immediately and set change state
-    const newLinksList = linksList.filter((link) => link !== linkToRemove);
-    setLinksList(newLinksList);
-    hasChangesRef.current.links = true;
-
-    // Close the confirmation dialog
-    setShowConfirmation(false);
-    setLinkToRemove("");
-  };
-
-  const handleCancelRemove = () => {
-    setShowConfirmation(false);
-    setLinkToRemove("");
-  };
-
-  // Reset state when modal closes
-  const handleModalClose = () => {
-    // Reset ref before closing
-    hasChangesRef.current = {
-      about: false,
-      links: false,
-    };
-
-    onClose();
-
-    // Reset the state 100ms after the modal closes
-    setTimeout(() => {
-      setNewLink("");
-      setEditingLink({ index: -1, value: "" });
-      setLinkError("");
-      setShowConfirmation(false);
-      setShowPicConfirmation(false);
-      // Ensure preview URL is revoked on close
-      if (previewImageUrl) {
-        URL.revokeObjectURL(previewImageUrl);
-      }
-      setPreviewImageUrl(null);
-    }, 100);
-  };
-
-  const handleSave = async () => {
-    // Check if there's text in the newLink input that hasn't been added
-    if (newLink.trim()) {
-      // Show warning instead of saving
-      setShowLinkWarning(true);
-      return;
-    }
-
-    onUpdate({
-      description: about,
-      links: linksList,
-      newProfilePic: profilePicFile,
-    });
-
-    // Reset change tracking after initiating save
-    hasChangesRef.current = {
-      about: false,
-      links: false,
-    };
-
-    handleModalClose();
-  };
-
-  const handleAddAndSave = () => {
-    // Add the link first
-    handleAddLink();
-    // Then save after a small delay to ensure state is updated
-    setTimeout(() => {
-      onUpdate({
-        description: about,
-        links: [...linksList, newLink],
-        newProfilePic: profilePicFile,
-      });
-
-      // Reset change tracking
-      hasChangesRef.current = {
-        about: false,
-        links: false,
-      };
-
-      handleModalClose();
-    }, 100);
-  };
-
-  const handleProfilePicUpload = async () => {
-    if (!profilePicFile || !token) return;
-
-    setUploadingProfilePic(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", profilePicFile);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      setCurrentProfileUrl(data.photoUrl || data.url);
-      setProfilePicFile(null);
-      // Mark changes after successful upload
-      hasChangesRef.current.about = true;
-    } catch (error) {
-      console.error("Error uploading profile picture:", error);
-      alert(error instanceof Error ? error.message : "Upload failed");
-    } finally {
-      setUploadingProfilePic(false);
-    }
-  };
-
-  const handleProfilePicDelete = async () => {
-    if (!token) {
-      console.error(
-        "Cannot delete profile picture: No authentication token available"
-      );
-      return;
-    }
-
-    console.log("Deleting profile picture...", {
-      endpoint: `${
-        import.meta.env.VITE_BACKEND_URL
-      }/sponsors/${sponsorName}/pfp`,
-      method: "DELETE",
-    });
-
-    try {
-      // Use the API endpoint provided
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Get response text regardless of success/failure
-      const responseText = await response.text();
-      console.log(
-        `Delete profile picture response: ${response.status}`,
-        responseText || "(empty response body)"
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to delete profile picture: ${response.status} ${responseText}`
-        );
-      }
-
-      console.log("Profile picture deletion successful");
-
-      // Set default image or placeholder
-      const placeholderUrl = "/placeholder-logo.png";
-      setCurrentProfileUrl(placeholderUrl);
-      // Mark changes after successful deletion
-      hasChangesRef.current.about = true;
-    } catch (error) {
-      console.error("Error deleting profile picture:", error);
-      // Add user feedback here if desired (toast notification, etc.)
-      alert(
-        "Failed to delete profile picture. Please try again or contact support."
-      );
-    } finally {
-      setShowPicConfirmation(false); // Close confirmation dialog regardless of outcome
-    }
-  };
-
-  const confirmProfilePicDelete = () => {
-    setShowPicConfirmation(true);
-  };
-
-  const cancelProfilePicDelete = () => {
-    setShowPicConfirmation(false);
-  };
-
-  // Handle file selection: Create and set preview URL
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-
-    // Revoke *previous* preview URL if it exists before creating a new one
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl);
-    }
-
-    setProfilePicFile(file);
-
-    if (file) {
-      const newPreviewUrl = URL.createObjectURL(file);
-      setPreviewImageUrl(newPreviewUrl);
-      // Mark changes if a file is selected
-      hasChangesRef.current.about =
-        hasChangesRef.current.about || currentProfileUrl !== profileUrl;
-    } else {
-      // Mark changes if file selection is cleared (might revert to original)
-      hasChangesRef.current.about =
-        hasChangesRef.current.about || currentProfileUrl !== profileUrl;
-    }
-  };
-
-  // Cancel the current file selection (clears preview)
-  const cancelFileSelection = () => {
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl);
-    }
-    setProfilePicFile(null);
-    setPreviewImageUrl(null);
-    // Mark changes if selection is cancelled (might revert to original)
-    hasChangesRef.current.about =
-      hasChangesRef.current.about || currentProfileUrl !== profileUrl;
-  };
-
-  // Cleanup effect for object URL
-  useEffect(() => {
-    // Return cleanup function to revoke URL on unmount
-    return () => {
-      if (previewImageUrl) {
-        URL.revokeObjectURL(previewImageUrl);
-      }
-    };
-  }, [previewImageUrl]); // Rerun only if previewImageUrl changes (should only run on unmount due to dependency)
-
-  const modalContent = (
-    <>
-      {/* Profile Picture Section */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
-        <div className="flex items-start gap-6">
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden shadow-sm">
-              <img
-                src={previewImageUrl || currentProfileUrl}
-                alt={`${sponsorName} Logo Preview`}
-                className="max-w-full max-h-full object-contain p-1"
-              />
-            </div>
-            <div className="absolute -bottom-2 -right-2">
-              <label
-                htmlFor="profile-pic-upload"
-                className="bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors"
-                title="Change picture"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-3 h-3"
-                >
-                  <path d="M12 5v14M5 12h14"></path>
-                </svg>
-              </label>
-            </div>
-            {previewImageUrl && (
-              <button
-                onClick={cancelFileSelection}
-                className="absolute top-0 right-0 -mt-2 -mr-2 bg-gray-600 text-white w-5 h-5 rounded-full flex items-center justify-center cursor-pointer shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Cancel selection"
-              >
-                <X size={12} />
-              </button>
-            )}
-            <input
-              id="profile-pic-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <h4 className="text-xl font-bold">{sponsorName}</h4>
-
-            {profilePicFile && (
-              <button
-                onClick={handleProfilePicUpload}
-                disabled={uploadingProfilePic}
-                className="px-3 py-1 bg-bapred text-white rounded-md text-sm mt-2 w-fit hover:bg-opacity-80 transition-colors disabled:opacity-50"
-              >
-                {uploadingProfilePic ? "Uploading..." : "Upload New Picture"}
-              </button>
-            )}
-
-            {!profilePicFile && (
-              <button
-                onClick={confirmProfilePicDelete}
-                className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit hover:bg-gray-700 transition-colors"
-              >
-                Remove Picture
-              </button>
-            )}
-          </div>
-        </div>
-        <p className="text-xs text-gray-500 mt-3 ml-1">
-          Recommended size: 250x250px square image
-        </p>
-      </div>
-
-      {/* Links Section */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-4">Links</h3>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={newLink}
-            onChange={(e) => {
-              setNewLink(e.target.value);
-              // Mark that we're making changes to links
-              if (e.target.value.trim()) {
-                hasChangesRef.current.links = true;
-              }
-            }}
-            placeholder="https://example.com"
-            className="flex-grow px-3 py-2 border rounded-md"
-          />
-          <button
-            onClick={handleAddLink}
-            className="px-4 py-2 bg-bapred text-white rounded-md font-bold"
-            title="Add link"
-          >
-            +
-          </button>
-        </div>
-        {linkError && <p className="text-red-500 text-sm mb-4">{linkError}</p>}
-
-        {editingLink.index !== -1 && (
-          <div className="mb-4 p-3 border rounded-md bg-gray-50">
-            <h4 className="font-medium mb-2">Edit Link</h4>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={editingLink.value}
-                onChange={(e) => {
-                  setEditingLink({ ...editingLink, value: e.target.value });
-                  // Force change tracking for link edits
-                  hasChangesRef.current.links = true;
-                  console.log(
-                    "Editing link value, changes set to true:",
-                    hasChangesRef.current
-                  );
-                }}
-                className="flex-grow px-3 py-2 border rounded-md"
-              />
-              <button
-                onClick={saveEditLink}
-                className="px-3 py-2 bg-green-600 text-white rounded-md"
-                title="Save"
-              >
-                Save
-              </button>
-              <button
-                onClick={cancelEditLink}
-                className="px-3 py-2 bg-gray-400 text-white rounded-md"
-                title="Cancel"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {linksList.length > 0 && (
-          <ul className="overflow-hidden">
-            {linksList.map((link, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md"
-              >
-                <span className="text-black truncate max-w-[80%]">{link}</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      startEditLink(index);
-                      // Mark as changed when editing a link
-                      hasChangesRef.current.links = true;
-                    }}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
-                    title="Edit"
-                  >
-                    <MoreHorizontal size={16} className="text-gray-600" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      confirmRemoveLink(link, e);
-                      // Mark as changed when removing a link
-                      hasChangesRef.current.links = true;
-                    }}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
-                    title="Remove"
-                  >
-                    <X size={16} className="text-red-600" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* About Section */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-4">About</h3>
-        <textarea
-          value={about}
-          onChange={(e) => {
-            const newValue = e.target.value;
-            setAbout(newValue);
-
-            // Update ref directly - much more reliable than state
-            hasChangesRef.current.about = newValue !== initialAbout;
-
-            console.log("About text changed:", {
-              newValue,
-              initialAbout,
-              hasChanged: hasChangesRef.current.about,
-            });
-          }}
-          onBlur={() => {
-            // Use ref directly on blur too
-            hasChangesRef.current.about = about !== initialAbout;
-            console.log("Textarea blur - ref:", hasChangesRef.current);
-          }}
-          className="w-full px-3 py-2 border rounded-md min-h-[150px] focus:ring-bapred focus:border-bapred"
-          maxLength={500}
-        />
-        <div className="flex justify-between text-sm text-gray-500 mt-1">
-          <span>Company description (max 500 characters)</span>
-          <span>{about.length}/500</span>
-        </div>
-      </div>
-
-      {/* Confirmation modals */}
-      {showConfirmation && (
-        <ConfirmDialog
-          isOpen={showConfirmation}
-          onClose={() => {
-            handleCancelRemove();
-          }}
-          onConfirm={(e) => {
-            handleRemoveLink(e);
-          }}
-          title="Confirm Removal"
-          message="Are you sure you want to remove this link?"
-          confirmText="Remove"
-          cancelText="Cancel"
-          preventOutsideClick={true}
-        />
-      )}
-
-      {showPicConfirmation && (
-        <ConfirmDialog
-          isOpen={showPicConfirmation}
-          onClose={() => {
-            cancelProfilePicDelete();
-          }}
-          onConfirm={() => {
-            handleProfilePicDelete();
-          }}
-          title="Confirm Deletion"
-          message="Are you sure you want to remove this profile picture?"
-          confirmText="Remove"
-          cancelText="Cancel"
-          preventOutsideClick={true}
-        />
-      )}
-
-      {/* Link warning dialog */}
-      {showLinkWarning && (
-        <ConfirmDialog
-          isOpen={showLinkWarning}
-          onClose={() => {
-            setShowLinkWarning(false);
-            // Just save without the link
-            onUpdate({
-              description: about,
-              links: linksList,
-              newProfilePic: null,
-            });
-            handleModalClose();
-          }}
-          onConfirm={() => {
-            handleAddAndSave();
-          }}
-          title="Unsaved Link"
-          message={`You have text in the link field that hasn't been added: "${newLink}". Would you like to add it before saving?`}
-          confirmText="Add & Save"
-          cancelText="Discard Link"
-          preventOutsideClick={true}
-        />
-      )}
-    </>
-  );
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleModalClose}
-      title="Edit Profile"
-      onConfirm={handleSave}
-      confirmText="Save Changes"
-      cancelText="Cancel"
-      showFooter={true}
-      size="lg"
-    >
-      {modalContent}
-    </Modal>
-  );
-};
+// Define common image regex (similar purpose to IMAGE_MIME_TYPES but works with URL)
+// IMAGE_URL_REGEX is now likely only used within ResourcePreviewModal or its caller
 
 const SponsorHome = () => {
   const { session, role } = useAuth();
@@ -707,31 +47,19 @@ const SponsorHome = () => {
   });
   const [loadingSponsor, setLoadingSponsor] = useState(true);
   const [sponsorError, setSponsorError] = useState<string | null>(null);
-  const [resources, setResources] = useState<
-    { id?: number; label: string; url: string; uploadDate?: string }[]
-  >([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [resourceName, setResourceName] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [resources, setResources] = useState<SponsorResource[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [previewResource, setPreviewResource] = useState<{
-    id?: number;
-    label: string;
-    url: string;
-    name?: string;
-  } | null>(null);
+  const [previewResource, setPreviewResource] =
+    useState<SponsorResource | null>(null);
   const [loadingResources, setLoadingResources] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [resourceToDelete, setResourceToDelete] = useState<{
-    id?: number;
-    label: string;
-    url: string;
-  } | null>(null);
+  const [resourceToDelete, setResourceToDelete] =
+    useState<SponsorResource | null>(null);
 
   // Helper function to format dates properly
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "Unknown date";
     const date = new Date(dateString);
     return isNaN(date.getTime()) ? "Recent upload" : date.toLocaleDateString();
@@ -852,42 +180,7 @@ const SponsorHome = () => {
     }
   }, [token, sponsorData.name, fetchResources]);
 
-  const handleResourceUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !resourceName || !token) return;
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("resourceLabel", resourceName);
-      formData.append("file", file);
-
-      console.log("Uploading resource with key 'file'");
-
-      // Use the correct API endpoint with environment variable
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
-          sponsorData.name
-        }/resources`,
-        formData,
-        {
-          headers: {
-            // Do not set Content-Type, axios will set it automatically with proper boundary
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setFile(null);
-      setResourceName("");
-      fetchResources(); // Refresh the resources list
-    } catch (error) {
-      console.error("Error uploading resource:", error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
+  // Upload profile picture logic (needed by ProfileEditModal -> handleProfileUpdate)
   const uploadProfilePicture = async (file: File): Promise<string | null> => {
     if (!token) return null;
 
@@ -995,11 +288,7 @@ const SponsorHome = () => {
     setIsUpdatingProfile(false);
   };
 
-  const handleResourceDelete = async (resource: {
-    id?: number;
-    label: string;
-    url: string;
-  }) => {
+  const handleResourceDelete = async (resource: SponsorResource) => {
     console.log("handleResourceDelete called for resource URL:", resource.url);
 
     if (!token || !resource.url) {
@@ -1037,11 +326,7 @@ const SponsorHome = () => {
   };
 
   // Function to trigger delete confirmation
-  const confirmResourceDelete = (resource: {
-    id?: number;
-    label: string;
-    url: string;
-  }) => {
+  const confirmResourceDelete = (resource: SponsorResource) => {
     setResourceToDelete(resource);
     setShowDeleteConfirmation(true);
   };
@@ -1062,11 +347,7 @@ const SponsorHome = () => {
   };
 
   // Function to handle showing resource preview
-  const showResourcePreview = (resource: {
-    id?: number;
-    label: string;
-    url: string;
-  }) => {
+  const showResourcePreview = (resource: SponsorResource) => {
     setPreviewResource(resource);
   };
 
@@ -1133,100 +414,21 @@ const SponsorHome = () => {
               {/* Resource Management */}
               <div className="h-full w-full">
                 <div className="flex flex-col gap-8 h-full">
-                  <div className="border p-6 rounded-lg shadow-md">
-                    <h2 className="text-2xl font-bold mb-4">
-                      Upload Resources
-                    </h2>
-                    <form
-                      onSubmit={handleResourceUpload}
-                      className="flex flex-col gap-4"
-                    >
-                      <div>
-                        <label className="block mb-1 font-medium">
-                          Resource Name
-                        </label>
-                        <input
-                          type="text"
-                          value={resourceName}
-                          onChange={(e) => setResourceName(e.target.value)}
-                          className="w-full px-3 py-2 border rounded"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 font-medium">File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setFile(e.target.files?.[0] || null)}
-                          className="w-full"
-                          required
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={!file || !resourceName || uploading}
-                        className="px-4 py-2 bg-bapred text-white rounded disabled:opacity-50"
-                      >
-                        {uploading ? "Uploading..." : "Upload Resource"}
-                      </button>
-                    </form>
-                  </div>
+                  {/* Use ResourceUploadForm Component */}
+                  <ResourceUploadForm
+                    sponsorName={sponsorData.name}
+                    token={token || ""}
+                    onUploadSuccess={fetchResources} // Pass fetchResources to refresh list
+                  />
 
-                  <div className="border p-6 rounded-lg shadow-md">
-                    <h2 className="text-2xl font-bold mb-4">My Resources</h2>
-                    {loadingResources ? (
-                      <LoadingSpinner text="Loading resources..." />
-                    ) : Array.isArray(resources) && resources.length > 0 ? (
-                      <div className="flex flex-col gap-3">
-                        {resources.map((resource) => (
-                          <div
-                            key={resource.id || resource.url}
-                            className="flex justify-between items-center border-b pb-2"
-                          >
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <p className="font-medium">{resource.label}</p>
-                              </div>
-                              <p className="text-sm text-gray-500">
-                                Uploaded on{" "}
-                                {formatDate(resource.uploadDate || "")}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => showResourcePreview(resource)}
-                                className="px-3 py-1 bg-bapred text-white rounded text-sm"
-                              >
-                                View
-                              </button>
-                              <button
-                                onClick={() => {
-                                  console.log(
-                                    "Delete button clicked for resource:",
-                                    resource
-                                  );
-                                  if (resource.url) {
-                                    confirmResourceDelete(resource); // Trigger confirmation
-                                  } else {
-                                    console.log(
-                                      "Resource URL is missing, cannot delete"
-                                    );
-                                  }
-                                }}
-                                className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">
-                        No resources uploaded yet.
-                      </p>
-                    )}
-                  </div>
+                  {/* Use ResourceList Component */}
+                  <ResourceList
+                    resources={resources}
+                    isLoading={loadingResources}
+                    onDeleteConfirm={confirmResourceDelete}
+                    onPreview={showResourcePreview}
+                    formatDate={formatDate}
+                  />
                 </div>
               </div>
             </div>
@@ -1249,62 +451,19 @@ const SponsorHome = () => {
       />
 
       {/* Resource Preview Modal */}
-      {previewResource &&
-        (() => {
-          return (
-            <Modal
-              isOpen={!!previewResource}
-              onClose={closePreview}
-              title={previewResource.label}
-              showFooter={false}
-              size="lg"
-            >
-              <div className="w-full h-[70vh] flex flex-col items-center">
-                {/* Header row for Open / Download buttons */}
-                <div className="w-full mb-4 flex justify-end items-center">
-                  <a
-                    href={previewResource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
-                    title="Open file in a new tab"
-                  >
-                    <ExternalLink size={16} /> Open
-                  </a>
-                  {/* Add Download Button */}
-                  <a
-                    href={previewResource.url}
-                    download={previewResource.label}
-                    className="ml-2 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                    title="Download file"
-                  >
-                    <Download size={16} /> Download
-                  </a>
-                </div>
-
-                {/* Conditional Preview Area */}
-                {previewResource.url.match(IMAGE_URL_REGEX) ? (
-                  // Display Image
-                  <img
-                    src={previewResource.url}
-                    alt={`Preview of ${previewResource.label}`}
-                    className="max-w-full max-h-[65vh] object-contain mx-auto block"
-                  />
-                ) : (
-                  // Attempt iframe for non-images (e.g., PDFs)
-                  <iframe
-                    src={previewResource.url}
-                    title={`Preview of ${previewResource.label}`}
-                    className="w-full h-[70vh] border-0"
-                  >
-                    Your browser does not support previews for this file type.
-                    Use the buttons above to download or open it.
-                  </iframe>
-                )}
-              </div>
-            </Modal>
-          );
-        })()}
+      <ResourcePreviewModal
+        isOpen={!!previewResource}
+        onClose={closePreview}
+        resource={
+          previewResource
+            ? {
+                name: previewResource.label, // Use label for title
+                signed_url: previewResource.url, // Map url to signed_url
+                mime_type: previewResource.mime_type, // Pass mime_type if available
+              }
+            : null
+        }
+      />
 
       {/* Delete Resource Confirmation Dialog */}
       {showDeleteConfirmation && resourceToDelete && (
