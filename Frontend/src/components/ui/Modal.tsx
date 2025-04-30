@@ -29,12 +29,33 @@ const Modal: React.FC<ModalProps> = ({
   size = "md",
   preventOutsideClick = false,
 }) => {
+  // Effect to handle Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]); // Re-run if isOpen or onClose changes
+
   // Effect to control body scrolling
   useEffect(() => {
+    console.log("Modal scroll effect running. isOpen:", isOpen);
     if (isOpen) {
+      console.log("Modal: Setting body overflow to hidden");
       // Prevent scrolling when modal is open
       document.body.style.overflow = "hidden";
     } else {
+      console.log("Modal: Setting body overflow to auto (due to isOpen false)");
       // Restore scrolling when modal is closed
       document.body.style.overflow = "auto";
     }
@@ -42,6 +63,7 @@ const Modal: React.FC<ModalProps> = ({
     // Cleanup function to restore scrolling when component unmounts
     // or before the effect runs again
     return () => {
+      console.log("Modal scroll effect cleanup: Setting body overflow to auto");
       document.body.style.overflow = "auto";
     };
   }, [isOpen]); // Depend on isOpen state

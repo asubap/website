@@ -42,18 +42,21 @@ const ResourcesPage: React.FC = () => {
   useEffect(() => {
     const fetchResources = async () => {
       if (!session?.access_token) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/resources`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/resources`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
           }
-        });
+        );
 
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
@@ -81,17 +84,20 @@ const ResourcesPage: React.FC = () => {
         outlineColor="#AF272F"
         isLogged={Boolean(session)}
       />
-      
+
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-center">Resources</h1>
-          
+
           {loading ? (
             <div className="flex justify-center items-center py-12">
               <LoadingSpinner text="Loading resources..." size="lg" />
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <div
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+              role="alert"
+            >
               <p className="font-bold">Error</p>
               <p>{error}</p>
             </div>
@@ -101,14 +107,14 @@ const ResourcesPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {categories.map(category => (
+              {categories.map((category) => (
                 <ResourceCategory key={category.id} category={category} />
               ))}
             </div>
           )}
         </div>
       </main>
-      
+
       <Footer backgroundColor="#AF272F" />
     </div>
   );
