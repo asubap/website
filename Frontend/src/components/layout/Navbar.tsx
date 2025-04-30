@@ -22,28 +22,9 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
   const lastToggleTime = useRef(0);
-
-  // Check screen size
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsSmallScreen(window.innerWidth < 640);
-    };
-
-    // Initial check
-    checkScreenSize();
-
-    // Add event listener for resize
-    window.addEventListener("resize", checkScreenSize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("resize", checkScreenSize);
-    };
-  }, []);
 
   // Use useCallback to prevent unnecessary re-renders
   const toggleMenu = useCallback((): void => {
@@ -155,8 +136,9 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="mr-3"
               />
               <div className="flex flex-col">
-                <span className="block text-xl">
-                  {isSmallScreen ? "BAP | Beta Tau Chapter" : title}
+                <span className="hidden lg:block text-xl">{title}</span>
+                <span className="block lg:hidden text-xl">
+                  BAP | Beta Tau Chapter
                 </span>
                 <span className="block text-sm text-[#AF272F]">
                   Arizona State University
@@ -165,8 +147,8 @@ const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6 z-10">
+          {/* Desktop Navigation - Change breakpoint to lg */}
+          <div className="hidden lg:flex items-center space-x-6 z-10">
             {/* Main navigation links */}
             <div className="flex space-x-6">
               {links.map((link) => (
@@ -185,8 +167,8 @@ const Navbar: React.FC<NavbarProps> = ({
             <div className="ml-6">{isLogged ? <LogOut /> : null}</div>
           </div>
 
-          {/* Hamburger button - always visible on mobile */}
-          <div className="md:hidden">
+          {/* Hamburger button - Change breakpoint to lg */}
+          <div className="lg:hidden">
             <button
               onClick={toggleMenu}
               className="text-black focus:outline-none p-1"
@@ -215,41 +197,33 @@ const Navbar: React.FC<NavbarProps> = ({
         ref={menuRef}
         className={`fixed bg-white text-black z-[90] transform ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-center items-center`}
+        } transition-transform duration-300 ease-in-out lg:hidden flex flex-col justify-center items-center 
+          w-full sm:w-[300px] right-0 top-0 bottom-0 border-l-bapred sm:border-l-[3px] border-l-0`}
         style={{
-          width: isSmallScreen ? "100%" : "300px",
-          right: 0,
-          left: isSmallScreen ? 0 : "auto",
-          top: 0,
-          bottom: 0,
-          borderLeft:
-            !isSmallScreen && outlineColor
-              ? `3px solid ${outlineColor}`
-              : "none",
+          // Apply border color dynamically only when not on small screen
+          borderLeftColor: outlineColor || "#AF272F",
         }}
       >
-        {/* Close (X) button - only visible on small screens */}
-        {isSmallScreen && (
-          <button
-            onClick={toggleMenu}
-            className="absolute top-6 right-6 text-black focus:outline-none p-1"
-            aria-label="Close menu"
+        {/* Close (X) button - always visible when menu is open */}
+        <button
+          onClick={toggleMenu}
+          className="absolute top-6 right-6 text-black focus:outline-none p-1 z-[91]"
+          aria-label="Close menu"
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        )}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
 
         <div className="flex flex-col space-y-8 p-4 items-center pt-20">
           <ul className="space-y-8 text-center text-xl">
