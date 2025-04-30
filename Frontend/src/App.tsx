@@ -16,29 +16,9 @@ import NetworkingPage from "./pages/network/NetworkingPage";
 import ResourcesPage from "./pages/resources/ResourcesPage";
 import NotFound from "./pages/notfound/NotFound";
 import ViewEvent from "./pages/events/ViewEvent";
-import { useState, createContext, useContext } from "react";
+import { useState } from "react";
 import Toast from "./components/ui/Toast";
-
-// Define toast context
-interface ToastContextType {
-  showToast: (
-    message: string,
-    type?: "success" | "error" | "info",
-    duration?: number
-  ) => void;
-}
-
-export const ToastContext = createContext<ToastContextType | undefined>(
-  undefined
-);
-
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
-  }
-  return context;
-}
+import { ToastContext } from "./context/toast/ToastContext";
 
 function App() {
   const [toast, setToast] = useState<{

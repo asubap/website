@@ -68,7 +68,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
     }
-  }, [isOpen, links, profileUrl, sponsorDescription]); // Added isOpen dependency
+  }, [isOpen, links, profileUrl, sponsorDescription, previewImageUrl]); // Added isOpen dependency
 
   const isValidUrl = (urlString: string) => {
     try {

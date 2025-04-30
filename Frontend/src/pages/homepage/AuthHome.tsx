@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { supabase } from "../../context/auth/supabaseClient"; // Import supabase client
-import { useToast } from "../../App"; // Import useToast for potential error messages
-
+import { useToast } from "../../context/toast/ToastContext";
 type AuthorizationStatus = "loading" | "authorized" | "unauthorized";
 
 export default function AuthHome() {
@@ -102,7 +101,8 @@ export default function AuthHome() {
       clearInterval(intervalId);
       clearTimeout(timeoutId);
     };
-  }, [authorizationStatus, navigate, setSession, showToast]); // Add dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorizationStatus, navigate, setSession, showToast]); // countdown dependency intentionally omitted to prevent timeout reset on each tick
 
   // Render based on authorization status
   if (authorizationStatus === "loading") {

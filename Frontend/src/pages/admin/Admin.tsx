@@ -3,7 +3,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
-import { useToast } from "../../App";
+import { useToast } from "../../context/toast/ToastContext";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
 import ResourceManagement from "../../components/admin/ResourceManagement";

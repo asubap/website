@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../../context/auth/supabaseClient";
-import { useToast } from "../../App";
 import ConfirmationModal from "../common/ConfirmationModal";
+import { useToast } from "../../context/toast/ToastContext";
 
 interface AddSponsorModalProps {
   onClose: () => void;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -96,7 +96,7 @@ const ResourceManagement: React.FC = () => {
     null
   );
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     console.log("Fetching resources...");
     console.log("Session:", session);
     console.log("Access token:", session?.access_token);
@@ -139,17 +139,18 @@ const ResourceManagement: React.FC = () => {
     } catch (error) {
       console.error("Error fetching resources:", error);
       toast.error("Failed to load resources");
+      setCategories([]); // Reset categories on error
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session, authLoading]);
 
   useEffect(() => {
     console.log("ResourceManagement mounted or session token changed");
     if (!authLoading) {
       fetchResources();
     }
-  }, [session?.access_token, authLoading]);
+  }, [authLoading, fetchResources]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
