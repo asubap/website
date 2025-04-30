@@ -13,7 +13,7 @@ import { EventListShort } from "../../components/event/EventListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 // Define interfaces for API responses
-interface AdminInfo {
+interface UserInfo {
   email: string;
   role: string;
 }
@@ -102,13 +102,13 @@ const Admin = () => {
             console.log("API response data:", data);
             // Process e-board members
             const admins = data
-              .filter((item: AdminInfo) => item.role === "e-board")
-              .map((item: AdminInfo) => item.email);
+              .filter((item: UserInfo) => item.role === "e-board")
+              .map((item: UserInfo) => item.email);
             console.log(admins);
             setAdminEmails(admins);
             const members = data
-              .filter((item: any) => item.role === "general-member")
-              .map((item: any) => item.email);
+              .filter((item: UserInfo) => item.role === "general-member")
+              .map((item: UserInfo) => item.email);
             console.log(members);
             setMembers(members);
             setLoadingAdmins(false);
@@ -402,9 +402,9 @@ const Admin = () => {
     }
   };
 
-  const handleSponsorAdded = (newSponsor: any) => {
-    console.log("New sponsor:", newSponsor);
-    setSponsors([...sponsors, newSponsor.sponsors.sponsor_name]);
+  const handleSponsorAdded = (newSponsor: ApiSponsor) => {
+    console.log("New sponsor data:", newSponsor);
+    setSponsors([...sponsors, newSponsor.company_name]);
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
   };
@@ -470,7 +470,7 @@ const Admin = () => {
                 </button>
               </form>
               {loadingAdmins ? (
-                <LoadingSpinner text="Loading admin users..." size="md" />
+                <LoadingSpinner text="Loading admins..." size="md" />
               ) : (
                 <EmailList
                   emails={adminEmails}
@@ -485,7 +485,7 @@ const Admin = () => {
                 <h2 className="text-2xl font-semibold">Past Events</h2>
               </div>
               {loadingEvents ? (
-                <LoadingSpinner text="Loading past events..." size="md" />
+                <LoadingSpinner text="Loading events..." size="md" />
               ) : pastEvents.length > 0 ? (
                 <EventListShort events={pastEvents} />
               ) : (
@@ -503,11 +503,15 @@ const Admin = () => {
                   + New Sponsor
                 </button>
               </div>
-              <EmailList
-                emails={sponsors}
-                onDelete={handleDeleteSponsor}
-                userType="sponsor"
-              />
+              {loadingSponsors ? (
+                <LoadingSpinner text="Loading sponsors..." size="md" />
+              ) : (
+                <EmailList
+                  emails={sponsors}
+                  onDelete={handleDeleteSponsor}
+                  userType="sponsor"
+                />
+              )}
             </div>
 
             <div className="order-5 md:order-5">
@@ -532,11 +536,15 @@ const Admin = () => {
                   + Add Member
                 </button>
               </form>
-              <EmailList
-                emails={members}
-                onDelete={handleDelete}
-                userType="admin"
-              />
+              {loadingMembers ? (
+                <LoadingSpinner text="Loading members..." size="md" />
+              ) : (
+                <EmailList
+                  emails={members}
+                  onDelete={handleDelete}
+                  userType="admin"
+                />
+              )}
             </div>
 
             <div className="order-6 md:order-6 col-span-1 md:col-span-2">
