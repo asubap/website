@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   ChevronDown,
   ChevronRight,
-  Plus,
   Eye,
   MoreVertical,
   Trash2,
@@ -14,6 +19,7 @@ import ConfirmationModal from "../common/ConfirmationModal";
 import CategoryModal from "./CategoryModal";
 import ResourceModal from "./ResourceModal";
 import ResourcePreviewModal from "../ui/ResourcePreviewModal";
+import Fuse from "fuse.js";
 
 interface Resource {
   id: string;
@@ -62,6 +68,7 @@ const ResourceManagement: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set()
   );
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
@@ -151,6 +158,60 @@ const ResourceManagement: React.FC = () => {
       fetchResources();
     }
   }, [authLoading, fetchResources]);
+
+  // Fuzzy search logic
+  const fuseOptions = {
+    includeScore: true,
+    threshold: 0.4, // Adjust threshold for sensitivity
+    keys: [
+      { name: "name", weight: 0.7 }, // Category name
+      { name: "description", weight: 0.3 }, // Category description
+      { name: "resources.name", weight: 0.7 }, // Resource name
+      { name: "resources.description", weight: 0.5 }, // Resource description
+    ],
+  };
+
+  const fuse = useMemo(() => new Fuse(categories, fuseOptions), [categories]);
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return categories; // No query, return all
+    }
+
+    const results = fuse.search(searchQuery);
+
+    // Map fuse results back to Category structure, filtering resources if needed
+    return results
+      .map((result) => {
+        const category = { ...result.item }; // Get the original category item
+
+        // If the category itself didn't score high, maybe only some resources did
+        // Refine results to only include matching resources if the main category match is weak
+        // Note: Fuse.js v6+ returns matches array indicating which parts matched.
+        // For simplicity here, we'll show the whole category if it matches,
+        // or filter resources if the category match itself isn't strong.
+        // A more advanced implementation could use the `matches` array.
+
+        // Let's refine this: If a category matches, keep all its resources for context.
+        // If only resources match, we need a slightly different approach (not directly supported by simple mapping).
+
+        // Simpler approach: Filter categories based on search, then filter resources within those categories.
+        // Re-initialize fuse for resources within matched categories if needed.
+        // Or, just return the category if it or any of its resources broadly match.
+        return category;
+
+        // ---- Revised Simpler Logic ----
+        // Let Fuse decide which categories match based on the keys.
+        // If a category appears in the results, return it as is.
+        // The default Fuse behavior might already include categories where only a resource matches.
+        // return result.item;
+      })
+      .filter(Boolean); // Filter out any potential undefined/null results if logic gets complex
+  }, [searchQuery, categories, fuse]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
@@ -461,23 +522,31 @@ const ResourceManagement: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col gap-4">
         <h2 className="text-2xl font-semibold">Resource Management</h2>
-        <button
-          onClick={handleOpenAddCategoryModal}
-          className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90"
-        >
-          <Plus className="inline-block mr-2" size={20} />
-          Add Category
-        </button>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <input
+            type="text"
+            placeholder="Search categories or resources..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-bapred focus:border-bapred text-sm flex-grow sm:w-64"
+          />
+          <button
+            onClick={handleOpenAddCategoryModal}
+            className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90 flex items-center justify-center whitespace-nowrap text-sm font-medium"
+          >
+            <span className="hidden md:inline mr-1">Add</span>+ Category
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
         <LoadingSpinner text="Loading resources..." size="md" />
       ) : (
         <div className="space-y-4">
-          {categories.length > 0 ? (
-            categories.map((category) => (
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((category) => (
               <div key={category.id} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div
@@ -574,7 +643,9 @@ const ResourceManagement: React.FC = () => {
             ))
           ) : (
             <p className="text-gray-500 text-center py-4">
-              No resource categories found. Add one to get started.
+              {searchQuery
+                ? "No categories or resources match your search."
+                : "No resource categories found. Add one to get started."}
             </p>
           )}
         </div>
