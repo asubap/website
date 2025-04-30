@@ -4,10 +4,13 @@ import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
 import axios from "axios";
 import { useAuth } from "../../context/auth/authProvider";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X, Download, ExternalLink } from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+
+// Define common image regex (similar purpose to IMAGE_MIME_TYPES but works with URL)
+const IMAGE_URL_REGEX = /\.(jpe?g|png|gif|svg|webp)$/i;
 
 // Edit Profile Modal Component
 interface ProfileEditModalProps {
@@ -1248,87 +1251,56 @@ const SponsorHome = () => {
       {/* Resource Preview Modal */}
       {previewResource &&
         (() => {
-          // Use IIFE to calculate variable within JSX scope
-          const isPreviewable =
-            previewResource.url.endsWith(".pdf") ||
-            previewResource.url.match(/\.(jpe?g|png|gif|svg|webp)$/i);
-
           return (
             <Modal
               isOpen={!!previewResource}
               onClose={closePreview}
               title={previewResource.label}
-              showFooter={true}
-              confirmText="Close"
-              onConfirm={closePreview}
+              showFooter={false}
               size="lg"
             >
               <div className="w-full h-[70vh] flex flex-col items-center">
-                {/* Header row for Open in New Tab / Download button */}
+                {/* Header row for Open / Download buttons */}
                 <div className="w-full mb-4 flex justify-end items-center">
                   <a
                     href={previewResource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1 bg-bapred text-white rounded text-sm"
-                    {...(!isPreviewable && {
-                      download: previewResource.label || "download",
-                    })} // Add download attribute conditionally
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+                    title="Open file in a new tab"
                   >
-                    {isPreviewable ? "Open in New Tab" : "Download"}{" "}
-                    {/* Conditional text */}
+                    <ExternalLink size={16} /> Open
+                  </a>
+                  {/* Add Download Button */}
+                  <a
+                    href={previewResource.url}
+                    download={previewResource.label}
+                    className="ml-2 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    title="Download file"
+                  >
+                    <Download size={16} /> Download
                   </a>
                 </div>
 
-                {/* Scrollable container for preview content */}
-                <div
-                  className="w-full flex-1 overflow-auto border border-gray-200 bg-gray-50"
-                  style={{ maxHeight: "calc(70vh - 60px)" }} // Adjust height based on controls row height
-                >
-                  {isPreviewable ? (
-                    previewResource.url.endsWith(".pdf") ? (
-                      // PDF container
-                      <div
-                        className="w-full h-full flex justify-center"
-                        style={{ minHeight: "100%" }} // Ensure PDF takes full height
-                      >
-                        <iframe
-                          src={`${previewResource.url}#toolbar=0`}
-                          className="w-full h-full border-none shadow-md"
-                          title={previewResource.label}
-                          loading="eager"
-                        />
-                      </div>
-                    ) : (
-                      // Image container
-                      <div className="w-full h-full flex items-center justify-center p-4">
-                        <img
-                          src={previewResource.url}
-                          alt={previewResource.label}
-                          style={{
-                            maxWidth: "100%", // Respect container width initially
-                            maxHeight: "100%", // Respect container height initially
-                            width: "auto",
-                            height: "auto",
-                            display: "block", // Helps with centering/sizing
-                          }}
-                          className="block shadow-md"
-                          loading="eager"
-                        />
-                      </div>
-                    )
-                  ) : (
-                    // Message for non-previewable files
-                    <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                      <p className="mb-4">
-                        This file type cannot be previewed in-browser.
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Click the 'Download' button above to save the file.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {/* Conditional Preview Area */}
+                {previewResource.url.match(IMAGE_URL_REGEX) ? (
+                  // Display Image
+                  <img
+                    src={previewResource.url}
+                    alt={`Preview of ${previewResource.label}`}
+                    className="max-w-full max-h-[65vh] object-contain mx-auto block"
+                  />
+                ) : (
+                  // Attempt iframe for non-images (e.g., PDFs)
+                  <iframe
+                    src={previewResource.url}
+                    title={`Preview of ${previewResource.label}`}
+                    className="w-full h-[70vh] border-0"
+                  >
+                    Your browser does not support previews for this file type.
+                    Use the buttons above to download or open it.
+                  </iframe>
+                )}
               </div>
             </Modal>
           );

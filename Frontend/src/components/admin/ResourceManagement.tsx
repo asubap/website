@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronDown, ChevronRight, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  Eye,
+  MoreVertical,
+  Trash2,
+  Download,
+  ExternalLink,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+} from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import { toast } from "react-hot-toast";
 import Modal from "../ui/Modal";
@@ -30,6 +42,15 @@ interface ResourceFormData {
   file: File | null;
   categoryId: string;
 }
+
+// List of common image MIME types for preview
+const IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+];
 
 // Utility function to format date
 const formatDate = (dateString: string): string => {
@@ -74,6 +95,11 @@ const ResourceManagement: React.FC = () => {
     useState(false);
   const [showConfirmResourceClose, setShowConfirmResourceClose] =
     useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [resourceToPreview, setResourceToPreview] = useState<Resource | null>(
+    null
+  );
+  const [imageZoomLevel, setImageZoomLevel] = useState(1);
 
   const fetchResources = async () => {
     console.log("Fetching resources...");
@@ -374,8 +400,21 @@ const ResourceManagement: React.FC = () => {
     setNewResource({ name: "", description: "", file: null, categoryId: "" }); // Reset state
   };
 
+  // --- Zoom Handlers ---
+  const handleZoomIn = () => {
+    setImageZoomLevel((prev) => Math.min(prev + 0.2, 3)); // Max zoom 3x
+  };
+
+  const handleZoomOut = () => {
+    setImageZoomLevel((prev) => Math.max(prev - 0.2, 0.5)); // Min zoom 0.5x
+  };
+
+  const handleResetZoom = () => {
+    setImageZoomLevel(1); // Reset to 1x
+  };
+
   return (
-    <div className="p-4 bg-white rounded-lg shadow">
+    <div>
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Resource Management</h2>
         <button
@@ -455,7 +494,28 @@ const ResourceManagement: React.FC = () => {
                                 Uploaded on {formatDate(resource.created_at)}
                               </p>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              {/* Preview Icon Button */}
+                              <button
+                                onClick={() => {
+                                  setResourceToPreview(resource);
+                                  setShowPreviewModal(true);
+                                }}
+                                className={`p-1.5 rounded-md text-gray-600 hover:bg-gray-100 ${
+                                  !resource.signed_url
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                disabled={!resource.signed_url}
+                                title={
+                                  !resource.signed_url
+                                    ? "Preview unavailable"
+                                    : "Preview Resource"
+                                }
+                              >
+                                <Eye size={18} />
+                              </button>
+                              {/* Edit Icon Button */}
                               <button
                                 onClick={() => {
                                   setSelectedResource(resource);
@@ -472,17 +532,20 @@ const ResourceManagement: React.FC = () => {
                                   }; // Store initial state for edit
                                   setShowResourceModal(true);
                                 }}
-                                className="px-3 py-1 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90"
+                                className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                                title="Edit Resource"
                               >
-                                Edit
+                                <MoreVertical size={18} />
                               </button>
+                              {/* Delete Icon Button */}
                               <button
                                 onClick={() =>
                                   handleDeleteResource(category.id, resource.id)
                                 }
-                                className="px-3 py-1 text-sm font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600"
+                                className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
+                                title="Delete Resource"
                               >
-                                Delete
+                                <Trash2 size={18} />
                               </button>
                             </div>
                           </div>
@@ -629,6 +692,125 @@ const ResourceManagement: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Preview Modal */}
+      {showPreviewModal && resourceToPreview && (
+        <Modal
+          isOpen={showPreviewModal}
+          onClose={() => {
+            setResourceToPreview(null);
+            setImageZoomLevel(1); // Reset zoom on close
+            setShowPreviewModal(false);
+          }}
+          title={resourceToPreview.name}
+          showFooter={false} // Hide default footer, rely on X button
+          size="lg" // Use a larger size for potential images
+        >
+          <div className="mt-4 space-y-4">
+            {/* Buttons moved to top-right */}
+            {resourceToPreview.signed_url && (
+              <div className="flex justify-end space-x-2 mb-4">
+                {/* Open in New Tab Button */}
+                <a
+                  href={resourceToPreview.signed_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+                  title="Open file in a new tab"
+                >
+                  <ExternalLink size={16} />
+                  Open
+                </a>
+                {/* Download Button */}
+                <a
+                  href={resourceToPreview.signed_url!}
+                  download={resourceToPreview.name} // Suggest original filename for download
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  title="Download file"
+                  target="_blank"
+                >
+                  <Download size={16} />
+                  Download
+                </a>
+              </div>
+            )}
+
+            {resourceToPreview.signed_url ? (
+              <div>
+                {IMAGE_MIME_TYPES.includes(resourceToPreview.mime_type) ? (
+                  // Display Image with Zoom container
+                  <div
+                    className="overflow-auto text-center"
+                    style={{ maxHeight: "65vh" }}
+                  >
+                    {" "}
+                    {/* Container for zoom scroll */}
+                    <img
+                      src={resourceToPreview.signed_url}
+                      alt={`Preview of ${resourceToPreview.name}`}
+                      className="object-contain mx-auto block transition-transform duration-150"
+                      style={{
+                        transform: `scale(${imageZoomLevel})`,
+                        transformOrigin: "center",
+                        // Remove max-h from image itself, let container handle scroll
+                      }}
+                    />
+                  </div>
+                ) : (
+                  // Attempt to display other file types in an iframe
+                  <iframe
+                    src={resourceToPreview.signed_url}
+                    title={`Preview of ${resourceToPreview.name}`}
+                    className="w-full h-[70vh] border-0"
+                    // sandbox // Consider adding sandbox attribute for security if needed
+                  >
+                    Your browser does not support previews for this file type.
+                    Use the buttons above to download or open it.
+                  </iframe>
+                )}
+              </div>
+            ) : (
+              <p className="text-center text-red-600 p-4">
+                Preview URL is missing for this resource.
+              </p>
+            )}
+
+            {/* Zoom Controls - Only show for images */}
+            {resourceToPreview.signed_url &&
+              IMAGE_MIME_TYPES.includes(resourceToPreview.mime_type) && (
+                <div className="flex justify-center items-center space-x-2 pt-3 mt-3 border-t border-gray-200">
+                  <button
+                    onClick={handleZoomOut}
+                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    disabled={imageZoomLevel <= 0.5}
+                    title="Zoom Out"
+                  >
+                    <ZoomOut size={20} />
+                  </button>
+                  <span className="text-sm text-gray-700 min-w-[40px] text-center">
+                    {(imageZoomLevel * 100).toFixed(0)}%
+                  </span>
+                  <button
+                    onClick={handleZoomIn}
+                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    disabled={imageZoomLevel >= 3}
+                    title="Zoom In"
+                  >
+                    <ZoomIn size={20} />
+                  </button>
+                  <button
+                    onClick={handleResetZoom}
+                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    disabled={imageZoomLevel === 1}
+                    title="Reset Zoom"
+                  >
+                    <RotateCcw size={18} />
+                  </button>
+                </div>
+              )}
+          </div>
+        </Modal>
+      )}
 
       {/* Confirmation Modals for Unsaved Changes */}
       {showConfirmCategoryClose && (
