@@ -279,9 +279,6 @@ const NetworkingPage = () => {
   }, [isMembersLoading, isSponsorsLoading, networkEntities]);
 
   const handleSearch = (query: string, filters: Filters) => {
-    console.log("Search Query:", query);
-    console.log("Filters:", filters);
-
     let results = networkEntities; // Start with combined list
 
     // 1. Apply Fuzzy Search (if query exists)
@@ -317,7 +314,6 @@ const NetworkingPage = () => {
       }
     });
 
-    console.log("Filtered Entities:", filteredResults);
     setFilteredEntities(filteredResults);
   };
 
