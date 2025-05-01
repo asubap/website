@@ -13,9 +13,9 @@ const MemberView = () => {
   const { session } = useAuth();
   const email = session?.user?.email || "";
   const navLinks = [
-    { name: "Events", href: "/events" },
-    { name: "Resources", href: "/resources" },
     { name: "Network", href: "/network" },
+    { name: "Events", href: "/events" },
+    { name: "Dashboard", href: "/admin" },
   ];
 
   const [sponsorProfileUrl] = useState(

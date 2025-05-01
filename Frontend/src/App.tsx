@@ -13,7 +13,6 @@ import SponsorHome from "./pages/sponsor/SponsorHome";
 import Admin from "./pages/admin/Admin";
 import MemberView from "./pages/member/MemberView";
 import NetworkingPage from "./pages/network/NetworkingPage";
-import ResourcesPage from "./pages/resources/ResourcesPage";
 import NotFound from "./pages/notfound/NotFound";
 import ViewEvent from "./pages/events/ViewEvent";
 import { useState } from "react";
@@ -61,7 +60,6 @@ function App() {
                   <Route path="/sponsor" element={<SponsorHome />} />
                   <Route path="/member" element={<MemberView />} />
                   <Route path="/network" element={<NetworkingPage />} />
-                  <Route path="/resources" element={<ResourcesPage />} />
                   <Route path="/events/:eventId" element={<ViewEvent />} />
                 </Route>
 

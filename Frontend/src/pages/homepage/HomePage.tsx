@@ -14,7 +14,6 @@ export default function Homepage() {
     navLinks = [
       { name: "Network", href: "/network" },
       { name: "Events", href: "/events" },
-      { name: "Resources", href: "/resources" },
       { name: "Dashboard", href: "/admin" },
     ];
   } else {
