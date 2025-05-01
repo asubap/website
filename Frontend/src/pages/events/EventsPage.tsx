@@ -53,11 +53,25 @@ const EventsPage: React.FC = () => {
         }
         const data = await response.json();
 
+        // Filter and sort past events (descending)
         setPastEvents(
-          data.filter((event: Event) => isPastDate(event.event_date))
+          data
+            .filter((event: Event) => isPastDate(event.event_date))
+            .sort(
+              (a: Event, b: Event) =>
+                new Date(b.event_date).getTime() -
+                new Date(a.event_date).getTime()
+            )
         );
+        // Filter and sort upcoming events (ascending)
         setUpcomingEvents(
-          data.filter((event: Event) => !isPastDate(event.event_date))
+          data
+            .filter((event: Event) => !isPastDate(event.event_date))
+            .sort(
+              (a: Event, b: Event) =>
+                new Date(a.event_date).getTime() -
+                new Date(b.event_date).getTime()
+            )
         );
       } catch (error) {
         console.error("Error fetching events:", error);

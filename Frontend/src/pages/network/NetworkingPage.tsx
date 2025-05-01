@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import NetworkSearch from "../../components/network/NetworkSearch";
+import Fuse from "fuse.js";
 
 import NetworkingLayout from "../../components/network/NetworkingLayout";
 import { Member, Sponsor } from "../../types";
@@ -58,13 +59,87 @@ interface BackendSponsor {
   resources?: SponsorResource[]; // Properly typed resources array
 }
 
+// --- Transformation Functions ---
+const transformBackendMemberToMember = (item: BackendMember): Member => {
+  const memberName =
+    item.name ||
+    `${item.first_name || ""} ${item.last_name || ""}`.trim() ||
+    "Unknown Member";
+  const memberLinks =
+    typeof item.links === "string" && item.links.trim() !== ""
+      ? item.links
+          .split(",")
+          .map((link: string) => link.trim())
+          .filter((link: string) => link !== "")
+      : [];
+  const memberAbout = item.about || item.bio || "";
+  const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
+
+  return {
+    id: item.id.toString(),
+    type: "member",
+    name: memberName,
+    email: item.user_email || "Not Provided",
+    hours: item.total_hours?.toString() ?? "0",
+    links: memberLinks,
+    major: item.major || "Not Provided",
+    about: memberAbout,
+    graduationDate: item.graduating_year || item.year || "Not Provided",
+    role: item.role || "Not Provided",
+    photoUrl: memberPhotoUrl,
+    phone: item.phone || "",
+    status: item.role || "Not Provided",
+    internship: item.internship || "",
+  };
+};
+
+const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
+  let parsedLinks: string[] = [];
+  if (Array.isArray(item.links)) {
+    parsedLinks = item.links.filter(
+      (link) => typeof link === "string" && link.trim() !== ""
+    );
+  } else if (typeof item.links === "string" && item.links.trim() !== "") {
+    try {
+      const parsed = JSON.parse(item.links);
+      if (Array.isArray(parsed)) {
+        parsedLinks = parsed.filter(
+          (link) => typeof link === "string" && link.trim() !== ""
+        );
+      } else {
+        parsedLinks = item.links
+          .split(",")
+          .map((link: string) => link.trim())
+          .filter((link: string) => link !== "");
+      }
+    } catch (e) {
+      // Log the error and assume comma-separated
+      console.warn(
+        "JSON parsing of sponsor links failed, falling back to comma split:",
+        e
+      );
+      parsedLinks = item.links
+        .split(",")
+        .map((link: string) => link.trim())
+        .filter((link: string) => link !== "");
+    }
+  }
+
+  return {
+    id: item.id?.toString(),
+    type: "sponsor",
+    name: item.company_name || "Unknown Sponsor",
+    about: item.about || "No description available.",
+    links: parsedLinks,
+    photoUrl: item.pfp_url || "/placeholder-logo.png",
+    resources: item.resources?.map((r) => r.url || "") || [],
+  };
+};
+
 const NetworkingPage = () => {
   const { session } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
-  const [networkEntities, setNetworkEntities] = useState<(Member | Sponsor)[]>(
-    []
-  );
   const [filteredEntities, setFilteredEntities] = useState<
     (Member | Sponsor)[]
   >([]);
@@ -73,6 +148,37 @@ const NetworkingPage = () => {
   const [isSponsorsLoading, setIsSponsorsLoading] = useState(true);
   const [membersError, setMembersError] = useState<string | null>(null);
   const [sponsorsError, setSponsorsError] = useState<string | null>(null);
+
+  // Combine members and sponsors for unified search and filtering
+  const networkEntities = useMemo(
+    () => [...members, ...allSponsors],
+    [members, allSponsors]
+  );
+
+  // Fuse.js setup
+  const fuseOptions = {
+    includeScore: true,
+    threshold: 0.3, // Lowered threshold from 0.4 for less strict matching
+    keys: [
+      // Shared keys
+      { name: "name", weight: 0.8 },
+      { name: "about", weight: 0.4 },
+      // Member specific
+      { name: "email", weight: 0.6 },
+      { name: "major", weight: 0.5 },
+      { name: "role", weight: 0.5 }, // Also used for status
+      { name: "graduationDate", weight: 0.3 },
+      { name: "hours", weight: 0.2 }, // Add hours field
+      { name: "links", weight: 0.2 }, // Add links field
+      // add others if needed
+    ],
+  };
+
+  // Ensure Fuse instance depends on the memoized networkEntities
+  const fuse = useMemo(
+    () => new Fuse(networkEntities, fuseOptions),
+    [networkEntities]
+  );
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -106,47 +212,9 @@ const NetworkingPage = () => {
 
         const data = await response.json();
 
-        // Transform member data based on new structure provided by user
-        const transformedData = data.map((item: BackendMember): Member => {
-          // Determine name (prefer 'name', fallback to first/last)
-          const memberName =
-            item.name ||
-            `${item.first_name || ""} ${item.last_name || ""}`.trim() ||
-            "Unknown Member";
-          // Parse links string safely
-          const memberLinks =
-            typeof item.links === "string" && item.links.trim() !== ""
-              ? item.links
-                  .split(",")
-                  .map((link: string) => link.trim())
-                  .filter((link: string) => link !== "")
-              : [];
-          // Determine about (prefer 'about', fallback to 'bio')
-          const memberAbout = item.about || item.bio || "";
-          // Determine photoUrl (prefer 'profile_photo_url', fallback to 'photo_url')
-          const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
-
-          return {
-            id: item.id.toString(), // Use the primary id
-            type: "member",
-            name: memberName,
-            email: item.user_email || "Not Provided",
-            hours: item.total_hours?.toString() ?? "0", // Use total_hours, default to "0"
-            links: memberLinks, // Parsed links array
-            major: item.major || "Not Provided",
-            about: memberAbout, // Use combined about/bio
-            graduationDate: item.graduating_year || item.year || "Not Provided", // Use graduating_year or year
-            role: item.role || "Not Provided", // Use role
-            photoUrl: memberPhotoUrl, // Use combined photo url
-            // Default/unused fields from Member type
-            phone: item.phone || "",
-            status: item.role || "Not Provided", // Can also use role for status
-            internship: item.internship || "",
-          };
-        });
-
+        // Use transformation function
+        const transformedData = data.map(transformBackendMemberToMember);
         setMembers(transformedData);
-        setFilteredEntities(transformedData);
       } catch (error) {
         console.error("Error fetching members:", error);
         setMembersError("Failed to load members. Please try again later.");
@@ -187,79 +255,8 @@ const NetworkingPage = () => {
 
         const data = await response.json();
 
-        // Transform sponsor data according to the API response structure
-        const transformedSponsors = data.map(
-          (item: BackendSponsor): Sponsor => {
-            // Better handling for links that could be array, string, or null
-            let parsedLinks: string[] = [];
-
-            // Add debug logging to see what we're getting
-            console.log(
-              "Original links data for",
-              item.company_name,
-              ":",
-              item.links
-            );
-
-            if (Array.isArray(item.links)) {
-              // If links is already an array, use it directly
-              parsedLinks = item.links.filter(
-                (link) => typeof link === "string" && link.trim() !== ""
-              );
-            } else if (
-              typeof item.links === "string" &&
-              item.links.trim() !== ""
-            ) {
-              // If links is a string, try to parse it
-              try {
-                // First try to parse as JSON, in case it's a stringified array
-                const parsed = JSON.parse(item.links);
-                if (Array.isArray(parsed)) {
-                  parsedLinks = parsed.filter(
-                    (link) => typeof link === "string" && link.trim() !== ""
-                  );
-                } else {
-                  // If it's not an array, fall back to comma splitting
-                  parsedLinks = item.links
-                    .split(",")
-                    .map((link: string) => link.trim())
-                    .filter((link: string) => link !== "");
-                }
-              } catch (e) {
-                // If JSON parsing fails, it's likely a comma-separated string
-                console.log(
-                  "JSON parsing failed, treating as comma-separated string:",
-                  e
-                );
-                parsedLinks = item.links
-                  .split(",")
-                  .map((link: string) => link.trim())
-                  .filter((link: string) => link !== "");
-              }
-            }
-
-            // Log the parsed links for debugging
-            console.log(
-              "Parsed links for",
-              item.company_name,
-              ":",
-              parsedLinks
-            );
-
-            return {
-              id: item.id?.toString(), // Convert number id to string if present
-              type: "sponsor",
-              name: item.company_name || "Unknown Sponsor", // Use company_name
-              about: item.about || "No description available.", // Use about, provide fallback
-              links: parsedLinks, // Use parsed links
-              photoUrl: item.pfp_url || "/placeholder-logo.png", // Use pfp_url, provide fallback
-              resources: item.resources
-                ? item.resources.map((r) => r.url || "")
-                : [], // Convert resource objects to strings (URLs)
-            };
-          }
-        );
-
+        // Use transformation function
+        const transformedSponsors = data.map(transformBackendSponsorToSponsor);
         setAllSponsors(transformedSponsors);
       } catch (error) {
         console.error("Error fetching sponsors:", error);
@@ -274,57 +271,54 @@ const NetworkingPage = () => {
     }
   }, [session]);
 
+  // Effect to set initial filtered list when data loads
   useEffect(() => {
     if (!isMembersLoading && !isSponsorsLoading) {
-      const combined = [...members, ...allSponsors];
-      setNetworkEntities(combined);
-      setFilteredEntities(combined);
+      setFilteredEntities(networkEntities); // Use the memoized value
     }
-  }, [members, allSponsors, isMembersLoading, isSponsorsLoading]);
+  }, [isMembersLoading, isSponsorsLoading, networkEntities]);
 
   const handleSearch = (query: string, filters: Filters) => {
-    if (!query && Object.values(filters).every((val) => !val)) {
-      setFilteredEntities(networkEntities);
-      return;
+    console.log("Search Query:", query);
+    console.log("Filters:", filters);
+
+    let results = networkEntities; // Start with combined list
+
+    // 1. Apply Fuzzy Search (if query exists)
+    if (query.trim()) {
+      try {
+        const searchResults = fuse.search(query);
+        console.log("Raw Fuse Results:", searchResults);
+        results = searchResults.map((result) => result.item);
+        console.log("Mapped Fuse Items:", results);
+      } catch (error) {
+        console.error("Error during fuse.search:", error);
+        results = [];
+      }
     }
 
-    let results = [...networkEntities];
+    // 2. Apply Filters (on top of fuzzy search results or all entities)image.png
+    const filteredResults = results.filter((entity) => {
+      const isMember = (entity: Member | Sponsor): entity is Member =>
+        entity.type === "member";
 
-    // Apply text search if query exists - Check common field 'name'
-    if (query) {
-      const searchTerm = query.toLowerCase();
-      results = results.filter((entity) =>
-        entity.name.toLowerCase().includes(searchTerm)
-      );
-    }
+      if (isMember(entity)) {
+        // Member filtering logic
+        const yearMatch =
+          !filters.graduationYear ||
+          entity.graduationDate === filters.graduationYear;
+        const majorMatch = !filters.major || entity.major === filters.major;
+        const statusMatch = !filters.status || entity.status === filters.status; // Assumes status uses role
+        return yearMatch && majorMatch && statusMatch;
+      } else {
+        // Sponsor filtering logic (if any filters apply to sponsors)
+        // Currently, no specific filters for sponsors are defined, so they pass if they match the search
+        return true;
+      }
+    });
 
-    // Apply filters - Type guard to ensure we only filter members
-    const isMember = (entity: Member | Sponsor): entity is Member =>
-      entity.type === "member";
-
-    if (filters.graduationYear) {
-      results = results.filter(
-        (entity) =>
-          isMember(entity) &&
-          entity.graduationDate.includes(filters.graduationYear)
-      );
-    }
-
-    if (filters.major) {
-      results = results.filter(
-        (entity) =>
-          isMember(entity) &&
-          entity.major.toLowerCase().includes(filters.major.toLowerCase())
-      );
-    }
-
-    if (filters.status) {
-      results = results.filter(
-        (entity) => isMember(entity) && entity.status === filters.status
-      );
-    }
-
-    setFilteredEntities(results);
+    console.log("Filtered Entities:", filteredResults);
+    setFilteredEntities(filteredResults);
   };
 
   return (
@@ -334,25 +328,25 @@ const NetworkingPage = () => {
 
         <NetworkSearch onSearch={handleSearch} />
 
-        {/* Combined Loading State */}
-        {isMembersLoading || isSponsorsLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner text="Loading network..." size="md" />
-          </div>
-        ) : /* Combined Error State */
-        membersError || sponsorsError ? (
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-            <p>{membersError || sponsorsError}</p>
-          </div>
-        ) : /* No Results State */
-        filteredEntities.length === 0 ? (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4 mt-4">
-            <p>No members or sponsors found matching your search criteria.</p>
-          </div>
-        ) : (
-          /* Display List */
-          <NetworkList entities={filteredEntities} />
-        )}
+        <div className="mt-6">
+          {isMembersLoading || isSponsorsLoading ? (
+            <LoadingSpinner text="Loading network..." />
+          ) : membersError || sponsorsError ? (
+            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
+              <p>{membersError || sponsorsError}</p>
+            </div>
+          ) : filteredEntities.length > 0 ? (
+            <NetworkList entities={filteredEntities} />
+          ) : (
+            (members.length > 0 || allSponsors.length > 0) && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4">
+                <p>
+                  No members or sponsors found matching your search criteria.
+                </p>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </NetworkingLayout>
   );
