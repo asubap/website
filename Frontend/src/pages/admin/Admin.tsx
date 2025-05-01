@@ -422,10 +422,10 @@ const Admin = () => {
       {/* Add padding-top to account for fixed navbar */}
       <div className="flex flex-col flex-grow pt-24">
         <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
-          <h1 className="text-4xl font-bold text-left w-full px-4 md:px-32 mb-6">
+          <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 mb-6">
             Admin Dashboard
           </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-4 md:px-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-8 sm:px-16 lg:px-24">
             <div className="order-1 md:order-1">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Upcoming Events</h2>
@@ -433,7 +433,7 @@ const Admin = () => {
                   className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
                   onClick={() => setShowCreateEventModal(true)}
                 >
-                  + New Event
+                  + <span className="hidden md:inline">New </span>Event
                 </button>
               </div>
               {loadingEvents ? (
@@ -465,8 +465,8 @@ const Admin = () => {
                   name="email"
                   onFocus={() => handleInputFocus("admin")}
                 />
-                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
-                  + Add Admin
+                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors whitespace-nowrap">
+                  + <span className="hidden md:inline">Add </span>Admin
                 </button>
               </form>
               {loadingAdmins ? (
@@ -484,13 +484,15 @@ const Admin = () => {
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Past Events</h2>
               </div>
-              {loadingEvents ? (
-                <LoadingSpinner text="Loading events..." size="md" />
-              ) : pastEvents.length > 0 ? (
-                <EventListShort events={pastEvents} />
-              ) : (
-                <p className="text-gray-500 text-sm">No past events found.</p>
-              )}
+              <div className="max-h-72 overflow-y-auto pr-2">
+                {loadingEvents ? (
+                  <LoadingSpinner text="Loading events..." size="md" />
+                ) : pastEvents.length > 0 ? (
+                  <EventListShort events={pastEvents} />
+                ) : (
+                  <p className="text-gray-500 text-sm">No past events found.</p>
+                )}
+              </div>
             </div>
 
             <div className="order-4 md:order-4">
@@ -500,7 +502,7 @@ const Admin = () => {
                   className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
                   onClick={() => setShowAddSponsorModal(true)}
                 >
-                  + New Sponsor
+                  + <span className="hidden md:inline">New </span>Sponsor
                 </button>
               </div>
               {loadingSponsors ? (
@@ -532,8 +534,8 @@ const Admin = () => {
                   name="email"
                   onFocus={() => handleInputFocus("admin")}
                 />
-                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors">
-                  + Add Member
+                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors whitespace-nowrap">
+                  + <span className="hidden md:inline">Add </span>Member
                 </button>
               </form>
               {loadingMembers ? (
