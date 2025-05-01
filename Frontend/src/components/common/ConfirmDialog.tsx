@@ -1,5 +1,5 @@
 import Modal from "../ui/Modal";
-import React, { useEffect } from "react";
+import React from "react";
 import { createPortal } from "react-dom";
 import { useScrollLock } from "../../hooks/useScrollLock";
 
