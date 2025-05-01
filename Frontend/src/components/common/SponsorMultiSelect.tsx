@@ -66,7 +66,7 @@ const SponsorMultiSelect: React.FC<SponsorMultiSelectProps> = ({ value, onChange
         style={{ minHeight: '44px' }}
       >
         {value.length === 0 && (
-          <span className="text-gray-400 select-none">e.g., Deloitte, KPMG (comma-separated)</span>
+          <span className="text-gray-400 select-none">Search or select from list</span>
         )}
         {value.map(s => (
           <span key={s} className="flex items-center bg-bapred text-white rounded px-2 py-1 text-xs mr-1 mb-1">
