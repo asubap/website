@@ -428,9 +428,9 @@ const SponsorHome = () => {
                     onDeleteConfirm={confirmResourceDelete}
                     onPreview={showResourcePreview}
                     formatDate={formatDate}
-                  />
-                </div>
-              </div>
+                        />
+                      </div>
+                  </div>
             </div>
           )}
         </main>
@@ -452,8 +452,8 @@ const SponsorHome = () => {
 
       {/* Resource Preview Modal */}
       <ResourcePreviewModal
-        isOpen={!!previewResource}
-        onClose={closePreview}
+              isOpen={!!previewResource}
+              onClose={closePreview}
         resource={
           previewResource
             ? {

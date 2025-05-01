@@ -49,7 +49,7 @@ const ConfirmDialog = ({
   };
 
   const content = (
-    <div onClick={e => e.stopPropagation()} className="confirm-dialog z-[10000]">
+    <div onClick={e => e.stopPropagation()} className="confirm-dialog">
       <Modal
         isOpen={isOpen}
         onClose={handleClose}
@@ -59,6 +59,7 @@ const ConfirmDialog = ({
         cancelText={cancelText}
         size="sm"
         preventOutsideClick={preventOutsideClick}
+        zIndex="z-[10000]"
       >
         <p className="text-gray-700">{message}</p>
       </Modal>
