@@ -21,7 +21,7 @@
     "react-hot-toast": "^2.5.2",
     "react-leaflet": "^5.0.0",
     "react-leaflet-geosearch": "^0.3.4",
-    "react-router-dom": "^7.4.0"
+    "react-router-dom": "^7.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
