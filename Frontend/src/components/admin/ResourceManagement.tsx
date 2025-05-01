@@ -536,7 +536,9 @@ const ResourceManagement: React.FC = () => {
             onClick={handleOpenAddCategoryModal}
             className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90 flex items-center justify-center whitespace-nowrap text-sm font-medium"
           >
-            <span className="hidden md:inline mr-1">Add</span>+ Category
+            <span className="mr-1">+</span>
+            <span className="hidden md:inline mr-1">Add</span>
+            Category
           </button>
         </div>
       </div>

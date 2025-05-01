@@ -484,13 +484,15 @@ const Admin = () => {
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Past Events</h2>
               </div>
-              {loadingEvents ? (
-                <LoadingSpinner text="Loading events..." size="md" />
-              ) : pastEvents.length > 0 ? (
-                <EventListShort events={pastEvents} />
-              ) : (
-                <p className="text-gray-500 text-sm">No past events found.</p>
-              )}
+              <div className="max-h-72 overflow-y-auto pr-2">
+                {loadingEvents ? (
+                  <LoadingSpinner text="Loading events..." size="md" />
+                ) : pastEvents.length > 0 ? (
+                  <EventListShort events={pastEvents} />
+                ) : (
+                  <p className="text-gray-500 text-sm">No past events found.</p>
+                )}
+              </div>
             </div>
 
             <div className="order-4 md:order-4">

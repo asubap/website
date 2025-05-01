@@ -16,6 +16,12 @@ const EventsPage: React.FC = () => {
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const location = useLocation();
 
+  // State for pagination/load more
+  const PAST_EVENTS_INCREMENT = 3;
+  const [visiblePastEventsCount, setVisiblePastEventsCount] = useState(
+    PAST_EVENTS_INCREMENT
+  );
+
   const isPastDate = (dateString: string): boolean => {
     // Parse the input date string into a Date object
     const inputDate = new Date(dateString);
@@ -104,6 +110,10 @@ const EventsPage: React.FC = () => {
     // No cleanup needed for the inner setTimeout, it handles itself
   }, [location.state, loading]); // Now depends on loading status correctly
 
+  const handleLoadMorePastEvents = () => {
+    setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);
+  };
+
   let navLinks;
 
   if (session) {
@@ -166,7 +176,8 @@ const EventsPage: React.FC = () => {
               {loading ? (
                 <LoadingSpinner text="Loading past events..." size="md" />
               ) : pastEvents.length > 0 ? (
-                pastEvents.map((event) => (
+                // Slice the array based on visible count
+                pastEvents.slice(0, visiblePastEventsCount).map((event) => (
                   <EventCard
                     key={event.id}
                     event={event}
@@ -182,6 +193,17 @@ const EventsPage: React.FC = () => {
                 <p className="text-gray-500">No past events</p>
               )}
             </div>
+            {/* Load More Button */}
+            {!loading && pastEvents.length > visiblePastEventsCount && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={handleLoadMorePastEvents}
+                  className="px-6 py-2 bg-bapred text-white text-sm font-medium rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+                >
+                  Load More Past Events
+                </button>
+              </div>
+            )}
           </section>
         </div>
       </main>
