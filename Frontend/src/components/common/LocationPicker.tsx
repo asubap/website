@@ -107,7 +107,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ location, onChange, err
   };
 
   // Refined blur logic: only close if focus is outside input and dropdown
-  const handleBlur = (e: React.FocusEvent) => {
+  const handleBlur = () => {
     setTimeout(() => {
       const active = document.activeElement;
       if (

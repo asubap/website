@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../../context/auth/supabaseClient";
 import { useToast } from "../../context/toast/ToastContext";
@@ -6,6 +6,7 @@ import ConfirmationModal from "../common/ConfirmationModal";
 import { Event } from "../../types";
 import LocationPicker, { LocationObject } from '../common/LocationPicker';
 import SponsorMultiSelect from '../common/SponsorMultiSelect';
+import { useScrollLock } from "../../hooks/useScrollLock";
 
 interface CreateEventModalProps {
   onClose: () => void;
@@ -30,6 +31,7 @@ const CreateEventModal = ({
   onClose,
   onEventCreated,
 }: CreateEventModalProps) => {
+  useScrollLock(true);
   const { showToast } = useToast();
   const [eventTitle, setEventTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -55,29 +57,6 @@ const CreateEventModal = ({
     hours,
     hoursType,
   });
-
-  // Prevent body scrolling when modal is open
-  useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = "hidden";
-
-    // Store initial state on mount
-    initialStateRef.current = {
-      eventTitle,
-      description,
-      location,
-      sponsors,
-      date,
-      time,
-      hours,
-      hoursType,
-    };
-
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on mount
 
   // Function to check if form data has changed
   const hasChanges = () => {

@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-geosearch/dist/geosearch.css';
 import LocationPicker, { LocationObject } from '../common/LocationPicker';
 import SponsorMultiSelect from '../common/SponsorMultiSelect';
+import { useScrollLock } from "../../hooks/useScrollLock";
 
 interface EditEventModalProps {
   isOpen: boolean;
@@ -65,6 +66,8 @@ const EditEventModal = ({
   const initialStateRef = useRef<FormDataState | null>(null);
   const hasInitialized = useRef(false);
 
+  useScrollLock(isOpen);
+
   useEffect(() => {
     if (!eventToEdit || !eventToEdit.id) return; // Guard: only run if valid event
 
@@ -101,16 +104,6 @@ const EditEventModal = ({
       console.log("EditEventModal: Saved changed state to localStorage:", formData);
     }
   }, [formData, eventToEdit]);
-
-  // Prevent body scrolling when modal is open
-  useEffect(() => {
-    if (!isOpen) return;
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-  }, [isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

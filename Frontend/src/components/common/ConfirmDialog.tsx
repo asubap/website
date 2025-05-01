@@ -1,6 +1,7 @@
 import Modal from "../ui/Modal";
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useScrollLock } from "../../hooks/useScrollLock";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -23,13 +24,7 @@ const ConfirmDialog = ({
   cancelText = "Cancel",
   preventOutsideClick = false
 }: ConfirmDialogProps) => {
-  // Ensure dialog cleans up after itself
-  useEffect(() => {
-    return () => {
-      // Clean up on unmount
-      document.body.style.overflow = 'auto';
-    };
-  }, []);
+  useScrollLock(isOpen);
 
   // Wrap the onClose and onConfirm handlers with simpler versions
   const handleClose = (e?: React.MouseEvent) => {

@@ -36,13 +36,6 @@ const Navbar: React.FC<NavbarProps> = ({
     lastToggleTime.current = now;
 
     setIsMenuOpen((prev) => !prev);
-
-    // Prevent scrolling when menu is open
-    if (!isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
   }, [isMenuOpen]);
 
   // Handle scroll events to hide/show navbar
@@ -68,7 +61,6 @@ const Navbar: React.FC<NavbarProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
-        document.body.style.overflow = "";
       }
     };
 
@@ -78,18 +70,10 @@ const Navbar: React.FC<NavbarProps> = ({
     };
   }, []);
 
-  // Clean up overflow style when component unmounts
-  useEffect(() => {
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-
   // Handle menu item clicks to close the menu
   const handleMenuItemClick = useCallback((linkOnClick?: () => void) => {
     return () => {
       setIsMenuOpen(false);
-      document.body.style.overflow = "";
       if (linkOnClick) {
         linkOnClick();
       }

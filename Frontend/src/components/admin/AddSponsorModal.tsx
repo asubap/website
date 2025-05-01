@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../../context/auth/supabaseClient";
 import ConfirmationModal from "../common/ConfirmationModal";
 import { useToast } from "../../context/toast/ToastContext";
+import { useScrollLock } from "../../hooks/useScrollLock";
 
 interface AddSponsorModalProps {
   onClose: () => void;
@@ -21,6 +22,7 @@ interface FormErrors {
 }
 
 const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
+  useScrollLock(true);
   const { showToast } = useToast();
   const [sponsor, setSponsor] = useState("");
   const [emailList, setEmailList] = useState<string[]>([]);
@@ -35,24 +37,6 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
     emailList,
     passcode,
   });
-
-  // Prevent body scrolling when modal is open
-  useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = "hidden";
-
-    // Store initial state on mount
-    initialStateRef.current = {
-      sponsor,
-      emailList,
-      passcode,
-    };
-
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on mount
 
   // Function to check if form data has changed
   const hasChanges = () => {
