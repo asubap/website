@@ -5,7 +5,7 @@ import WhoWeAre from "../../components/Hero/WhoWeAre";
 import { useAuth } from "../../context/auth/authProvider";
 
 export default function Homepage() {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
 
   let navLinks;
 
@@ -37,6 +37,7 @@ export default function Homepage() {
           title="Beta Alpha Psi | Beta Tau Chapter"
           backgroundColor="#FFFFFF"
           outlineColor="#AF272F"
+          role={role}
         />
         <main className="flex-grow">
           <Hero />

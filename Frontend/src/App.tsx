@@ -18,6 +18,7 @@ import ViewEvent from "./pages/events/ViewEvent";
 import { useState } from "react";
 import Toast from "./components/ui/Toast";
 import { ToastContext } from "./context/toast/ToastContext";
+import ResourcesPage from "./pages/resources/ResourcesPage";
 
 function App() {
   const [toast, setToast] = useState<{
@@ -61,6 +62,7 @@ function App() {
                   <Route path="/member" element={<MemberView />} />
                   <Route path="/network" element={<NetworkingPage />} />
                   <Route path="/events/:eventId" element={<ViewEvent />} />
+                  <Route path="/resources" element={<ResourcesPage />} />
                 </Route>
 
                 {/* 404 catch-all route */}

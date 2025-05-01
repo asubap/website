@@ -364,6 +364,7 @@ const SponsorHome = () => {
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
+        role={role}
       />
 
       {/* Add padding-top to account for fixed navbar */}

@@ -10,7 +10,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const MemberView = () => {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   const email = session?.user?.email || "";
   const navLinks = [
     { name: "Network", href: "/network" },
@@ -103,11 +103,12 @@ const MemberView = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={true}
         links={navLinks}
+        isLogged={!!session}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
+        role={role}
       />
 
       {loading ? (

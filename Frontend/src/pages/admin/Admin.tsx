@@ -12,6 +12,7 @@ import EditEventModal from "../../components/admin/EditEventModal";
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAuth } from "../../context/auth/authProvider";
 
 // Define interfaces for API responses
 interface UserInfo {
@@ -66,6 +67,8 @@ const Admin = () => {
   const [loadingSponsors, setLoadingSponsors] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
+
+  const { session, role } = useAuth();
 
   // Reset input error state when clicking away from input
   const handleInputFocus = (inputType: "admin") => {
@@ -451,6 +454,7 @@ const Admin = () => {
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
+        role={role}
       />
 
       {/* Add padding-top to account for fixed navbar */}

@@ -8,7 +8,7 @@ type SponsorRole = {
   companyName: string;
 };
 
-type RoleType = string | SponsorRole | null;
+export type RoleType = string | SponsorRole | null;
 
 interface AuthContextType {
   session: Session | null;
