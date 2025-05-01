@@ -13,8 +13,7 @@ const NetworkingLayout = ({ children }: NetworkingLayoutProps) => {
   const navLinks = [
     { name: "Network", href: "/network" },
     { name: "Events", href: "/events" },
-    { name: "Resources", href: "/resources" },
-    { name: "Dashboard", href: "/admin" }
+    { name: "Dashboard", href: "/admin" },
   ];
 
   return (

@@ -12,3 +12,17 @@ html {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Hide native browser password reveal (eye) icon in password fields */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-input-decoration,
+input[type="password"]::-webkit-input-password-reveal {
+  display: none !important;
+}
+input[type="password"]::-moz-password-reveal {
+  display: none;
+}

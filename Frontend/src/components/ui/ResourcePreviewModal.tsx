@@ -39,15 +39,6 @@ const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
     setImageZoomLevel(1);
   }, [resource, isOpen]);
 
-  // Add useEffect to re-assert body overflow on zoom change
-  useEffect(() => {
-    if (isOpen) {
-      // console.log('PreviewModal zoom effect: Re-setting body overflow to hidden');
-      document.body.style.overflow = "hidden";
-    }
-    // No cleanup needed here, the main Modal effect handles final restoration
-  }, [imageZoomLevel, isOpen]); // Depend on zoom level and isOpen
-
   const handleZoomIn = () => {
     setImageZoomLevel((prev) => Math.min(prev + 0.2, 3)); // Max zoom 3x
   };

@@ -30,6 +30,7 @@ const LogInPage = () => {
     { name: "Our Sponsors", href: "/sponsors" },
     { name: "Events", href: "/events" },
     { name: "Membership", href: "/membership" },
+    { name: "Log In", href: "/login" },
   ];
 
   // If still loading, show loading indicator

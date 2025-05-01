@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+    __modalOpenCount?: number;
+  }
+}
+
 {
   /*Resource Management Modal*/
 }
@@ -51,22 +57,25 @@ const Modal: React.FC<ModalProps> = ({
 
   // Effect to control body scrolling
   useEffect(() => {
-    console.log("Modal scroll effect running. isOpen:", isOpen);
+    // Use a counter to track open modals
+    if (!window.__modalOpenCount) window.__modalOpenCount = 0;
     if (isOpen) {
-      console.log("Modal: Setting body overflow to hidden");
-      // Prevent scrolling when modal is open
+      window.__modalOpenCount++;
       document.body.style.overflow = "hidden";
-    } else {
-      console.log("Modal: Setting body overflow to auto (due to isOpen false)");
-      // Restore scrolling when modal is closed
-      document.body.style.overflow = "auto";
+    } else if (window.__modalOpenCount && window.__modalOpenCount > 0) {
+      window.__modalOpenCount = Math.max(0, window.__modalOpenCount - 1);
+      if (window.__modalOpenCount === 0) {
+        document.body.style.overflow = "auto";
+      }
     }
-
-    // Cleanup function to restore scrolling when component unmounts
-    // or before the effect runs again
+    // Cleanup function to decrement counter and restore scrolling if needed
     return () => {
-      console.log("Modal scroll effect cleanup: Setting body overflow to auto");
-      document.body.style.overflow = "auto";
+      if (isOpen && window.__modalOpenCount && window.__modalOpenCount > 0) {
+        window.__modalOpenCount = Math.max(0, window.__modalOpenCount - 1);
+        if (window.__modalOpenCount === 0) {
+          document.body.style.overflow = "auto";
+        }
+      }
     };
   }, [isOpen]); // Depend on isOpen state
 
