@@ -7,6 +7,7 @@ import { useToast } from "../../context/toast/ToastContext";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
 import ResourceManagement from "../../components/admin/ResourceManagement";
+import EditEventModal from "../../components/admin/EditEventModal";
 
 import { Event } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
@@ -33,6 +34,8 @@ const Admin = () => {
   const [adminInputError, setAdminInputError] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
+  const [showEditEventModal, setShowEditEventModal] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   const navLinks = [
     { name: "Network", href: "/network" },
@@ -409,6 +412,37 @@ const Admin = () => {
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
   };
 
+  const handleEventUpdated = (updatedEvent: Event) => {
+    const updateList = (list: Event[]) =>
+      list.map((e) => (e.id === updatedEvent.id ? updatedEvent : e));
+
+    // Determine if the event moved between past and upcoming
+    const isNowPast = isPastDate(updatedEvent.event_date);
+    const wasPast = pastEvents.some(e => e.id === updatedEvent.id);
+
+    if (isNowPast && !wasPast) {
+      // Moved from upcoming to past
+      setUpcomingEvents((prev) => prev.filter(e => e.id !== updatedEvent.id));
+      setPastEvents((prev) => [...prev, updatedEvent].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()));
+    } else if (!isNowPast && wasPast) {
+      // Moved from past to upcoming
+      setPastEvents((prev) => prev.filter(e => e.id !== updatedEvent.id));
+      setUpcomingEvents((prev) => [...prev, updatedEvent].sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime()));
+    } else {
+      // Updated within the same list
+      setUpcomingEvents((prev) => updateList(prev));
+      setPastEvents((prev) => updateList(prev));
+    }
+
+    setShowEditEventModal(false); // Close modal on success
+    setEventToEdit(null);
+  };
+
+  const handleEditEventClick = (event: Event) => {
+    setEventToEdit(event);
+    setShowEditEventModal(true);
+  };
+
   return (
     <div className="flex flex-col min-h-screen font-outfit">
       <Navbar
@@ -439,7 +473,7 @@ const Admin = () => {
               {loadingEvents ? (
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
               ) : upcomingEvents.length > 0 ? (
-                <EventListShort events={upcomingEvents} />
+                <EventListShort events={upcomingEvents} onEdit={handleEditEventClick} />
               ) : (
                 <p className="text-gray-500 text-sm">
                   No upcoming events scheduled.
@@ -488,7 +522,7 @@ const Admin = () => {
                 {loadingEvents ? (
                   <LoadingSpinner text="Loading events..." size="md" />
                 ) : pastEvents.length > 0 ? (
-                  <EventListShort events={pastEvents} />
+                  <EventListShort events={pastEvents} onEdit={handleEditEventClick} />
                 ) : (
                   <p className="text-gray-500 text-sm">No past events found.</p>
                 )}
@@ -570,6 +604,19 @@ const Admin = () => {
         <AddSponsorModal
           onClose={() => setShowAddSponsorModal(false)}
           onSponsorAdded={handleSponsorAdded}
+        />
+      )}
+
+      {/* Edit Event Modal */}
+      {showEditEventModal && eventToEdit && (
+        <EditEventModal
+          isOpen={showEditEventModal}
+          onClose={() => {
+            setShowEditEventModal(false);
+            setEventToEdit(null);
+          }}
+          eventToEdit={eventToEdit}
+          onEventUpdated={handleEventUpdated}
         />
       )}
     </div>

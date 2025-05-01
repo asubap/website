@@ -15,6 +15,7 @@ interface ModalProps {
   showFooter?: boolean;
   size?: "sm" | "md" | "lg";
   preventOutsideClick?: boolean;
+  zIndex?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -28,6 +29,7 @@ const Modal: React.FC<ModalProps> = ({
   showFooter = true,
   size = "md",
   preventOutsideClick = false,
+  zIndex = "z-[9999]",
 }) => {
   // Effect to handle Escape key press
   useEffect(() => {
@@ -83,7 +85,7 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className={`fixed inset-0 ${zIndex}`}>
       <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center">
         {/* Background overlay */}
         <div

@@ -3,9 +3,10 @@ import { Event } from "../../types";
 
 interface EventListShortProps {
   events: Event[];
+  onEdit?: (event: Event) => void;
 }
 
-export const EventListShort: React.FC<EventListShortProps> = ({ events }) => {
+export const EventListShort: React.FC<EventListShortProps> = ({ events, onEdit }) => {
   const navigate = useNavigate();
 
   // Helper function to format date (optional, but good practice)
@@ -55,9 +56,14 @@ export const EventListShort: React.FC<EventListShortProps> = ({ events }) => {
             >
               View
             </button>
-            <button className="px-3 py-1 bg-bapred text-white text-xs rounded-md hover:bg-bapreddark transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-bapred">
-              Edit
-            </button>
+            {onEdit && (
+              <button
+                onClick={() => onEdit(event)}
+                className="px-3 py-1 bg-bapred text-white text-xs rounded-md hover:bg-bapreddark transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-bapred"
+              >
+                Edit
+              </button>
+            )}
           </div>
         </div>
       ))}

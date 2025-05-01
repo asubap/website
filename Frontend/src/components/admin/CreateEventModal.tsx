@@ -4,6 +4,9 @@ import { supabase } from "../../context/auth/supabaseClient";
 import { useToast } from "../../context/toast/ToastContext";
 import ConfirmationModal from "../common/ConfirmationModal";
 import { Event } from "../../types";
+import LocationPicker, { LocationObject } from '../common/LocationPicker';
+import SponsorMultiSelect from '../common/SponsorMultiSelect';
+
 interface CreateEventModalProps {
   onClose: () => void;
   onEventCreated: (newEvent: Event) => void;
@@ -30,10 +33,8 @@ const CreateEventModal = ({
   const { showToast } = useToast();
   const [eventTitle, setEventTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [sponsors, setSponsors] = useState("");
+  const [location, setLocation] = useState<LocationObject>({ name: "", latitude: 33.4242, longitude: -111.9281 });
+  const [sponsors, setSponsors] = useState<string[]>([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [hours, setHours] = useState("");
@@ -48,8 +49,6 @@ const CreateEventModal = ({
     eventTitle,
     description,
     location,
-    latitude,
-    longitude,
     sponsors,
     date,
     time,
@@ -67,8 +66,6 @@ const CreateEventModal = ({
       eventTitle,
       description,
       location,
-      latitude,
-      longitude,
       sponsors,
       date,
       time,
@@ -88,8 +85,6 @@ const CreateEventModal = ({
       eventTitle,
       description,
       location,
-      latitude,
-      longitude,
       sponsors,
       date,
       time,
@@ -128,20 +123,14 @@ const CreateEventModal = ({
     // --- Validation ---
     if (!eventTitle.trim()) newErrors.eventTitle = "Event title is required";
     if (!description.trim()) newErrors.description = "Description is required";
-    if (!location.trim()) newErrors.location = "Location is required";
+    if (!location.name.trim()) newErrors.location = "Location name is required";
     if (!date) newErrors.date = "Date is required";
     if (!time) newErrors.time = "Time is required";
     if (!hours.trim()) newErrors.hours = "Event hours are required";
     if (!hoursType) newErrors.hoursType = "Hours type is required";
 
-    const parsedLat = parseFloat(latitude);
-    const parsedLong = parseFloat(longitude);
-    const parsedHours = parseFloat(hours); // Use parseFloat for potential half-hours
+    const parsedHours = parseFloat(hours);
 
-    if (latitude.trim() && isNaN(parsedLat))
-      newErrors.latitude = "Must be a valid number";
-    if (longitude.trim() && isNaN(parsedLong))
-      newErrors.longitude = "Must be a valid number";
     if (hours.trim() && (isNaN(parsedHours) || parsedHours <= 0))
       newErrors.hours = "Must be a positive number";
 
@@ -153,12 +142,6 @@ const CreateEventModal = ({
 
     // Clear errors if validation passes
     setErrors({});
-
-    // Parse sponsors string into an array
-    const sponsorsArray = sponsors
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s !== "");
 
     setIsLoading(true);
 
@@ -177,14 +160,14 @@ const CreateEventModal = ({
       const eventData = {
         event_name: eventTitle.trim(),
         event_description: description.trim(),
-        event_location: location.trim(),
-        event_lat: latitude.trim() ? parsedLat : null,
-        event_long: longitude.trim() ? parsedLong : null,
+        event_location: location.name.trim() || "Unnamed Location",
+        event_lat: location.latitude,
+        event_long: location.longitude,
         event_date: date,
         event_time: time,
         event_hours: parsedHours, // Send parsed number
         event_hours_type: hoursType,
-        sponsors_attending: sponsorsArray,
+        sponsors_attending: sponsors,
       };
 
       const response = await fetch(
@@ -334,122 +317,17 @@ const CreateEventModal = ({
           </div>
 
           {/* Location & Sponsors */}
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="location"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Location *
-              </label>
-              <input
-                id="location"
-                type="text"
-                placeholder="e.g., Memorial Union, Room 202"
-                value={location}
-                onChange={(e) => {
-                  setLocation(e.target.value);
-                  clearError("location");
-                }}
-                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
-                  errors.location ? "border-red-500" : "border-gray-300"
-                }`}
-                required
-                aria-invalid={!!errors.location}
-                aria-describedby={
-                  errors.location ? "location-error" : undefined
-                }
-              />
-              {errors.location && (
-                <p id="location-error" className="text-red-500 text-xs mt-1">
-                  {errors.location}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="sponsors"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Sponsors Attending
-              </label>
-              <input
-                id="sponsors"
-                type="text"
-                placeholder="e.g., Deloitte, KPMG (comma-separated)"
-                value={sponsors}
-                onChange={(e) => setSponsors(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred"
-              />
-              {/* No inline validation for sponsors currently */}
-            </div>
+          <div>
+              <SponsorMultiSelect value={sponsors} onChange={setSponsors} />
           </div>
 
-          {/* Coordinates */}
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="latitude"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Latitude
-              </label>
-              <input
-                id="latitude"
-                type="number"
-                step="any"
-                placeholder="e.g., 33.4242"
-                value={latitude}
-                onChange={(e) => {
-                  setLatitude(e.target.value);
-                  clearError("latitude");
-                }}
-                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
-                  errors.latitude ? "border-red-500" : "border-gray-300"
-                }`}
-                aria-invalid={!!errors.latitude}
-                aria-describedby={
-                  errors.latitude ? "latitude-error" : undefined
-                }
-              />
-              {errors.latitude && (
-                <p id="latitude-error" className="text-red-500 text-xs mt-1">
-                  {errors.latitude}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="longitude"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Longitude
-              </label>
-              <input
-                id="longitude"
-                type="number"
-                step="any"
-                placeholder="e.g., -111.9281"
-                value={longitude}
-                onChange={(e) => {
-                  setLongitude(e.target.value);
-                  clearError("longitude");
-                }}
-                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
-                  errors.longitude ? "border-red-500" : "border-gray-300"
-                }`}
-                aria-invalid={!!errors.longitude}
-                aria-describedby={
-                  errors.longitude ? "longitude-error" : undefined
-                }
-              />
-              {errors.longitude && (
-                <p id="longitude-error" className="text-red-500 text-xs mt-1">
-                  {errors.longitude}
-                </p>
-              )}
-            </div>
-          </div>
+
+          {/* Location Picker */}
+          <LocationPicker
+            location={location}
+            onChange={setLocation}
+            error={errors.location}
+          />
 
           {/* Date & Time */}
           <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">

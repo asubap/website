@@ -63,7 +63,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     <div
       ref={registerRef}
       // Apply base styles, border, always-on ring-2/inset, transition-colors, and conditional ring color
-      className={`p-6 bg-white rounded-lg shadow-md grid grid-cols-2 border border-gray-200 ring-2 ring-inset transition-colors duration-250 ease-in-out ${highlightClasses}`}
+      className={`p-6 bg-white rounded-lg shadow-md grid grid-cols-2 border border-gray-200 ring-2 ring-inset transition-colors duration-200 ease-in-out ${highlightClasses}`}
     >
       <div className="col-span-1">
         <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">
