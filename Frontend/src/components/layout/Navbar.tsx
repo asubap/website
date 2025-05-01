@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import LogOut from "../logOut/LogOut";
+import type { RoleType } from "../../context/auth/authProvider";
 
 interface NavbarProps {
   links: { name: string; href: string; onClick?: () => void }[];
@@ -10,6 +11,7 @@ interface NavbarProps {
   backgroundColor?: string;
   outlineColor?: string;
   onClick?: () => void;
+  role?: RoleType;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -19,6 +21,7 @@ const Navbar: React.FC<NavbarProps> = ({
   outlineColor,
   onClick,
   isLogged,
+  role,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -95,6 +98,22 @@ const Navbar: React.FC<NavbarProps> = ({
     if (onClick) onClick();
   };
 
+  // Add Resources link if logged in and not a sponsor
+  let navLinks = [...links];
+  const isSponsor =
+    (typeof role === "string" && role === "sponsor") ||
+    (typeof role === "object" && role !== null && "type" in role && role.type === "sponsor");
+  if (isLogged && !isSponsor) {
+    navLinks.push({ name: "Resources", href: "/resources" });
+  }
+
+  // Move Resources link to the leftmost position if present
+  const resourcesIndex = navLinks.findIndex(l => l.name === "Resources");
+  if (resourcesIndex > 0) {
+    const [resourcesLink] = navLinks.splice(resourcesIndex, 1);
+    navLinks.unshift(resourcesLink);
+  }
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 font-outfit">
       <div
@@ -135,7 +154,7 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="hidden lg:flex items-center space-x-6 z-10">
             {/* Main navigation links */}
             <div className="flex space-x-6">
-              {links.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
@@ -212,7 +231,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="flex flex-col space-y-8 p-4 items-center pt-20">
           <ul className="space-y-8 text-center text-xl">
             {/* Navigation links */}
-            {links.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.name}>
                 <Link
                   to={link.href}

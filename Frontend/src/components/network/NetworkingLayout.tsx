@@ -7,7 +7,7 @@ interface NetworkingLayoutProps {
 }
 
 const NetworkingLayout = ({ children }: NetworkingLayoutProps) => {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   
   // Define the navigation links for authenticated users in the networking section
   const navLinks = [
@@ -23,6 +23,7 @@ const NetworkingLayout = ({ children }: NetworkingLayoutProps) => {
         title="Beta Alpha Psi | Beta Tau Chapter"
         isLogged={!!session}
         outlineColor="#AF272F"
+        role={role}
       />
 
       <main className="flex-1 bg-gray-50 mt-20">{children}</main>

@@ -8,7 +8,7 @@ import { Event } from "../../types";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const EventsPage: React.FC = () => {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,6 +142,7 @@ const EventsPage: React.FC = () => {
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
         isLogged={Boolean(session)} // Let Navbar know the auth state
+        role={role}
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
