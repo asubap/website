@@ -5,6 +5,7 @@ import { useToast } from "../../context/toast/ToastContext";
 import ConfirmationModal from "../common/ConfirmationModal";
 import { Event } from "../../types";
 import LocationPicker, { LocationObject } from '../common/LocationPicker';
+import SponsorMultiSelect from '../common/SponsorMultiSelect';
 
 interface CreateEventModalProps {
   onClose: () => void;
@@ -33,7 +34,7 @@ const CreateEventModal = ({
   const [eventTitle, setEventTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState<LocationObject>({ name: "", latitude: 33.4242, longitude: -111.9281 });
-  const [sponsors, setSponsors] = useState("");
+  const [sponsors, setSponsors] = useState<string[]>([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [hours, setHours] = useState("");
@@ -142,12 +143,6 @@ const CreateEventModal = ({
     // Clear errors if validation passes
     setErrors({});
 
-    // Parse sponsors string into an array
-    const sponsorsArray = sponsors
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s !== "");
-
     setIsLoading(true);
 
     try {
@@ -172,7 +167,7 @@ const CreateEventModal = ({
         event_time: time,
         event_hours: parsedHours, // Send parsed number
         event_hours_type: hoursType,
-        sponsors_attending: sponsorsArray,
+        sponsors_attending: sponsors,
       };
 
       const response = await fetch(
@@ -322,19 +317,10 @@ const CreateEventModal = ({
           </div>
 
           {/* Location & Sponsors */}
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="sponsors" className="block text-sm font-medium text-gray-700 mb-1">Sponsors Attending</label>
-              <input
-                id="sponsors"
-                type="text"
-                placeholder="e.g., Deloitte, KPMG (comma-separated)"
-                value={sponsors}
-                onChange={e => setSponsors(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred"
-              />
-            </div>
+          <div>
+              <SponsorMultiSelect value={sponsors} onChange={setSponsors} />
           </div>
+
 
           {/* Location Picker */}
           <LocationPicker

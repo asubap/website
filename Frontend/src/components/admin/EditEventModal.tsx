@@ -7,6 +7,7 @@ import { Event } from "../../types";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-geosearch/dist/geosearch.css';
 import LocationPicker, { LocationObject } from '../common/LocationPicker';
+import SponsorMultiSelect from '../common/SponsorMultiSelect';
 
 interface EditEventModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ interface FormDataState {
   eventTitle: string;
   description: string;
   location: LocationObject;
-  sponsors: string;
+  sponsors: string[];
   date: string;
   time: string;
   hours: string;
@@ -50,7 +51,7 @@ const EditEventModal = ({
     eventTitle: "",
     description: "",
     location: { name: "", latitude: 33.4242, longitude: -111.9281 }, // Default to ASU coords
-    sponsors: "",
+    sponsors: [],
     date: "",
     time: "",
     hours: "",
@@ -76,7 +77,7 @@ const EditEventModal = ({
         latitude: eventToEdit.event_lat ?? 33.4242,
         longitude: eventToEdit.event_long ?? -111.9281,
       },
-      sponsors: (eventToEdit.sponsors_attending || []).join(", "),
+      sponsors: eventToEdit.sponsors_attending || [],
       date: eventToEdit.event_date ? eventToEdit.event_date.split("T")[0] : "",
       time: eventToEdit.event_time || "",
       hours: eventToEdit.event_hours?.toString() || "",
@@ -200,7 +201,7 @@ const EditEventModal = ({
         },
         description: formData.description.trim(),
         time: formData.time || "",
-        sponsors: formData.sponsors.trim(),
+        sponsors: formData.sponsors,
       };
       if (formData.hours.trim()) eventDataToUpdate.event_hours = parseFloat(formData.hours);
       if (formData.hoursType) eventDataToUpdate.event_hours_type = formData.hoursType;
@@ -237,7 +238,7 @@ const EditEventModal = ({
         event_time: formData.time,
         event_hours: parseFloat(formData.hours),
         event_hours_type: formData.hoursType,
-        sponsors_attending: formData.sponsors.split(",").map((s) => s.trim()).filter((s) => s !== ""),
+        sponsors_attending: formData.sponsors,
         id: eventToEdit.id,
         event_attending: eventToEdit.event_attending ?? null,
         event_rsvped: eventToEdit.event_rsvped ?? null,
@@ -314,13 +315,10 @@ const EditEventModal = ({
             {errors.description && <p id="description-error" className="text-red-500 text-xs mt-1">{errors.description}</p>}
           </div>
 
-          {/* ... Location & Sponsors ... */}
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* ... Sponsors Dropdown ... */}
             <div>
-              <label htmlFor="sponsors" className="block text-sm font-medium text-gray-700 mb-1">Sponsors Attending</label>
-              <input id="sponsors" name="sponsors" type="text" placeholder="e.g., Deloitte, KPMG (comma-separated)" value={formData.sponsors} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred" />
+              <SponsorMultiSelect value={formData.sponsors} onChange={s => setFormData(prev => ({ ...prev, sponsors: s }))} />
             </div>
-          </div>
 
           {/* ... Location ... */}
           <LocationPicker
