@@ -38,14 +38,14 @@ export default function AboutPage() {
       />
 
       <main className="flex-grow mt-16 sm:mt-20 md:mt-24 mb-8 sm:mb-12 px-8 sm:px-16 lg:px-24">
-        <section className="pt-4 sm:pt-8">
-          <h1 className="text-3xl sm:text-4xl font-bold font-outfit text-[#AF272F] mb-4">
+        <section>
+          <h1 className="text-5xl font-outfit font-bold text-bapred pt-4 sm:pt-8">
             About Us
           </h1>
 
           {/* Introduction */}
           <div className="mb-6 sm:mb-10">
-            <p className="text-gray-800 font-pt-serif text-base sm:text-md">
+            <p className="text-gray-800 font-pt-serif text-base sm:text-md pt-4">
               Founded in 1919, Beta Alpha Psi is an honors organization for
               financial information students and professionals. There are over
               300 chapters on college and university campuses, with over 300,000
