@@ -88,7 +88,7 @@ const Admin = () => {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
-  const { session, role } = useAuth();
+  const { role } = useAuth();
 
   // Reset input error state when clicking away from input
   const handleInputFocus = (inputType: "admin") => {
@@ -433,11 +433,46 @@ const Admin = () => {
       }
     }
   };
+ 
 
   // Handle a newly created event
-  const handleEventCreated = (newEvent: Event) => {
+  const handleEventCreated = async (newEvent: Event) => {
     // Determine if it's upcoming or past
     const isNewEventPast = isPastDate(newEvent.event_date);
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      const token = session.access_token;
+      try {
+        await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/events/add-event`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({event_name: newEvent.event_name,
+                                  event_description: newEvent.event_description,
+                                  event_location: newEvent.event_location,
+                                  event_lat: newEvent.event_lat,
+                                  event_long: newEvent.event_long,
+                                  event_date: newEvent.event_date,
+                                  event_time: newEvent.event_time,
+                                  event_hours: newEvent.event_hours,
+                                  event_hours_type: newEvent.event_hours_type,
+                                  sponsors_attending: newEvent.sponsors_attending }),
+          }
+        );
+
+        showToast("Event created successfully", "success");
+        
+      } catch (error) {
+        console.error("Error creating Event:", error);
+      }
+    }
 
     // Update the correct list and sort it
     if (!isNewEventPast) {
@@ -841,6 +876,7 @@ const Admin = () => {
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
+        onDelete={handleConfirmDeleteAnnouncement}
         isOpen={showDeleteAnnouncementModal}
         onClose={() => setShowDeleteAnnouncementModal(false)}
         onConfirm={handleConfirmDeleteAnnouncement}

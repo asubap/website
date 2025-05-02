@@ -11,7 +11,7 @@ interface AnnouncementListShortProps {
 export const AnnouncementListShort = ({ announcements, onEdit, onView, onDelete }: AnnouncementListShortProps) => {
   return (
     <div className="space-y-3 mt-2">
-      {announcements.map((announcement) => (
+      {[...announcements].reverse().map((announcement) => (
         <div 
           key={announcement.id} 
           className={`p-3 rounded-md border ${announcement.is_pinned ? 'border-bapred bg-red-50' : 'border-gray-200'} relative`}

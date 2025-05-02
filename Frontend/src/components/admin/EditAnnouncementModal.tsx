@@ -146,13 +146,12 @@ const EditAnnouncementModal = ({
       }
       const token = session.access_token;
 
-      // --- Prepare data for EDIT endpoint ---
+      // Prepare data for EDIT endpoint with only required fields
       const announcementDataToUpdate = {
         announcement_id: announcementToEdit.id,
         title: formData.title.trim(),
         description: formData.description.trim(),
-        date: formData.date,
-        is_pinned: formData.isPinned,
+        
       };
 
       const response = await fetch(
