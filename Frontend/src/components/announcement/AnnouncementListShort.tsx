@@ -1,5 +1,5 @@
 import { Announcement } from "../../types";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface AnnouncementListShortProps {
   announcements: Announcement[];
@@ -9,9 +9,25 @@ interface AnnouncementListShortProps {
 }
 
 export const AnnouncementListShort = ({ announcements, onEdit, onView, onDelete }: AnnouncementListShortProps) => {
+  
+  // Function to format the timestamp in readable format
+  const formatDateTime = (timestamp: string) => {
+    if (!timestamp) return "No date";
+    
+    try {
+      // Parse the ISO timestamp
+      const date = parseISO(timestamp);
+      // Format as "MMM d, yyyy 'at' h:mm a" (e.g., "Jan 15, 2024 at 2:30 PM")
+      return format(date, "MMM d, yyyy 'at' h:mm a");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+  
   return (
     <div className="space-y-3 mt-2">
-      {[...announcements].reverse().map((announcement) => (
+      {announcements.map((announcement) => (
         <div 
           key={announcement.id} 
           className={`p-3 rounded-md border ${announcement.is_pinned ? 'border-bapred bg-red-50' : 'border-gray-200'} relative`}
@@ -64,7 +80,7 @@ export const AnnouncementListShort = ({ announcements, onEdit, onView, onDelete 
           </div>
           <p className="text-sm text-gray-600 line-clamp-2 mb-1">{announcement.description}</p>
           <p className="text-xs text-gray-500">
-            {announcement.date ? format(new Date(announcement.date), 'MMMM d, yyyy') : 'No date'}
+            {announcement.created_at ? formatDateTime(announcement.created_at) : 'No date available'}
           </p>
         </div>
       ))}

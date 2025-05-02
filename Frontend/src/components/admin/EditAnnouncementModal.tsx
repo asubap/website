@@ -23,8 +23,7 @@ interface FormErrors {
 interface FormDataState {
   title: string;
   description: string;
-  date: string;
-  isPinned: boolean;
+
 }
 
 const EditAnnouncementModal = ({
@@ -37,8 +36,7 @@ const EditAnnouncementModal = ({
   const [formData, setFormData] = useState<FormDataState>({
     title: "",
     description: "",
-    date: "",
-    isPinned: false,
+   
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -56,8 +54,7 @@ const EditAnnouncementModal = ({
     const initialState: FormDataState = {
       title: announcementToEdit.title || "",
       description: announcementToEdit.description || "",
-      date: announcementToEdit.date ? announcementToEdit.date.split("T")[0] : "",
-      isPinned: announcementToEdit.is_pinned || false,
+
     };
     initialStateRef.current = initialState;
 
@@ -127,7 +124,7 @@ const EditAnnouncementModal = ({
     // --- Validation ---
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
-    if (!formData.date) newErrors.date = "Date is required";
+ 
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -178,8 +175,7 @@ const EditAnnouncementModal = ({
         ...announcementToEdit,
         title: formData.title.trim(),
         description: formData.description.trim(),
-        date: formData.date,
-        is_pinned: formData.isPinned,
+    
       };
 
       onAnnouncementUpdated(updatedAnnouncement);
@@ -270,36 +266,9 @@ const EditAnnouncementModal = ({
             {errors.description && <p id="description-error" className="text-red-500 text-xs mt-1">{errors.description}</p>}
           </div>
 
-          <div className="mb-4">
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-            <input 
-              id="date" 
-              name="date" 
-              type="date" 
-              value={formData.date} 
-              onChange={handleInputChange} 
-              className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${errors.date ? 'border-red-500' : 'border-gray-300'}`} 
-              required 
-              aria-invalid={!!errors.date} 
-              aria-describedby={errors.date ? 'date-error' : undefined} 
-            />
-            {errors.date && <p id="date-error" className="text-red-500 text-xs mt-1">{errors.date}</p>}
-          </div>
+        
 
-          <div className="mb-4">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                name="isPinned"
-                checked={formData.isPinned}
-                onChange={(e) => setFormData(prev => ({ ...prev, isPinned: e.target.checked }))}
-                className="rounded border-gray-300 text-bapred focus:ring-bapred"
-              />
-              <span className="ml-2 text-sm text-gray-700">
-                Pin this announcement
-              </span>
-            </label>
-          </div>
+         
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 mt-6">

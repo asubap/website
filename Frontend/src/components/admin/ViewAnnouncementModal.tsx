@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { Announcement } from "../../types";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useScrollLock } from "../../hooks/useScrollLock";
 
 interface ViewAnnouncementModalProps {
@@ -15,6 +15,21 @@ const ViewAnnouncementModal = ({
   announcement,
 }: ViewAnnouncementModalProps) => {
   useScrollLock(isOpen);
+
+  // Function to format the timestamp in readable format with both date and time
+  const formatDateTime = (timestamp: string) => {
+    if (!timestamp) return "No date";
+    
+    try {
+      // Parse the ISO timestamp
+      const date = parseISO(timestamp);
+      // Format as "MMMM d, yyyy 'at' h:mm a" (e.g., "January 15, 2024 at 2:30 PM")
+      return format(date, "MMMM d, yyyy 'at' h:mm a");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
 
   if (!isOpen || !announcement) return null;
 
@@ -63,9 +78,9 @@ const ViewAnnouncementModal = ({
             )}
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {announcement.date
-              ? format(new Date(announcement.date), 'MMMM d, yyyy')
-              : 'No date'}
+            {announcement.created_at
+              ? formatDateTime(announcement.created_at)
+              : 'No date available'}
           </p>
           <div className="border-t border-gray-200 pt-4 mt-2">
             <p className="text-gray-700 whitespace-pre-wrap">

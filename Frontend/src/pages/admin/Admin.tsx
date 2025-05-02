@@ -241,8 +241,10 @@ const Admin = () => {
               if (a.is_pinned && !b.is_pinned) return -1;
               if (!a.is_pinned && b.is_pinned) return 1;
               
-              // Then sort by date (newer first)
-              return new Date(b.date).getTime() - new Date(a.date).getTime();
+              // Then sort by created_at (newer first) - safely handle null values
+              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+              return dateB - dateA;
             });
             setAnnouncements(sortedAnnouncements);
             setLoadingAnnouncements(false);
@@ -542,10 +544,20 @@ const Admin = () => {
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
         
-        // Then sort by date (newer first)
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+        // Then sort by created_at (newer first) - safely handle null values
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
       });
     });
+    
+    // Show success toast before refresh
+    showToast("Announcement created successfully", "success");
+    
+    // Refresh the page after a short delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000); // 1 second delay to let the user see the toast
   };
 
   // Handle editing an announcement
@@ -559,7 +571,11 @@ const Admin = () => {
       return updated.sort((a, b) => {
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+        
+        // Sort by created_at (newer first) - safely handle null values
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
       });
     });
     
@@ -876,7 +892,6 @@ const Admin = () => {
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
-        onDelete={handleConfirmDeleteAnnouncement}
         isOpen={showDeleteAnnouncementModal}
         onClose={() => setShowDeleteAnnouncementModal(false)}
         onConfirm={handleConfirmDeleteAnnouncement}
