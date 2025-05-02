@@ -26,8 +26,7 @@ const CreateAnnouncementModal = ({
   const { showToast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [isPinned, setIsPinned] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showConfirmCloseModal, setShowConfirmCloseModal] = useState(false);
@@ -36,8 +35,7 @@ const CreateAnnouncementModal = ({
   const initialStateRef = useRef({
     title,
     description,
-    date,
-    isPinned,
+  
   });
 
   // Function to check if form data has changed
@@ -45,8 +43,7 @@ const CreateAnnouncementModal = ({
     const current = {
       title,
       description,
-      date,
-      isPinned,
+  
     };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
   };
@@ -80,7 +77,7 @@ const CreateAnnouncementModal = ({
     // --- Validation ---
     if (!title.trim()) newErrors.title = "Title is required";
     if (!description.trim()) newErrors.description = "Description is required";
-    if (!date) newErrors.date = "Date is required";
+   
 
     // --- Update errors state and return if invalid ---
     if (Object.keys(newErrors).length > 0) {
@@ -107,8 +104,7 @@ const CreateAnnouncementModal = ({
       const announcementData = {
         title: title.trim(),
         description: description.trim(),
-        date: date,
-        is_pinned: isPinned,
+   
       };
 
       const response = await fetch(
@@ -137,9 +133,10 @@ const CreateAnnouncementModal = ({
 
       const data = await response.json();
 
+      // Only call the onAnnouncementCreated function, which will handle the toast and page refresh
       onAnnouncementCreated(data);
-      showToast("Announcement created successfully", "success");
-      onClose();
+      
+      // No need to close the modal here as the page will refresh
     } catch (error) {
       console.error("Error creating announcement:", error);
       if (!`${error}`.includes("Error: ")) {
@@ -252,50 +249,9 @@ const CreateAnnouncementModal = ({
             )}
           </div>
 
-          {/* Date */}
-          <div className="mb-4">
-            <label
-              htmlFor="date"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Date *
-            </label>
-            <input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                clearError("date");
-              }}
-              className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
-                errors.date ? "border-red-500" : "border-gray-300"
-              }`}
-              required
-              aria-invalid={!!errors.date}
-              aria-describedby={errors.date ? "date-error" : undefined}
-            />
-            {errors.date && (
-              <p id="date-error" className="text-red-500 text-xs mt-1">
-                {errors.date}
-              </p>
-            )}
-          </div>
+          
 
-          {/* Pin Announcement Checkbox */}
-          <div className="mb-4">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={isPinned}
-                onChange={(e) => setIsPinned(e.target.checked)}
-                className="rounded border-gray-300 text-bapred focus:ring-bapred"
-              />
-              <span className="ml-2 text-sm text-gray-700">
-                Pin this announcement
-              </span>
-            </label>
-          </div>
+         
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 mt-6">
