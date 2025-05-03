@@ -55,14 +55,14 @@ const EventMember: React.FC = () => {
 
   const inSessionEvents = events.filter(isEventInSession);
   const upcomingEvents = events
-    .filter((event) => new Date(event.event_date) >= today && !isEventInSession(event))
+    .filter((event) => !isEventInSession(event) && new Date(event.event_date) >= today)
     .sort(
       (a, b) =>
         new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
     );
 
   const pastEvents = events
-    .filter((event) => new Date(event.event_date) < today && !isEventInSession(event))
+    .filter((event) => !isEventInSession(event) && new Date(event.event_date) < today)
     .sort(
       (a, b) =>
         new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
