@@ -21,13 +21,6 @@ const EventsPage: React.FC = () => {
     PAST_EVENTS_INCREMENT
   );
 
-  const isPastDate = (dateString: string): boolean => {
-    const inputDate = new Date(dateString);
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    return inputDate < currentDate;
-  };
-
   function isEventInSession(event: Event) {
     if (!event.event_date || !event.event_time || !event.event_hours) return false;
     const [hour, minute] = event.event_time.split(":").map(Number);
