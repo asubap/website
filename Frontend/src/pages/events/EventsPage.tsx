@@ -9,8 +9,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
-  const [pastEvents, setPastEvents] = useState<Event[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -23,14 +22,9 @@ const EventsPage: React.FC = () => {
   );
 
   const isPastDate = (dateString: string): boolean => {
-    // Parse the input date string into a Date object
     const inputDate = new Date(dateString);
-
-    // Get the current date and reset its time to midnight
     const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Set time to 00:00:00 for accurate comparison
-
-    // Compare the input date with the current date
+    currentDate.setHours(0, 0, 0, 0);
     return inputDate < currentDate;
   };
 
@@ -44,7 +38,6 @@ const EventsPage: React.FC = () => {
     return now >= start && now <= end;
   }
 
-  // Effect 1: Fetch Events on mount or session change
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -62,77 +55,48 @@ const EventsPage: React.FC = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-
-        // Filter and sort past events (descending)
-        setPastEvents(
-          data
-            .filter((event: Event) => isPastDate(event.event_date))
-            .sort(
-              (a: Event, b: Event) =>
-                new Date(b.event_date).getTime() -
-                new Date(a.event_date).getTime()
-            )
-        );
-        // Filter and sort upcoming events (ascending)
-        setUpcomingEvents(
-          data
-            .filter((event: Event) => !isPastDate(event.event_date))
-            .sort(
-              (a: Event, b: Event) =>
-                new Date(a.event_date).getTime() -
-                new Date(b.event_date).getTime()
-            )
-        );
+        setAllEvents(data);
       } catch (error) {
         console.error("Error fetching events:", error);
-        // Handle error state if needed
-        setPastEvents([]); // Clear data on error
-        setUpcomingEvents([]);
+        setAllEvents([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchEvents();
-  }, [session]); // Depend only on session for re-fetching
+  }, [session]);
 
   // Effect 2: Handle highlighting when location state changes or loading finishes
   useEffect(() => {
     const highlightEventId = location.state?.highlightEventId;
-
-    // Only proceed if not loading and we have an ID to highlight
     if (!loading && highlightEventId) {
-      console.log(
-        "Highlighting effect triggered (loading finished): ID",
-        highlightEventId
-      );
-
-      // Clear the state immediately after detecting it to prevent re-trigger on back navigation
       window.history.replaceState(
         { ...location.state, highlightEventId: null },
         ""
       );
-
-      // Use setTimeout to ensure DOM is ready after state update
       const timer = setTimeout(() => {
         const element = eventRefs.current.get(highlightEventId);
         if (element) {
-          console.log("Element found, scrolling and highlighting:", element);
           element.scrollIntoView({ behavior: "smooth", block: "center" });
           setHighlightedId(highlightEventId);
-          // Clear highlight after a delay
-          setTimeout(() => setHighlightedId(null), 2000); // Highlight for 2 seconds
-        } else {
-          console.log("Element not found in refs for ID:", highlightEventId);
+          setTimeout(() => setHighlightedId(null), 2000);
         }
-      }, 100); // Increased delay slightly just in case
-
-      // Cleanup the main timer if effect re-runs or component unmounts
+      }, 100);
       return () => clearTimeout(timer);
     }
+  }, [location.state, loading]);
 
-    // No cleanup needed for the inner setTimeout, it handles itself
-  }, [location.state, loading]); // Now depends on loading status correctly
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const inSessionEvents = allEvents.filter(isEventInSession);
+  const upcomingEvents = allEvents
+    .filter((event) => !isEventInSession(event) && new Date(event.event_date) >= today)
+    .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+  const pastEvents = allEvents
+    .filter((event) => !isEventInSession(event) && new Date(event.event_date) < today)
+    .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
 
   const handleLoadMorePastEvents = () => {
     setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);
@@ -157,9 +121,6 @@ const EventsPage: React.FC = () => {
       { name: "Log In", href: "/login" },
     ];
   }
-
-  const inSessionEvents = [...upcomingEvents, ...pastEvents].filter(isEventInSession);
-  const notInSessionUpcomingEvents = upcomingEvents.filter(e => !isEventInSession(e));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -203,8 +164,8 @@ const EventsPage: React.FC = () => {
             <div className="space-y-4">
               {loading ? (
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
-              ) : notInSessionUpcomingEvents.length > 0 ? (
-                notInSessionUpcomingEvents.map((event) => (
+              ) : upcomingEvents.length > 0 ? (
+                upcomingEvents.map((event) => (
                   <EventCard
                     key={event.id}
                     event={event}

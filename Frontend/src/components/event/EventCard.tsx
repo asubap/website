@@ -115,9 +115,9 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       {!isPast && isLoggedIn && !loading && (
-        <div className="col-span-2 flex justify-end space-x-4 mt-4">
+        <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
           {(isMember || isSponsor) && !hideRSVP && (
-            <div className="w-40">
+            <div className="w-full sm:w-40">
               <EventRSVP 
                 eventId={event.id} 
                 eventRSVPed={event.event_rsvped || []} 
@@ -126,7 +126,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             </div>
           )}
           {isMember && (
-            <div className="w-40">
+            <div className="w-full sm:w-40">
               <EventCheckIn
                 eventId={event.id}
                 eventAttending={event.event_attending || []}

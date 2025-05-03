@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../ui/Modal";
+import { toast } from "react-hot-toast";
 
 interface EventRSVPProps {
   eventId: string;
@@ -10,7 +11,6 @@ interface EventRSVPProps {
 
 const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }) => {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
-  const [message, setMessage] = useState<string>("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [localRSVPed, setLocalRSVPed] = useState<boolean>(eventRSVPed.includes(useAuth().session?.user?.id || ""));
   const { session } = useAuth();
@@ -21,7 +21,7 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }
   const handleRSVPAction = async () => {
     if (!session?.access_token) {
       setStatus("error");
-      setMessage("Not authenticated. Please log in again.");
+      toast.error("Not authenticated. Please log in again.");
       setShowConfirmModal(false);
       return;
     }
@@ -46,15 +46,15 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }
       if (res.ok) {
         setStatus("idle");
         setLocalRSVPed(!localRSVPed);
-        setMessage(data.message);
+        toast.success(data.message);
       } else {
         setStatus("error");
-        setMessage(data.error || `${localRSVPed ? "Un-RSVP" : "RSVP"} failed.`);
+        toast.error(data.error || `${localRSVPed ? "Un-RSVP" : "RSVP"} failed.`);
       }
     } catch (err) {
       console.error("RSVP error:", err);
       setStatus("error");
-      setMessage("Network error during RSVP.");
+      toast.error("Network error during RSVP.");
     }
     setShowConfirmModal(false);
   };
@@ -63,28 +63,17 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }
     <div>
       <button
         onClick={() => setShowConfirmModal(true)}
-        className={`w-40 px-4 py-2 text-white rounded-md text-sm font-medium ${
+        className={`w-full sm:w-40 px-4 py-2 text-white rounded-md text-sm font-medium ${
           status === "sending"
             ? "bg-gray-400"
             : status === "error"
             ? "bg-red-600"
-            : localRSVPed
-            ? "bg-gray-600 hover:bg-gray-700"
             : "bg-[#AF272F] hover:bg-[#8f1f26]"
         } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#AF272F]`}
         disabled={status === "sending"}
       >
         {localRSVPed ? "Un-RSVP" : "RSVP"}
       </button>
-      {message && (
-        <p
-          className={`mt-1 text-xs ${
-            status === "error" ? "text-red-600" : "text-green-600"
-          }`}
-        >
-          {message}
-        </p>
-      )}
       <Modal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
