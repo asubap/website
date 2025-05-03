@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, FileText, Image, File, Download, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Image, File, ExternalLink } from "lucide-react";
 import ResourcePreviewModal from "../ui/ResourcePreviewModal";
 
 // Define the interfaces for our data structure
