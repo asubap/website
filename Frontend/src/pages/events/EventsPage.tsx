@@ -34,6 +34,16 @@ const EventsPage: React.FC = () => {
     return inputDate < currentDate;
   };
 
+  function isEventInSession(event: Event) {
+    if (!event.event_date || !event.event_time || !event.event_hours) return false;
+    const [hour, minute] = event.event_time.split(":").map(Number);
+    const start = new Date(event.event_date);
+    start.setHours(hour, minute, 0, 0);
+    const end = new Date(start.getTime() + event.event_hours * 60 * 60 * 1000);
+    const now = new Date();
+    return now >= start && now <= end;
+  }
+
   // Effect 1: Fetch Events on mount or session change
   useEffect(() => {
     const fetchEvents = async () => {
@@ -148,6 +158,9 @@ const EventsPage: React.FC = () => {
     ];
   }
 
+  const inSessionEvents = [...upcomingEvents, ...pastEvents].filter(isEventInSession);
+  const notInSessionUpcomingEvents = upcomingEvents.filter(e => !isEventInSession(e));
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
@@ -161,12 +174,37 @@ const EventsPage: React.FC = () => {
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
           <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
+            <div className="space-y-4">
+              {loading ? (
+                <LoadingSpinner text="Loading events in session..." size="md" />
+              ) : inSessionEvents.length > 0 ? (
+                inSessionEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    isPast={false}
+                    isHighlighted={event.id === highlightedId}
+                    registerRef={(el: HTMLDivElement | null) => {
+                      if (el) eventRefs.current.set(event.id, el);
+                      else eventRefs.current.delete(event.id);
+                    }}
+                    hideRSVP={true}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500">No events in session</p>
+              )}
+            </div>
+          </section>
+
+          <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
             <div className="space-y-4">
               {loading ? (
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
-              ) : upcomingEvents.length > 0 ? (
-                upcomingEvents.map((event) => (
+              ) : notInSessionUpcomingEvents.length > 0 ? (
+                notInSessionUpcomingEvents.map((event) => (
                   <EventCard
                     key={event.id}
                     event={event}
