@@ -1,86 +1,91 @@
 import { useState } from "react";
 import { useAuth } from "../../context/auth/authProvider";
+import Modal from "../ui/Modal";
+import { toast } from "react-hot-toast";
 
 interface EventRSVPProps {
   eventId: string;
+  eventRSVPed: string[];
+  eventName: string;
 }
 
-const EventRSVP: React.FC<EventRSVPProps> = ({ eventId }) => {
-  const [status, setStatus] = useState<
-    "idle" | "sending" | "success" | "error"
-  >("idle");
-  const [message, setMessage] = useState<string>("");
+const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }) => {
+  const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [localRSVPed, setLocalRSVPed] = useState<boolean>(eventRSVPed.includes(useAuth().session?.user?.id || ""));
   const { session } = useAuth();
 
-  const rsvp = async () => {
+  // Keep localRSVPed in sync if eventRSVPed changes (e.g. after parent refresh)
+  // (Optional: can add useEffect if you want to sync with parent updates)
+
+  const handleRSVPAction = async () => {
     if (!session?.access_token) {
       setStatus("error");
-      setMessage("Not authenticated. Please log in again.");
+      toast.error("Not authenticated. Please log in again.");
+      setShowConfirmModal(false);
       return;
     }
 
     try {
       setStatus("sending");
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/events/rsvp/${eventId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          credentials: "include",
-        }
-      );
+      const endpoint = localRSVPed
+        ? `${import.meta.env.VITE_BACKEND_URL}/events/unrsvp/${eventId}`
+        : `${import.meta.env.VITE_BACKEND_URL}/events/rsvp/${eventId}`;
+      
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        credentials: "include",
+      });
 
       const data = await res.json();
 
       if (res.ok) {
-        setStatus("success");
-        setMessage(data.message);
+        setStatus("idle");
+        setLocalRSVPed(!localRSVPed);
+        toast.success(data.message);
       } else {
         setStatus("error");
-        setMessage(data.error || "RSVP failed.");
+        toast.error(data.error || `${localRSVPed ? "Un-RSVP" : "RSVP"} failed.`);
       }
     } catch (err) {
       console.error("RSVP error:", err);
       setStatus("error");
-      setMessage("Network error during RSVP.");
+      toast.error("Network error during RSVP.");
     }
+    setShowConfirmModal(false);
   };
 
   return (
     <div>
       <button
-        onClick={rsvp}
-        className={`px-4 py-2 text-white rounded-lg w-full text-sm ${
+        onClick={() => setShowConfirmModal(true)}
+        className={`w-full sm:w-40 px-4 py-2 text-white rounded-md text-sm font-medium ${
           status === "sending"
             ? "bg-gray-400"
-            : status === "success"
-            ? "bg-green-600"
             : status === "error"
             ? "bg-red-600"
             : "bg-[#AF272F] hover:bg-[#8f1f26]"
-        }`}
+        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#AF272F]`}
         disabled={status === "sending"}
       >
-        {status === "sending"
-          ? "Submitting..."
-          : status === "success"
-          ? "✓ RSVP'd"
-          : status === "error"
-          ? "Try Again"
-          : "RSVP"}
+        {localRSVPed ? "Un-RSVP" : "RSVP"}
       </button>
-      {message && (
-        <p
-          className={`mt-1 text-xs ${
-            status === "success" ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {message}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title={`Confirm ${localRSVPed ? "Un-RSVP" : "RSVP"}`}
+        onConfirm={handleRSVPAction}
+        confirmText={localRSVPed ? "Un-RSVP" : "RSVP"}
+        cancelText="Cancel"
+      >
+        <p className="text-gray-600">
+          Are you sure you want to {localRSVPed ? "un-RSVP" : "RSVP"} to the event "{eventName}"?
         </p>
-      )}
+      </Modal>
     </div>
   );
 };

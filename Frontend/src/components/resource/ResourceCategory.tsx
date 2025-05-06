@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, FileText, Image, File, Download, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Image, File, ExternalLink } from "lucide-react";
+import ResourcePreviewModal from "../ui/ResourcePreviewModal";
 
 // Define the interfaces for our data structure
 interface Resource {
@@ -27,9 +28,21 @@ interface ResourceCategoryProps {
 
 const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [resourceToPreview, setResourceToPreview] = useState<typeof category.resources[0] | null>(null);
 
   const toggleOpen = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleOpenPreviewModal = (resource: typeof category.resources[0]) => {
+    setResourceToPreview(resource);
+    setShowPreviewModal(true);
+  };
+
+  const handleClosePreviewModal = () => {
+    setShowPreviewModal(false);
+    setResourceToPreview(null);
   };
 
   // Helper function to determine icon based on mime type
@@ -93,31 +106,29 @@ const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category }) => {
                   </div>
                 </div>
                 <div>
-                  {resource.signed_url ? (
-                    <a
-                      href={resource.signed_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
-                      download={resource.file_key.split('/').pop()}
-                    >
-                      <Download size={16} className="mr-1" />
-                      Download
-                    </a>
-                  ) : (
-                    <button
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-md cursor-not-allowed"
-                      disabled
-                    >
-                      <ExternalLink size={16} className="mr-1" />
-                      Unavailable
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleOpenPreviewModal(resource)}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+                    disabled={!resource.signed_url}
+                    title={
+                      !resource.signed_url ? "Preview unavailable" : "Preview Resource"
+                    }
+                  >
+                    <ExternalLink size={16} className="mr-1" />
+                    Preview
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+      {showPreviewModal && resourceToPreview && (
+        <ResourcePreviewModal
+          isOpen={showPreviewModal}
+          onClose={handleClosePreviewModal}
+          resource={resourceToPreview}
+        />
       )}
     </div>
   );

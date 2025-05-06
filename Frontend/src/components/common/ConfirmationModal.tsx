@@ -6,6 +6,7 @@ interface ConfirmationModalProps {
   onClose: () => void; // Called when Cancel or backdrop is clicked
   onConfirm: () => void; // Called when Confirm is clicked
   title: string;
+  onDelete?: () => void; // Optional, can be used for additional delete logic
   message: string;
   confirmText?: string; // Optional override for confirm button text
   cancelText?: string;  // Optional override for cancel button text

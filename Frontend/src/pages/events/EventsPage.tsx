@@ -9,8 +9,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
-  const [pastEvents, setPastEvents] = useState<Event[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -22,19 +21,16 @@ const EventsPage: React.FC = () => {
     PAST_EVENTS_INCREMENT
   );
 
-  const isPastDate = (dateString: string): boolean => {
-    // Parse the input date string into a Date object
-    const inputDate = new Date(dateString);
+  function isEventInSession(event: Event) {
+    if (!event.event_date || !event.event_time || !event.event_hours) return false;
+    const [hour, minute] = event.event_time.split(":").map(Number);
+    const start = new Date(event.event_date);
+    start.setHours(hour, minute, 0, 0);
+    const end = new Date(start.getTime() + event.event_hours * 60 * 60 * 1000);
+    const now = new Date();
+    return now >= start && now <= end;
+  }
 
-    // Get the current date and reset its time to midnight
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Set time to 00:00:00 for accurate comparison
-
-    // Compare the input date with the current date
-    return inputDate < currentDate;
-  };
-
-  // Effect 1: Fetch Events on mount or session change
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -52,77 +48,48 @@ const EventsPage: React.FC = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-
-        // Filter and sort past events (descending)
-        setPastEvents(
-          data
-            .filter((event: Event) => isPastDate(event.event_date))
-            .sort(
-              (a: Event, b: Event) =>
-                new Date(b.event_date).getTime() -
-                new Date(a.event_date).getTime()
-            )
-        );
-        // Filter and sort upcoming events (ascending)
-        setUpcomingEvents(
-          data
-            .filter((event: Event) => !isPastDate(event.event_date))
-            .sort(
-              (a: Event, b: Event) =>
-                new Date(a.event_date).getTime() -
-                new Date(b.event_date).getTime()
-            )
-        );
+        setAllEvents(data);
       } catch (error) {
         console.error("Error fetching events:", error);
-        // Handle error state if needed
-        setPastEvents([]); // Clear data on error
-        setUpcomingEvents([]);
+        setAllEvents([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchEvents();
-  }, [session]); // Depend only on session for re-fetching
+  }, [session]);
 
   // Effect 2: Handle highlighting when location state changes or loading finishes
   useEffect(() => {
     const highlightEventId = location.state?.highlightEventId;
-
-    // Only proceed if not loading and we have an ID to highlight
     if (!loading && highlightEventId) {
-      console.log(
-        "Highlighting effect triggered (loading finished): ID",
-        highlightEventId
-      );
-
-      // Clear the state immediately after detecting it to prevent re-trigger on back navigation
       window.history.replaceState(
         { ...location.state, highlightEventId: null },
         ""
       );
-
-      // Use setTimeout to ensure DOM is ready after state update
       const timer = setTimeout(() => {
         const element = eventRefs.current.get(highlightEventId);
         if (element) {
-          console.log("Element found, scrolling and highlighting:", element);
           element.scrollIntoView({ behavior: "smooth", block: "center" });
           setHighlightedId(highlightEventId);
-          // Clear highlight after a delay
-          setTimeout(() => setHighlightedId(null), 2000); // Highlight for 2 seconds
-        } else {
-          console.log("Element not found in refs for ID:", highlightEventId);
+          setTimeout(() => setHighlightedId(null), 2000);
         }
-      }, 100); // Increased delay slightly just in case
-
-      // Cleanup the main timer if effect re-runs or component unmounts
+      }, 100);
       return () => clearTimeout(timer);
     }
+  }, [location.state, loading]);
 
-    // No cleanup needed for the inner setTimeout, it handles itself
-  }, [location.state, loading]); // Now depends on loading status correctly
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const inSessionEvents = allEvents.filter(isEventInSession);
+  const upcomingEvents = allEvents
+    .filter((event) => !isEventInSession(event) && new Date(event.event_date) >= today)
+    .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+  const pastEvents = allEvents
+    .filter((event) => !isEventInSession(event) && new Date(event.event_date) < today)
+    .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
 
   const handleLoadMorePastEvents = () => {
     setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);
@@ -160,6 +127,31 @@ const EventsPage: React.FC = () => {
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
+            <div className="space-y-4">
+              {loading ? (
+                <LoadingSpinner text="Loading events in session..." size="md" />
+              ) : inSessionEvents.length > 0 ? (
+                inSessionEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    isPast={false}
+                    isHighlighted={event.id === highlightedId}
+                    registerRef={(el: HTMLDivElement | null) => {
+                      if (el) eventRefs.current.set(event.id, el);
+                      else eventRefs.current.delete(event.id);
+                    }}
+                    hideRSVP={true}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500">No events in session</p>
+              )}
+            </div>
+          </section>
+
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
             <div className="space-y-4">

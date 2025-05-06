@@ -9,6 +9,7 @@ interface EventCardProps {
   isPast: boolean;
   isHighlighted?: boolean;
   registerRef?: (element: HTMLDivElement | null) => void;
+  hideRSVP?: boolean;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
@@ -16,6 +17,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   isPast,
   isHighlighted,
   registerRef,
+  hideRSVP = false,
 }) => {
   const { session, role, loading } = useAuth();
 
@@ -41,8 +43,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   };
 
   // Role checking logic - Check for string role names
-  const isMember = Array.isArray(role) && role.includes("general-member"); // Role ID 3
-  const isSponsor = Array.isArray(role) && role.includes("sponsor"); // Role ID 2
+  const isMember = role === "general-member" || role === "admin";
+  const isSponsor = role === "sponsor";
   const isLoggedIn = !!session;
 
   // Debug log for role checks
@@ -110,36 +112,29 @@ export const EventCard: React.FC<EventCardProps> = ({
             </span>
           </div>
         )}
-
-        {event.event_rsvped && (
-          <div>
-            <span className="font-semibold text-gray-700">RSVPed: </span>
-            <span className="text-gray-600">
-              RSVPed: {event.event_rsvped.join(", ")}
-            </span>
-          </div>
-        )}
-
-        {event.event_attending && (
-          <div>
-            <span className="font-semibold text-gray-700">Attending: </span>
-            <span className="text-gray-600">
-              Attending: {event.event_attending.join(", ")}
-            </span>
-          </div>
-        )}
       </div>
 
       {!isPast && isLoggedIn && !loading && (
-        <div className="flex justify-end space-x-4">
-          {(isMember || isSponsor) && (
-            <div className="w-40">
-              <EventRSVP eventId={event.id} />
+        <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
+          {(isMember || isSponsor) && !hideRSVP && (
+            <div className="w-full sm:w-40">
+              <EventRSVP 
+                eventId={event.id} 
+                eventRSVPed={event.event_rsvped || []} 
+                eventName={event.event_name}
+              />
             </div>
           )}
           {isMember && (
-            <div className="w-40">
-              <EventCheckIn eventId={event.id} />
+            <div className="w-full sm:w-40">
+              <EventCheckIn
+                eventId={event.id}
+                eventAttending={event.event_attending || []}
+                eventRSVPed={event.event_rsvped || []}
+                eventDate={event.event_date}
+                eventTime={event.event_time}
+                eventHours={event.event_hours}
+              />
             </div>
           )}
         </div>
