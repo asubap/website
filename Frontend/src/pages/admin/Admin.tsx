@@ -90,6 +90,14 @@ const Admin = () => {
 
   const { role } = useAuth();
 
+  // State for email inputs
+  const [adminEmailInput, setAdminEmailInput] = useState("");
+  const [memberEmailInput, setMemberEmailInput] = useState("");
+
+  // Loading states for add buttons
+  const [isAddingAdmins, setIsAddingAdmins] = useState(false);
+  const [isAddingMembers, setIsAddingMembers] = useState(false);
+
   // Reset input error state when clicking away from input
   const handleInputFocus = (inputType: "admin") => {
     if (inputType === "admin") {
@@ -105,6 +113,13 @@ const Admin = () => {
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  };
+
+  const handleEmailInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    setter(e.target.value.replace(/\s+/g, "")); // Remove spaces
   };
 
   useEffect(() => {
@@ -264,124 +279,196 @@ const Admin = () => {
     role: string
   ) => {
     e.preventDefault();
+    setIsAddingAdmins(true);
 
-    // Get form and email value
-    const form = e.target as HTMLFormElement;
-    const emailInput = form.email as HTMLInputElement;
-    const email = emailInput.value.trim();
+    const emailsToAdd = adminEmailInput
+      .split(",")
+      .map((email) => email.trim())
+      .filter((email) => email);
 
-    // Set the appropriate error state to update UI based on role type
-    const isRoleAdmin = role === "e-board";
-
-    // Validate email presence
-    if (!email) {
-      showToast("Please enter an email address", "error");
-      if (isRoleAdmin) {
-        setAdminInputError(true);
-      }
+    if (emailsToAdd.length === 0) {
+      showToast("Please enter at least one email address.", "error");
+      setAdminInputError(true);
+      setIsAddingAdmins(false);
       return;
     }
 
-    // Validate email format using regex
-    if (!validateEmail(email)) {
-      showToast("Please enter a valid email address", "error");
-      if (isRoleAdmin) {
-        setAdminInputError(true);
-      }
+    const invalidEmails = emailsToAdd.filter((email) => !validateEmail(email));
+    if (invalidEmails.length > 0) {
+      showToast(
+        `Invalid email format for: ${invalidEmails.join(", ")}`,
+        "error"
+      );
+      setAdminInputError(true);
+      setIsAddingAdmins(false);
       return;
     }
 
-    // If we got here, reset error state as email is valid
-    if (isRoleAdmin) {
-      setAdminInputError(false);
+    setAdminInputError(false);
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      setIsAddingAdmins(false);
+      return;
+    }
+    const token = session.access_token;
+
+    const addUserPromises = emailsToAdd.map((email) =>
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/users/add-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_email: email, role: role }),
+      }).then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          return { email, success: false, error: errorData.message || `Failed to add ${email}` };
+        }
+        return { email, success: true };
+      }).catch(error => {
+        return { email, success: false, error: error.message || `Network error for ${email}` };
+      })
+    );
+
+    const results = await Promise.allSettled(addUserPromises);
+
+    const successfulEmails: string[] = [];
+    const failedEmails: string[] = [];
+
+    results.forEach((result) => {
+      if (result.status === "fulfilled" && result.value.success) {
+        successfulEmails.push(result.value.email);
+      } else if (result.status === "fulfilled" && !result.value.success) {
+        failedEmails.push(`${result.value.email} (${result.value.error})`);
+      } else if (result.status === "rejected") {
+        const reason = result.reason as any;
+        failedEmails.push(`Unknown email (Error: ${reason?.message || 'Unknown error'})`);
+      }
+    });
+
+    if (successfulEmails.length > 0) {
+      if (role === "e-board") {
+        setAdminEmails((prev) => [...prev, ...successfulEmails]);
+      }
+      showToast(
+        `${successfulEmails.length} admin(s) added successfully.`,
+        "success"
+      );
+      setAdminEmailInput(""); // Clear input
+    }
+
+    if (failedEmails.length > 0) {
+      showToast(
+        `Failed to add: ${failedEmails.join("; ")}`,
+        "error",
+        failedEmails.length > 1 ? 10000 : 5000
+      );
+    }
+    
+    if (adminFormRef.current && successfulEmails.length === emailsToAdd.length) {
+        adminFormRef.current.reset();
+        setAdminEmailInput(""); 
+    }
+    setIsAddingAdmins(false);
+  };
+
+  const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsAddingMembers(true);
+
+    const emailsToAdd = memberEmailInput
+      .split(",")
+      .map((email) => email.trim())
+      .filter((email) => email);
+
+    if (emailsToAdd.length === 0) {
+      showToast("Please enter at least one email address.", "error");
+      setIsAddingMembers(false);
+      return;
+    }
+
+    const invalidEmails = emailsToAdd.filter((email) => !validateEmail(email));
+    if (invalidEmails.length > 0) {
+      showToast(
+        `Invalid email format for: ${invalidEmails.join(", ")}`,
+        "error"
+      );
+      setIsAddingMembers(false);
+      return;
     }
 
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (session) {
-      try {
-        // Fetch user role
-        const token = session.access_token;
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/users/add-user`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ user_email: email, role: role }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to add user");
-        }
-
-        // Update local state based on role
-        if (role === "e-board") {
-          setAdminEmails([...adminEmails, email]);
-          showToast("Admin added successfully", "success");
-          if (adminFormRef.current) adminFormRef.current.reset();
-        } else if (role === "sponsor") {
-          setSponsors([...sponsors, email]);
-          showToast("Sponsor added successfully", "success");
-          if (sponsorFormRef.current) sponsorFormRef.current.reset();
-        }
-      } catch (error) {
-        console.error("Error adding user:", error);
-        showToast("Failed to add user. Please try again.", "error");
-      }
-    }
-  };
-
-  const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const emailInput = form.email as HTMLInputElement;
-    const email = emailInput.value.trim();
-
-    if (!email) {
-      showToast("Please enter an email address", "error");
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      setIsAddingMembers(false);
       return;
     }
+    const token = session.access_token;
 
-    if (!validateEmail(email)) {
-      showToast("Please enter a valid email address", "error");
-      return;
-    }
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/users/add-user`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ user_email: email, role: "general-member" }),
-          }
-        );
-
+    const addUserPromises = emailsToAdd.map((email) =>
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/users/add-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_email: email, role: "general-member" }),
+      }).then(async (response) => {
         if (!response.ok) {
-          throw new Error("Failed to add member");
+          const errorData = await response.json().catch(() => ({}));
+          return { email, success: false, error: errorData.message || `Failed to add ${email}` };
         }
+        return { email, success: true };
+      }).catch(error => {
+        return { email, success: false, error: error.message || `Network error for ${email}` };
+      })
+    );
 
-        setMembers([...members, email]);
-        showToast("Member added successfully", "success");
-        if (memberFormRef.current) memberFormRef.current.reset();
+    const results = await Promise.allSettled(addUserPromises);
+    const successfulEmails: string[] = [];
+    const failedEmails: string[] = [];
+
+    results.forEach((result) => {
+       if (result.status === "fulfilled" && result.value.success) {
+        successfulEmails.push(result.value.email);
+      } else if (result.status === "fulfilled" && !result.value.success) {
+        failedEmails.push(`${result.value.email} (${result.value.error})`);
+      } else if (result.status === "rejected") {
+        const reason = result.reason as any;
+        failedEmails.push(`Unknown email (Error: ${reason?.message || 'Unknown error'})`);
       }
-    } catch (error) {
-      console.error("Error adding member:", error);
-      showToast("Failed to add member. Please try again.", "error");
+    });
+
+    if (successfulEmails.length > 0) {
+      setMembers((prev) => [...prev, ...successfulEmails]);
+      showToast(
+        `${successfulEmails.length} member(s) added successfully.`,
+        "success"
+      );
+      setMemberEmailInput(""); // Clear input
     }
+
+    if (failedEmails.length > 0) {
+      showToast(
+        `Failed to add: ${failedEmails.join("; ")}`,
+        "error",
+        failedEmails.length > 1 ? 10000 : 5000
+      );
+    }
+    
+    if (memberFormRef.current && successfulEmails.length === emailsToAdd.length) {
+        memberFormRef.current.reset();
+        setMemberEmailInput("");
+    }
+    setIsAddingMembers(false);
   };
 
   const handleDelete = async (email: string) => {
@@ -739,7 +826,9 @@ const Admin = () => {
               >
                 <input
                   type="text"
-                  placeholder="Enter admin email.."
+                  placeholder="Enter admin email(s), comma-separated"
+                  value={adminEmailInput}
+                  onChange={(e) => handleEmailInputChange(e, setAdminEmailInput)}
                   className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
                     adminInputError
                       ? "border-red-500 bg-red-50"
@@ -747,9 +836,21 @@ const Admin = () => {
                   }`}
                   name="email"
                   onFocus={() => handleInputFocus("admin")}
+                  disabled={isAddingAdmins}
                 />
-                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors whitespace-nowrap">
-                  + <span className="hidden md:inline">Add </span>Admin
+                <button 
+                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  disabled={isAddingAdmins}
+                >
+                  {isAddingAdmins ? (
+                    
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <>+ <span className="hidden md:inline">Add </span>Admin</>
+                  )}
                 </button>
               </form>
               {loadingAdmins ? (
@@ -795,7 +896,9 @@ const Admin = () => {
               >
                 <input
                   type="text"
-                  placeholder="Enter member email.."
+                  placeholder="Enter member email(s), comma-separated"
+                  value={memberEmailInput}
+                  onChange={(e) => handleEmailInputChange(e, setMemberEmailInput)}
                   className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
                     adminInputError
                       ? "border-red-500 bg-red-50"
@@ -803,9 +906,20 @@ const Admin = () => {
                   }`}
                   name="email"
                   onFocus={() => handleInputFocus("admin")}
+                  disabled={isAddingMembers}
                 />
-                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors whitespace-nowrap">
-                  + <span className="hidden md:inline">Add </span>Member
+                <button 
+                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  disabled={isAddingMembers}
+                >
+                  {isAddingMembers ? (
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <>+ <span className="hidden md:inline">Add </span>Member</>
+                  )}
                 </button>
               </form>
               {loadingMembers ? (
