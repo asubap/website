@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
-import EmailList from "../../components/admin/EmailList";
 import { useToast } from "../../context/toast/ToastContext";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
@@ -12,11 +11,14 @@ import CreateAnnouncementModal from "../../components/admin/CreateAnnouncementMo
 import EditAnnouncementModal from "../../components/admin/EditAnnouncementModal";
 import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
+import Sidebar from "../../components/admin/Sidebar";
+import AdminEventsSection from "../../components/admin/AdminEventsSection";
+import AdminAnnouncementsSection from "../../components/admin/AdminAnnouncementsSection";
+import AdminUsersSection from "../../components/admin/AdminUsersSection";
+import AdminSponsorsSection from "../../components/admin/AdminSponsorsSection";
+import AdminMembersSection from "../../components/admin/AdminMembersSection";
 
 import { Event, Announcement } from "../../types";
-import { EventListShort } from "../../components/event/EventListShort";
-import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
 
 // Define interfaces for API responses
@@ -44,19 +46,26 @@ const Admin = () => {
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   // New state for announcements
-  const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
-  const [showEditAnnouncementModal, setShowEditAnnouncementModal] = useState(false);
-  const [announcementToEdit, setAnnouncementToEdit] = useState<Announcement | null>(null);
+  const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] =
+    useState(false);
+  const [showEditAnnouncementModal, setShowEditAnnouncementModal] =
+    useState(false);
+  const [announcementToEdit, setAnnouncementToEdit] =
+    useState<Announcement | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
 
   // Add new state for viewing announcements
-  const [showViewAnnouncementModal, setShowViewAnnouncementModal] = useState(false);
-  const [announcementToView, setAnnouncementToView] = useState<Announcement | null>(null);
+  const [showViewAnnouncementModal, setShowViewAnnouncementModal] =
+    useState(false);
+  const [announcementToView, setAnnouncementToView] =
+    useState<Announcement | null>(null);
 
   // Add new state for delete confirmation
-  const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] = useState(false);
-  const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
+  const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] =
+    useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] =
+    useState<Announcement | null>(null);
 
   const navLinks = [
     { name: "Network", href: "/network" },
@@ -89,6 +98,48 @@ const Admin = () => {
   const [loadingMembers, setLoadingMembers] = useState(true);
 
   const { role } = useAuth();
+
+  const sectionList = [
+    { key: "events", label: "Events" },
+    { key: "announcements", label: "Announcements" },
+    { key: "admins", label: "Admin Users" },
+    { key: "sponsors", label: "Sponsors" },
+    { key: "members", label: "General Members" },
+    { key: "resources", label: "Resources" },
+  ];
+
+  const sectionRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {
+    events: useRef<HTMLDivElement>(null),
+    announcements: useRef<HTMLDivElement>(null),
+    admins: useRef<HTMLDivElement>(null),
+    sponsors: useRef<HTMLDivElement>(null),
+    members: useRef<HTMLDivElement>(null),
+    resources: useRef<HTMLDivElement>(null),
+  };
+
+  const [activeSection, setActiveSection] = useState("events");
+
+  // Intersection Observer for scrollspy
+  useEffect(() => {
+    const handleScroll = () => {
+      const offsets = Object.entries(sectionRefs).map(([key, ref]) => {
+        if (!ref.current) return { key, top: Infinity };
+        const rect = ref.current.getBoundingClientRect();
+        return { key, top: Math.abs(rect.top - 80) }; // 80px offset for navbar
+      });
+      const visible = offsets.reduce((a, b) => (a.top < b.top ? a : b));
+      setActiveSection(visible.key);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleSidebarItemClick = (key: string) => {
+    const ref = sectionRefs[key];
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   // Reset input error state when clicking away from input
   const handleInputFocus = (inputType: "admin") => {
@@ -236,16 +287,22 @@ const Admin = () => {
           .then((data) => {
             console.log("Announcements:", data);
             // Sort announcements by date (newest first) and pinned status
-            const sortedAnnouncements = data.sort((a: Announcement, b: Announcement) => {
-              // First sort by pinned status (pinned items first)
-              if (a.is_pinned && !b.is_pinned) return -1;
-              if (!a.is_pinned && b.is_pinned) return 1;
-              
-              // Then sort by created_at (newer first) - safely handle null values
-              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-              return dateB - dateA;
-            });
+            const sortedAnnouncements = data.sort(
+              (a: Announcement, b: Announcement) => {
+                // First sort by pinned status (pinned items first)
+                if (a.is_pinned && !b.is_pinned) return -1;
+                if (!a.is_pinned && b.is_pinned) return 1;
+
+                // Then sort by created_at (newer first) - safely handle null values
+                const dateA = a.created_at
+                  ? new Date(a.created_at).getTime()
+                  : 0;
+                const dateB = b.created_at
+                  ? new Date(b.created_at).getTime()
+                  : 0;
+                return dateB - dateA;
+              }
+            );
             setAnnouncements(sortedAnnouncements);
             setLoadingAnnouncements(false);
           })
@@ -435,7 +492,6 @@ const Admin = () => {
       }
     }
   };
- 
 
   // Handle a newly created event
   const handleEventCreated = async (newEvent: Event) => {
@@ -448,29 +504,27 @@ const Admin = () => {
     if (session) {
       const token = session.access_token;
       try {
-        await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/events/add-event`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({event_name: newEvent.event_name,
-                                  event_description: newEvent.event_description,
-                                  event_location: newEvent.event_location,
-                                  event_lat: newEvent.event_lat,
-                                  event_long: newEvent.event_long,
-                                  event_date: newEvent.event_date,
-                                  event_time: newEvent.event_time,
-                                  event_hours: newEvent.event_hours,
-                                  event_hours_type: newEvent.event_hours_type,
-                                  sponsors_attending: newEvent.sponsors_attending }),
-          }
-        );
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/add-event`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            event_name: newEvent.event_name,
+            event_description: newEvent.event_description,
+            event_location: newEvent.event_location,
+            event_lat: newEvent.event_lat,
+            event_long: newEvent.event_long,
+            event_date: newEvent.event_date,
+            event_time: newEvent.event_time,
+            event_hours: newEvent.event_hours,
+            event_hours_type: newEvent.event_hours_type,
+            sponsors_attending: newEvent.sponsors_attending,
+          }),
+        });
 
         showToast("Event created successfully", "success");
-        
       } catch (error) {
         console.error("Error creating Event:", error);
       }
@@ -509,16 +563,26 @@ const Admin = () => {
 
     // Determine if the event moved between past and upcoming
     const isNowPast = isPastDate(updatedEvent.event_date);
-    const wasPast = pastEvents.some(e => e.id === updatedEvent.id);
+    const wasPast = pastEvents.some((e) => e.id === updatedEvent.id);
 
     if (isNowPast && !wasPast) {
       // Moved from upcoming to past
-      setUpcomingEvents((prev) => prev.filter(e => e.id !== updatedEvent.id));
-      setPastEvents((prev) => [...prev, updatedEvent].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()));
+      setUpcomingEvents((prev) => prev.filter((e) => e.id !== updatedEvent.id));
+      setPastEvents((prev) =>
+        [...prev, updatedEvent].sort(
+          (a, b) =>
+            new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
+        )
+      );
     } else if (!isNowPast && wasPast) {
       // Moved from past to upcoming
-      setPastEvents((prev) => prev.filter(e => e.id !== updatedEvent.id));
-      setUpcomingEvents((prev) => [...prev, updatedEvent].sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime()));
+      setPastEvents((prev) => prev.filter((e) => e.id !== updatedEvent.id));
+      setUpcomingEvents((prev) =>
+        [...prev, updatedEvent].sort(
+          (a, b) =>
+            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+        )
+      );
     } else {
       // Updated within the same list
       setUpcomingEvents((prev) => updateList(prev));
@@ -537,23 +601,23 @@ const Admin = () => {
   // Handle a newly created announcement
   const handleAnnouncementCreated = (newAnnouncement: Announcement) => {
     // Add the new announcement to the list and sort
-    setAnnouncements(prevAnnouncements => {
+    setAnnouncements((prevAnnouncements) => {
       const updatedAnnouncements = [...prevAnnouncements, newAnnouncement];
       return updatedAnnouncements.sort((a, b) => {
         // First sort by pinned status (pinned items first)
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-        
+
         // Then sort by created_at (newer first) - safely handle null values
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     });
-    
+
     // Show success toast before refresh
     showToast("Announcement created successfully", "success");
-    
+
     // Refresh the page after a short delay
     setTimeout(() => {
       window.location.reload();
@@ -562,23 +626,23 @@ const Admin = () => {
 
   // Handle editing an announcement
   const handleAnnouncementUpdated = (updatedAnnouncement: Announcement) => {
-    setAnnouncements(prevAnnouncements => {
-      const updated = prevAnnouncements.map(a => 
+    setAnnouncements((prevAnnouncements) => {
+      const updated = prevAnnouncements.map((a) =>
         a.id === updatedAnnouncement.id ? updatedAnnouncement : a
       );
-      
+
       // Re-sort after update
       return updated.sort((a, b) => {
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-        
+
         // Sort by created_at (newer first) - safely handle null values
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     });
-    
+
     setShowEditAnnouncementModal(false);
     setAnnouncementToEdit(null);
   };
@@ -602,24 +666,26 @@ const Admin = () => {
 
   const handleConfirmDeleteAnnouncement = async () => {
     if (!announcementToDelete) return;
-    
+
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      
+
       if (session) {
         const token = session.access_token;
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/announcements/delete-announcement`,
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/announcements/delete-announcement`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ 
-              announcement_id: announcementToDelete.id 
+            body: JSON.stringify({
+              announcement_id: announcementToDelete.id,
             }),
           }
         );
@@ -629,10 +695,10 @@ const Admin = () => {
         }
 
         // Remove the deleted announcement from state
-        setAnnouncements(prevAnnouncements => 
-          prevAnnouncements.filter(a => a.id !== announcementToDelete.id)
+        setAnnouncements((prevAnnouncements) =>
+          prevAnnouncements.filter((a) => a.id !== announcementToDelete.id)
         );
-        
+
         showToast("Announcement deleted successfully", "success");
       }
     } catch (error) {
@@ -654,197 +720,106 @@ const Admin = () => {
         outlineColor="#AF272F"
         role={role}
       />
-
-      {/* Add padding-top to account for fixed navbar */}
-      <div className="flex flex-col flex-grow pt-24">
-        <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
-          <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 mb-6">
+      {/* Fixed Sidebar for desktop */}
+      <Sidebar
+        sections={sectionList}
+        activeSection={activeSection}
+        onSidebarItemClick={handleSidebarItemClick}
+      />
+      <div className="flex flex-1 pt-24 bg-gray-50">
+        {/* Main content: all sections scrollable */}
+        <main className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 lg:px-16 py-8 min-h-[calc(100vh-5rem)] md:ml-56 transition-all">
+          <h1 className="text-4xl font-bold text-left w-full mb-8">
             Admin Dashboard
           </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-8 sm:px-16 lg:px-24">
-            {/* Events column */}
-            <div className="order-1 md:order-1">
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold">Upcoming Events</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowCreateEventModal(true)}
-                >
-                  + <span className="hidden md:inline">New </span>Event
-                </button>
-              </div>
-              {loadingEvents ? (
-                <LoadingSpinner text="Loading upcoming events..." size="md" />
-              ) : upcomingEvents.length > 0 ? (
-                <EventListShort events={upcomingEvents} onEdit={handleEditEventClick} />
-              ) : (
-                <p className="text-gray-500 text-sm">
-                  No upcoming events scheduled.
-                </p>
-              )}
+          <div className="w-full max-w-5xl space-y-16">
+            <div id="events" ref={sectionRefs.events} className="scroll-mt-28">
+              <AdminEventsSection
+                upcomingEvents={upcomingEvents}
+                pastEvents={pastEvents}
+                loadingEvents={loadingEvents}
+                onCreateEvent={() => setShowCreateEventModal(true)}
+                onEditEvent={handleEditEventClick}
+              />
             </div>
-
-            {/* Past Events - now order-2 on mobile to appear directly after Upcoming Events */}
-            <div className="order-2 md:order-3">
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold">Past Events</h2>
-              </div>
-              <div className="max-h-72 overflow-y-auto pr-2">
-                {loadingEvents ? (
-                  <LoadingSpinner text="Loading events..." size="md" />
-                ) : pastEvents.length > 0 ? (
-                  <EventListShort events={pastEvents} onEdit={handleEditEventClick} />
-                ) : (
-                  <p className="text-gray-500 text-sm">No past events found.</p>
-                )}
-              </div>
+            <div
+              id="announcements"
+              ref={sectionRefs.announcements}
+              className="scroll-mt-28"
+            >
+              <AdminAnnouncementsSection
+                announcements={announcements}
+                loadingAnnouncements={loadingAnnouncements}
+                onCreateAnnouncement={() =>
+                  setShowCreateAnnouncementModal(true)
+                }
+                onEditAnnouncement={handleEditAnnouncementClick}
+                onViewAnnouncement={handleViewAnnouncementClick}
+                onDeleteAnnouncement={handleDeleteAnnouncementClick}
+              />
             </div>
-
-            {/* Announcements column - now order-3 on mobile to appear after Past Events */}
-            <div className="order-3 md:order-2">
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold">Announcements</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowCreateAnnouncementModal(true)}
-                >
-                  + <span className="hidden md:inline">New </span>Announcement
-                </button>
-              </div>
-              <div className="max-h-72 overflow-y-auto pr-2">
-                {loadingAnnouncements ? (
-                  <LoadingSpinner text="Loading announcements..." size="md" />
-                ) : announcements.length > 0 ? (
-                  <AnnouncementListShort 
-                    announcements={announcements} 
-                    onEdit={handleEditAnnouncementClick}
-                    onView={handleViewAnnouncementClick}
-                    onDelete={handleDeleteAnnouncementClick}
-                  />
-                ) : (
-                  <p className="text-gray-500 text-sm">
-                    No announcements available.
-                  </p>
-                )}
-              </div>
+            <div id="admins" ref={sectionRefs.admins} className="scroll-mt-28">
+              <AdminUsersSection
+                adminEmails={adminEmails}
+                loadingAdmins={loadingAdmins}
+                adminInputError={adminInputError}
+                adminFormRef={adminFormRef}
+                handleAddAdmin={(e) => handleRoleSubmit(e, "e-board")}
+                handleInputFocus={() => handleInputFocus("admin")}
+                handleDeleteAdmin={handleDelete}
+              />
             </div>
-
-            {/* Admin Users */}
-            <div className="order-4 md:order-4">
-              <h2 className="text-2xl font-semibold mb-2">Admin Users</h2>
-              <form
-                className="flex gap-4 justify-between items-center"
-                onSubmit={(e) => handleRoleSubmit(e, "e-board")}
-                ref={adminFormRef}
-              >
-                <input
-                  type="text"
-                  placeholder="Enter admin email.."
-                  className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
-                    adminInputError
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  name="email"
-                  onFocus={() => handleInputFocus("admin")}
-                />
-                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors whitespace-nowrap">
-                  + <span className="hidden md:inline">Add </span>Admin
-                </button>
-              </form>
-              {loadingAdmins ? (
-                <LoadingSpinner text="Loading admins..." size="md" />
-              ) : (
-                <EmailList
-                  emails={adminEmails}
-                  onDelete={handleDelete}
-                  userType="admin"
-                />
-              )}
+            <div
+              id="sponsors"
+              ref={sectionRefs.sponsors}
+              className="scroll-mt-28"
+            >
+              <AdminSponsorsSection
+                sponsors={sponsors}
+                loadingSponsors={loadingSponsors}
+                handleAddSponsor={() => setShowAddSponsorModal(true)}
+                handleDeleteSponsor={handleDeleteSponsor}
+              />
             </div>
-
-            {/* Sponsors */}
-            <div className="order-5 md:order-5">
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold">Sponsors</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowAddSponsorModal(true)}
-                >
-                  + <span className="hidden md:inline">New </span>Sponsor
-                </button>
-              </div>
-              {loadingSponsors ? (
-                <LoadingSpinner text="Loading sponsors..." size="md" />
-              ) : (
-                <EmailList
-                  emails={sponsors}
-                  onDelete={handleDeleteSponsor}
-                  userType="sponsor"
-                />
-              )}
+            <div
+              id="members"
+              ref={sectionRefs.members}
+              className="scroll-mt-28"
+            >
+              <AdminMembersSection
+                members={members}
+                loadingMembers={loadingMembers}
+                memberInputError={adminInputError}
+                memberFormRef={memberFormRef}
+                handleAddMember={handleMemberSubmit}
+                handleInputFocus={() => handleInputFocus("admin")}
+                handleDeleteMember={handleDelete}
+              />
             </div>
-
-            {/* General Members */}
-            <div className="order-6 md:order-6">
-              <h2 className="text-2xl font-semibold mb-2">General Members</h2>
-              <form
-                className="flex gap-4 justify-between items-center"
-                onSubmit={(e) => handleMemberSubmit(e)}
-                ref={memberFormRef}
-              >
-                <input
-                  type="text"
-                  placeholder="Enter member email.."
-                  className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
-                    adminInputError
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  name="email"
-                  onFocus={() => handleInputFocus("admin")}
-                />
-                <button className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors whitespace-nowrap">
-                  + <span className="hidden md:inline">Add </span>Member
-                </button>
-              </form>
-              {loadingMembers ? (
-                <LoadingSpinner text="Loading members..." size="md" />
-              ) : (
-                <EmailList
-                  emails={members}
-                  onDelete={handleDelete}
-                  userType="admin"
-                />
-              )}
-            </div>
-
-            {/* Resource Management */}
-            <div className="order-7 md:order-7 col-span-1 md:col-span-2">
+            <div
+              id="resources"
+              ref={sectionRefs.resources}
+              className="scroll-mt-28"
+            >
               <ResourceManagement />
             </div>
           </div>
         </main>
       </div>
-
       <Footer backgroundColor="#AF272F" />
-
-      {/* Event Creation Modal */}
+      {/* Modals remain unchanged */}
       {showCreateEventModal && (
         <CreateEventModal
           onClose={() => setShowCreateEventModal(false)}
           onEventCreated={handleEventCreated}
         />
       )}
-
       {showAddSponsorModal && (
         <AddSponsorModal
           onClose={() => setShowAddSponsorModal(false)}
           onSponsorAdded={handleSponsorAdded}
         />
       )}
-
-      {/* Edit Event Modal */}
       {showEditEventModal && eventToEdit && (
         <EditEventModal
           isOpen={showEditEventModal}
@@ -856,16 +831,12 @@ const Admin = () => {
           onEventUpdated={handleEventUpdated}
         />
       )}
-
-      {/* Announcement Creation Modal */}
       {showCreateAnnouncementModal && (
         <CreateAnnouncementModal
           onClose={() => setShowCreateAnnouncementModal(false)}
           onAnnouncementCreated={handleAnnouncementCreated}
         />
       )}
-
-      {/* Edit Announcement Modal */}
       {showEditAnnouncementModal && announcementToEdit && (
         <EditAnnouncementModal
           isOpen={showEditAnnouncementModal}
@@ -877,8 +848,6 @@ const Admin = () => {
           onAnnouncementUpdated={handleAnnouncementUpdated}
         />
       )}
-
-      {/* View Announcement Modal */}
       {showViewAnnouncementModal && announcementToView && (
         <ViewAnnouncementModal
           isOpen={showViewAnnouncementModal}
@@ -889,8 +858,6 @@ const Admin = () => {
           announcement={announcementToView}
         />
       )}
-
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteAnnouncementModal}
         onClose={() => setShowDeleteAnnouncementModal(false)}
