@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import EventMember from "./EventMember";
 import ProfileEditModal from "./ProfileEditModal";
+import MemberAnnouncementsListModal from "./MemberAnnouncementsListModal"; 
+import { Bell } from 'lucide-react'; 
+import { supabase } from "../../context/auth/supabaseClient"; 
+import { Announcement } from "../../types";
+
 interface MemberDescriptionProps {
     profileUrl: string;
     name: string;
@@ -11,14 +16,93 @@ interface MemberDescriptionProps {
     hours: string;
     year: string;
     internship: string;
-    
-  
     description: string;
 }
 
+const READ_ANNOUNCEMENTS_KEY = "readAnnouncementIds";
+
+const getReadAnnouncementIdsFromStorage = (): string[] => {
+  const stored = localStorage.getItem(READ_ANNOUNCEMENTS_KEY);
+  try {
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error("Error parsing read announcements from localStorage", e);
+    return [];
+  }
+};
+
+const addAnnouncementsToReadStorage = (idsToAdd: string[]) => {
+  const currentReadIds = new Set(getReadAnnouncementIdsFromStorage());
+  idsToAdd.forEach(id => currentReadIds.add(id));
+  localStorage.setItem(READ_ANNOUNCEMENTS_KEY, JSON.stringify(Array.from(currentReadIds)));
+};
+
 const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name, major, description, email, phone, status, hours, year, internship }) => {
   
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAnnouncementsListModalOpen, setIsAnnouncementsListModalOpen] = useState(false); 
+
+  const [announcementBadgeCount, setAnnouncementBadgeCount] = useState(0); 
+  const [allFetchedAnnouncementIds, setAllFetchedAnnouncementIds] = useState<string[]>([]);
+  const [allAnnouncementsData, setAllAnnouncementsData] = useState<Announcement[]>([]); // Store full announcement data
+
+  const calculateUnreadCount = useCallback(() => {
+    const readIds = new Set(getReadAnnouncementIdsFromStorage());
+    const unreadCount = allFetchedAnnouncementIds.filter(id => !readIds.has(id)).length;
+    setAnnouncementBadgeCount(unreadCount);
+  }, [allFetchedAnnouncementIds]);
+
+  // Fetch all announcements to get IDs and data for badge and modal
+  useEffect(() => {
+    const fetchAnnouncementsForBadgeAndModal = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.error("User not authenticated. Cannot fetch announcements.");
+          return;
+        }
+        const token = session.access_token;
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/announcements`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.error("Failed to fetch announcements");
+          return;
+        }
+        const data: Announcement[] = await response.json();
+        if (Array.isArray(data)) {
+          setAllAnnouncementsData(data); // Store full data
+          const ids = data
+            .map(ann => ann.id)
+            .filter((id): id is number => id != null) // Ensure ID is not null/undefined
+            .map(id => id.toString()); // Convert ID to string
+          setAllFetchedAnnouncementIds(ids);
+        }
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+      }
+    };
+
+    fetchAnnouncementsForBadgeAndModal();
+  }, []);
+
+  useEffect(() => {
+    calculateUnreadCount();
+  }, [allFetchedAnnouncementIds, calculateUnreadCount]);
+
+
+  const handleOpenAnnouncementsModal = () => {
+    if (allFetchedAnnouncementIds.length > 0) {
+      addAnnouncementsToReadStorage(allFetchedAnnouncementIds);
+    }
+    calculateUnreadCount(); 
+    setIsAnnouncementsListModalOpen(true);
+  };
 
   // Initial profile data state
   const [profileData, setProfileData] = useState({
@@ -32,7 +116,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
     internship: internship,
     photoUrl: profileUrl,
     hours: hours,
-  })
+  });
   interface ProfileData {
     name: string;
     email: string;
@@ -46,17 +130,28 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
     hours: string;
   }
 
-  
-
   const handleSaveProfile = (newData: ProfileData): void => {
-
     setProfileData(newData);
   }
-    return (
-    
-      <main className="flex flex-col lg:flex-row flex-1 p-4 sm:p-6 gap-8 lg:gap-12 mt-[150px]">
+
+  return (
+    <main className="flex flex-col lg:flex-row flex-1 p-4 sm:p-6 gap-8 lg:gap-12 mt-[150px]">
       {/* Left Column - Profile */}
-      <div className="w-full lg:w-1/2">
+      <div className="w-full lg:w-1/2 relative"> 
+        <button
+          onClick={handleOpenAnnouncementsModal}
+          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
+          aria-label="View Announcements"
+          title="View Announcements"
+        >
+          <Bell size={50} className="text-[#af272f]" strokeWidth={2.5} />
+          {announcementBadgeCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-[#af272f] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
+              {announcementBadgeCount > 9 ? '9+' : announcementBadgeCount}
+            </span>
+          )}
+        </button>
+
         <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Welcome back, {name}!</h2>
 
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
@@ -110,16 +205,23 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
       <EventMember/>
       {/* Edit Profile Modal */}
       <ProfileEditModal
-      isOpen={isEditModalOpen}
-      onClose={() => setIsEditModalOpen(false)}
-      profileData={profileData}
-      onSave={handleSaveProfile}
-    />
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        profileData={profileData}
+        onSave={handleSaveProfile}
+      />
+      {/* Member Announcements List Modal */}
+      {isAnnouncementsListModalOpen && (
+        <MemberAnnouncementsListModal
+          announcementsData={allAnnouncementsData} // Pass the full data
+          isOpen={isAnnouncementsListModalOpen}
+          onClose={() => {
+            setIsAnnouncementsListModalOpen(false);
+          }}
+        />
+      )}
     </main>
-    
-        
-       
-    )
+  )
 }
 
 export default MemberDescription;

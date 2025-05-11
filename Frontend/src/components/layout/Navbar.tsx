@@ -23,6 +23,7 @@ const Navbar: React.FC<NavbarProps> = ({
   isLogged,
   role,
 }) => {
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
