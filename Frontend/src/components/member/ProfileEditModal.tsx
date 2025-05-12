@@ -191,7 +191,7 @@ export default function ProfileEditModal({
   };
 
   const formContent = (
-    <div className="flex flex-col overflow-y-auto max-h-[75vh] p-1"> {/* Added overflow-y-auto, max-h, and slight padding for scrollbar */}
+    <div className="flex flex-col overflow-y-auto max-h-[60vh] sm:max-h-[75vh] p-1"> {/* Adjusted max-h for mobile and larger screens */}
       {/* Center - Photo Upload - Moved to top */}
       <div className="w-full flex justify-center items-center p-6 pt-4 md:pt-6">
         <div className="relative">
