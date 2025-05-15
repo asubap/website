@@ -58,6 +58,8 @@ const SponsorHome = () => {
   const [resourceToDelete, setResourceToDelete] =
     useState<SponsorResource | null>(null);
 
+  const [reloadTimestamp, setReloadTimestamp] = useState<number>(Date.now());
+
   // Helper function to format dates properly
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "Unknown date";
@@ -227,7 +229,9 @@ const SponsorHome = () => {
         updatedProfile.newProfilePic
       );
       if (uploadedUrl) {
-        newProfileUrl = uploadedUrl; // Update URL if upload succeeded
+        // Add a cache-busting parameter to force browser to reload the image
+        newProfileUrl = `${uploadedUrl}?t=${Date.now()}`; // Add timestamp to prevent caching
+        console.log("New profile URL with cache-buster:", newProfileUrl);
       } else {
         console.error(
           "Profile picture upload failed. Profile data not updated."
@@ -273,6 +277,9 @@ const SponsorHome = () => {
         links: updatedProfile.links,
         profileUrl: newProfileUrl,
       }));
+
+      // Force a component re-render by updating a timestamp state
+      setReloadTimestamp(Date.now());
     } catch (error) {
       console.error("Error updating sponsor details:", error);
       alert("Failed to update sponsor details. Please try again.");
@@ -403,7 +410,7 @@ const SponsorHome = () => {
                   </h1>
                 </div>
                 <SponsorDescription
-                  profileUrl={sponsorData.profileUrl}
+                  profileUrl={`${sponsorData.profileUrl}?t=${reloadTimestamp}`} // Add cache-busting
                   name={sponsorData.name}
                   description={sponsorData.description}
                   links={sponsorData.links}
@@ -429,9 +436,9 @@ const SponsorHome = () => {
                     onDeleteConfirm={confirmResourceDelete}
                     onPreview={showResourcePreview}
                     formatDate={formatDate}
-                        />
-                      </div>
-                  </div>
+                  />
+                </div>
+              </div>
             </div>
           )}
         </main>
@@ -453,8 +460,8 @@ const SponsorHome = () => {
 
       {/* Resource Preview Modal */}
       <ResourcePreviewModal
-              isOpen={!!previewResource}
-              onClose={closePreview}
+        isOpen={!!previewResource}
+        onClose={closePreview}
         resource={
           previewResource
             ? {

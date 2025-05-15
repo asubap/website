@@ -53,7 +53,10 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   useEffect(() => {
     setAbout(sponsorDescription);
     setLinksList(links);
-    setCurrentProfileUrl(profileUrl);
+
+    // Add a cache-busting parameter to ensure fresh image loads when modal opens
+    setCurrentProfileUrl(`${profileUrl}?t=${Date.now()}`);
+
     setInitialAbout(sponsorDescription);
     // Reset file selection state when modal opens/closes
     setProfilePicFile(null);
@@ -64,11 +67,10 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       links: false,
     };
     // Revoke previous object URL if it exists on modal open/re-render
-    // (Defensive coding in case cleanup fails)
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
     }
-  }, [isOpen, links, profileUrl, sponsorDescription, previewImageUrl]); // Added isOpen dependency
+  }, [isOpen, links, profileUrl, sponsorDescription]); // Added isOpen dependency
 
   const isValidUrl = (urlString: string) => {
     try {
@@ -233,14 +235,35 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     }, 100);
   };
 
-  const handleProfilePicUpload = async () => {
-    if (!profilePicFile || !token) return;
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (!file) return;
+
+    // Revoke *previous* preview URL if it exists before creating a new one
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+    }
+
+    // Create and set preview immediately
+    const newPreviewUrl = URL.createObjectURL(file);
+    setPreviewImageUrl(newPreviewUrl);
+    setProfilePicFile(file);
+    
+    // Start upload process immediately
+    await handleProfilePicUpload(file);
+  };
+
+  const handleProfilePicUpload = async (fileToUpload: File | null = null) => {
+    // Use the passed file or fall back to the state
+    const fileToUse = fileToUpload || profilePicFile;
+    
+    if (!fileToUse || !token) return;
 
     setUploadingProfilePic(true);
 
     try {
       const formData = new FormData();
-      formData.append("file", profilePicFile);
+      formData.append("file", fileToUse);
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
@@ -259,8 +282,13 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         throw new Error(data.error);
       }
 
-      setCurrentProfileUrl(data.photoUrl || data.url);
+      // Add cache busting parameter when setting the new URL
+      const imageUrl = data.photoUrl || data.url;
+      setCurrentProfileUrl(`${imageUrl}?t=${Date.now()}`);
+      
+      // Clear the file state since upload is complete
       setProfilePicFile(null);
+      
       // Clear preview URL after successful upload
       if (previewImageUrl) {
         URL.revokeObjectURL(previewImageUrl);
@@ -283,6 +311,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       );
       return;
     }
+    setPreviewImageUrl(null);
 
     console.log("Deleting profile picture...", {
       endpoint: `${
@@ -342,43 +371,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     setShowPicConfirmation(false);
   };
 
-  // Handle file selection: Create and set preview URL
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-
-    // Revoke *previous* preview URL if it exists before creating a new one
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl);
-    }
-
-    setProfilePicFile(file);
-
-    if (file) {
-      const newPreviewUrl = URL.createObjectURL(file);
-      setPreviewImageUrl(newPreviewUrl);
-      // Mark changes if a file is selected
-      hasChangesRef.current.about =
-        hasChangesRef.current.about || currentProfileUrl !== profileUrl;
-    } else {
-      setPreviewImageUrl(null); // Clear preview if no file selected
-      // Mark changes if file selection is cleared (might revert to original)
-      hasChangesRef.current.about =
-        hasChangesRef.current.about || currentProfileUrl !== profileUrl;
-    }
-  };
-
-  // Cancel the current file selection (clears preview)
-  const cancelFileSelection = () => {
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl);
-    }
-    setProfilePicFile(null);
-    setPreviewImageUrl(null);
-    // Mark changes if selection is cancelled (might revert to original)
-    hasChangesRef.current.about =
-      hasChangesRef.current.about || currentProfileUrl !== profileUrl;
-  };
-
   // Cleanup effect for object URL
   useEffect(() => {
     // Return cleanup function to revoke URL on unmount OR when previewImageUrl changes
@@ -396,6 +388,12 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
         <div className="flex items-start gap-6">
           <div className="relative group">
+            {/* Add a loading overlay when uploading */}
+            {uploadingProfilePic && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-md flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+              </div>
+            )}
             <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden shadow-sm">
               <img
                 src={previewImageUrl || currentProfileUrl}
@@ -406,8 +404,8 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             <div className="absolute -bottom-2 -right-2">
               <label
                 htmlFor="profile-pic-upload"
-                className="bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors"
-                title="Change picture"
+                className={`bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors ${uploadingProfilePic ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={uploadingProfilePic ? "Uploading..." : "Change picture"}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -423,41 +421,27 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                 </svg>
               </label>
             </div>
-            {previewImageUrl && (
-              <button
-                onClick={cancelFileSelection}
-                className="absolute top-0 right-0 -mt-2 -mr-2 bg-gray-600 text-white w-5 h-5 rounded-full flex items-center justify-center cursor-pointer shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Cancel selection"
-              >
-                <X size={12} />
-              </button>
-            )}
+            {/* Remove the cancel button since we auto-upload */}
             <input
               id="profile-pic-upload"
               type="file"
               accept="image/*"
               onChange={handleFileSelect}
               className="hidden"
+              disabled={uploadingProfilePic}
             />
           </div>
 
           <div className="flex flex-col">
             <h4 className="text-xl font-bold">{sponsorName}</h4>
-
-            {profilePicFile && (
-              <button
-                onClick={handleProfilePicUpload}
-                disabled={uploadingProfilePic}
-                className="px-3 py-1 bg-bapred text-white rounded-md text-sm mt-2 w-fit hover:bg-opacity-80 transition-colors disabled:opacity-50"
-              >
-                {uploadingProfilePic ? "Uploading..." : "Upload New Picture"}
-              </button>
-            )}
-
-            {!profilePicFile && (
+            
+            {/* Remove the "Upload New Picture" button since we auto-upload */}
+            
+            {!uploadingProfilePic && (
               <button
                 onClick={confirmProfilePicDelete}
                 className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit hover:bg-gray-700 transition-colors"
+                disabled={uploadingProfilePic}
               >
                 Remove Picture
               </button>
