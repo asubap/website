@@ -453,6 +453,36 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (
+      !session?.access_token ||
+      !window.confirm(
+        "Are you sure you want to delete this category? All resources in this category will also be deleted."
+      )
+    )
+      return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/resources/${categoryId}/delete`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete category");
+
+      toast.success("Category deleted successfully");
+      fetchResources();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Failed to delete category");
+    }
+  };
+
   const hasCategoryChanges = () => {
     return (
       JSON.stringify(categoryFormData) !==
@@ -569,6 +599,13 @@ const ResourceManagement: React.FC = () => {
                       title="Edit Category"
                     >
                       Edit Category
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200 text-sm"
+                      title="Delete Category"
+                    >
+                      Delete Category
                     </button>
                     <button
                       onClick={() => handleOpenAddResourceModal(category)}
