@@ -74,7 +74,7 @@ const Admin = () => {
 
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-  const [inSessionEvents, setInSessionEvents] = useState<Event[]>([]);
+  const [setInSessionEvents] = useState<Event[]>([]);
 
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
