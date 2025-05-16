@@ -19,7 +19,6 @@ import { EventListShort } from "../../components/event/EventListShort";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
-import { isEventInSession } from "../../components/event/EventCheckIn";
 
 // Define interfaces for API responses
 interface UserInfo {
@@ -74,7 +73,6 @@ const Admin = () => {
 
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-  const [setInSessionEvents] = useState<Event[]>([]);
 
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
@@ -212,20 +210,17 @@ const Admin = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            const { past, upcoming, inSession } = data.reduce((acc: { past: Event[], upcoming: Event[], inSession: Event[] }, event: Event) => {
-              if (isEventInSession(event.event_date, event.event_time, event.event_hours)) {
-                acc.inSession.push(event);
-              } else if (isPastDate(event.event_date + "T" + event.event_time)) {
+            const { past, upcoming } = data.reduce((acc: { past: Event[], upcoming: Event[] }, event: Event) => {
+              if (isPastDate(event.event_date + "T" + event.event_time)) {
                 acc.past.push(event);
               } else {
                 acc.upcoming.push(event);
               }
               return acc;
-            }, { past: [], upcoming: [], inSession: [] });
+            }, { past: [], upcoming: [] });
 
             setPastEvents(past);
             setUpcomingEvents(upcoming);
-            setInSessionEvents(inSession);
             setLoadingEvents(false);
           })
           .catch((error) => {
