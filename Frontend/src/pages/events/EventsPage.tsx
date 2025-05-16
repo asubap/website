@@ -6,6 +6,7 @@ import { EventCard } from "../../components/event/EventCard";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { isEventInSession } from "../../components/event/EventCheckIn";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
@@ -20,16 +21,6 @@ const EventsPage: React.FC = () => {
   const [visiblePastEventsCount, setVisiblePastEventsCount] = useState(
     PAST_EVENTS_INCREMENT
   );
-
-  function isEventInSession(event: Event) {
-    if (!event.event_date || !event.event_time || !event.event_hours) return false;
-    const [hour, minute] = event.event_time.split(":").map(Number);
-    const start = new Date(event.event_date);
-    start.setHours(hour, minute, 0, 0);
-    const end = new Date(start.getTime() + event.event_hours * 60 * 60 * 1000);
-    const now = new Date();
-    return now >= start && now <= end;
-  }
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -83,15 +74,15 @@ const EventsPage: React.FC = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const inSessionEvents = allEvents.filter(isEventInSession);
   const getEventDateTime = (event: Event) =>
     new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
 
+  const inSessionEvents = allEvents.filter(event => isEventInSession(event.event_date, event.event_time, event.event_hours));
   const upcomingEvents = allEvents
-    .filter((event) => !isEventInSession(event) && getEventDateTime(event) >= today)
+    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) >= today)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
   const pastEvents = allEvents
-    .filter((event) => !isEventInSession(event) && getEventDateTime(event) < today)
+    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) < today)
     .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
 
   const handleLoadMorePastEvents = () => {
