@@ -27,6 +27,10 @@ export interface Member {
   internship: string;
   photoUrl: string;
   hours: string;
+  developmentHours: string;
+  professionalHours: string;
+  serviceHours: string;
+  socialHours: string;
   links: string[];
   role: string;
 }

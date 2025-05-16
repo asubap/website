@@ -64,9 +64,34 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
             <span>Graduating: {member.graduationDate || 'Not Provided'}</span>
           </div>
           
-          <div className="flex items-center">
+          {/* Hours */}
+          <div className="flex items-center mt-2">
             <Clock className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
-            <span>Total Hours: {member.hours ?? '0'}</span>
+
+            {/* Hours details container */}
+            <div className="flex flex-col w-full">
+
+              {/* Individual hour categories */}
+              <div className="flex flex-row flex-wrap gap-x-4 gap-y-1 mb-1">
+                <span className="text-gray-600">
+                  Development: <span className="font-medium text-gray-800">{member.developmentHours ?? '0'} hrs</span>
+                </span>
+                <span className="text-gray-600">
+                  Professional: <span className="font-medium text-gray-800">{member.professionalHours ?? '0'} hrs</span>
+                </span>
+                <span className="text-gray-600">
+                  Service: <span className="font-medium text-gray-800">{member.serviceHours ?? '0'} hrs</span>
+                </span>
+                <span className="text-gray-600">
+                  Social: <span className="font-medium text-gray-800">{member.socialHours ?? '0'} hrs</span>
+                </span>
+              </div>
+
+              {/* Total hours */}
+              <span className="border-t border-gray-300 pt-2 mt-1 font-bold text-gray-800 text-left">
+                Total Hours: {member.hours ?? '0'} hrs
+              </span>
+            </div>
           </div>
           
           {member.links && member.links.length > 0 && (

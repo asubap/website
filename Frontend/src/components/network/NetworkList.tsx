@@ -94,7 +94,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     </div>
                     <div className="flex items-center text-sm">
                       <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">
+                      <span className="text-gray-700 font-bold">
                         Total Hours: {entity.hours ?? "0"}
                       </span>
                     </div>
