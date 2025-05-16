@@ -31,9 +31,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
   // Helper: is the event currently in session?
   const isEventInSession = () => {
     if (!eventDate || !eventTime || !eventHours) return false;
-    const [hour, minute] = eventTime.split(":").map(Number);
-    const start = new Date(eventDate);
-    start.setHours(hour, minute, 0, 0);
+    const start = new Date(`${eventDate}T${eventTime}`);
     const end = new Date(start.getTime() + eventHours * 60 * 60 * 1000);
     const now = new Date();
     return now >= start && now <= end;

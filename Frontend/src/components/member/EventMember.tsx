@@ -5,13 +5,14 @@ import { Event } from "../../types";
 
 function isEventInSession(event: Event) {
   if (!event.event_date || !event.event_time || !event.event_hours) return false;
-  const [hour, minute] = event.event_time.split(":").map(Number);
-  const start = new Date(event.event_date);
-  start.setHours(hour, minute, 0, 0);
+  const start = new Date(`${event.event_date}T${event.event_time}`);
   const end = new Date(start.getTime() + event.event_hours * 60 * 60 * 1000);
   const now = new Date();
   return now >= start && now <= end;
 }
+
+const getEventDateTime = (event: Event) =>
+  new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
 
 const EventMember: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -51,22 +52,15 @@ const EventMember: React.FC = () => {
 
   // Split events into in-session, upcoming, and past
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
 
   const inSessionEvents = events.filter(isEventInSession);
   const upcomingEvents = events
-    .filter((event) => !isEventInSession(event) && new Date(event.event_date) >= today)
-    .sort(
-      (a, b) =>
-        new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
-    );
+    .filter((event) => !isEventInSession(event) && getEventDateTime(event) >= today)
+    .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
 
   const pastEvents = events
-    .filter((event) => !isEventInSession(event) && new Date(event.event_date) < today)
-    .sort(
-      (a, b) =>
-        new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
-    );
+    .filter((event) => !isEventInSession(event) && getEventDateTime(event) < today)
+    .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
 
   return (
     <div className="w-full lg:w-1/2">
