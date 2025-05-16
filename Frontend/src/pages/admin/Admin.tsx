@@ -19,6 +19,7 @@ import { EventListShort } from "../../components/event/EventListShort";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
+import { isEventInSession } from "../../components/event/EventCheckIn";
 
 // Define interfaces for API responses
 interface UserInfo {
@@ -73,6 +74,7 @@ const Admin = () => {
 
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [inSessionEvents, setInSessionEvents] = useState<Event[]>([]);
 
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
@@ -210,17 +212,20 @@ const Admin = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            const { past, upcoming } = data.reduce((acc: { past: Event[], upcoming: Event[] }, event: Event) => {
-              if (isPastDate(event.event_date + "T" + event.event_time)) {
+            const { past, upcoming, inSession } = data.reduce((acc: { past: Event[], upcoming: Event[], inSession: Event[] }, event: Event) => {
+              if (isEventInSession(event.event_date, event.event_time, event.event_hours)) {
+                acc.inSession.push(event);
+              } else if (isPastDate(event.event_date + "T" + event.event_time)) {
                 acc.past.push(event);
               } else {
                 acc.upcoming.push(event);
               }
               return acc;
-            }, { past: [], upcoming: [] });
+            }, { past: [], upcoming: [], inSession: [] });
 
             setPastEvents(past);
             setUpcomingEvents(upcoming);
+            setInSessionEvents(inSession);
             setLoadingEvents(false);
           })
           .catch((error) => {
@@ -740,7 +745,7 @@ const Admin = () => {
 
       {/* Add padding-top to account for fixed navbar */}
       <div className="flex flex-col flex-grow pt-24">
-        <main className="flex-grow flex flex-col items-center justify-center h-full w-full my-12">
+        <main className="order-1 md:order-1">
           <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 mb-6">
             Admin Dashboard
           </h1>
