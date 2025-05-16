@@ -75,8 +75,10 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                       {entity.major || "Not Provided"}
                     </p>
                   )}
-                  {entity.type === "sponsor" && (
-                    <p className="text-sm text-blue-600 font-medium">Sponsor</p>
+                  {entity.type === "sponsor" && entity.tier && (
+                    <p className="text-sm text-blue-600 font-medium">
+                      {entity.tier[0].toUpperCase() + entity.tier.slice(1)} Sponsor
+                    </p>
                   )}
                 </div>
               </div>
