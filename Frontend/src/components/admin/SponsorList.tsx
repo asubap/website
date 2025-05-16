@@ -14,6 +14,7 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const { showToast } = useToast();
   const { session } = useAuth();
+  
   const handleDeleteClick = (email: string) => {
     setEmailToDelete(email);
   };
@@ -77,6 +78,10 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
           <button
             onClick={() => handleDeleteClick(email)}
             className="text-bapred hover:text-bapreddark font-bold pl-8"
+          <span className="text-bapgray ml-auto pr-4 rounded-md bg-bapgraylight">{tiers[index]}</span>
+          <button
+            onClick={() => handleDeleteClick(email)}
+            className="text-bapred hover:text-bapreddark font-bold"
             aria-label={`Delete ${email}`}
           >
             ×
