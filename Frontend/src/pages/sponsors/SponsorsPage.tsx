@@ -5,30 +5,6 @@ import Footer from "../../components/layout/Footer";
 import SponsorCard from "../../components/ui/SponsorCard";
 import SponsorTier from "../../components/ui/SponsorTier";
 
-// Import sponsor images
-import mossAdamsImg from "../../assets/sponsors/mossadams.jpeg";
-import bakerTillyImg from "../../assets/sponsors/bakertilly.jpeg";
-import deloitteImg from "../../assets/sponsors/deloitte.webp";
-import eideBaillyImg from "../../assets/sponsors/eidebaily.png";
-import eyImg from "../../assets/sponsors/ey.png";
-import forvisMazarsImg from "../../assets/sponsors/forvismazars.png";
-import grantThorntonImg from "../../assets/sponsors/grantthornton.webp";
-import pwcImg from "../../assets/sponsors/pwc.png";
-import rsmImg from "../../assets/sponsors/rsm.jpeg";
-import abdoImg from "../../assets/sponsors/abdo.png";
-import bdoImg from "../../assets/sponsors/bdo.png";
-import cbizImg from "../../assets/sponsors/cbiz.jpeg";
-import claImg from "../../assets/sponsors/cla.png";
-import frankRimermanImg from "../../assets/sponsors/frankrimerman.jpeg";
-import haynieImg from "../../assets/sponsors/haynieco.png";
-import hcvtImg from "../../assets/sponsors/hcvt.jpeg";
-import iiaImg from "../../assets/sponsors/ioia.jpeg";
-import kpmgImg from "../../assets/sponsors/kpmg.png";
-import mbeImg from "../../assets/sponsors/mbacpas.jpeg";
-import equityMethodsImg from "../../assets/sponsors/equitymethods.jpeg";
-import heinfeldMeechImg from "../../assets/sponsors/heinfeldmeech.png";
-import honeywellImg from "../../assets/sponsors/honeywell.png";
-
 // Interface for sponsor data
 interface Sponsor {
   id: number;
