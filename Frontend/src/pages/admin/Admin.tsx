@@ -66,18 +66,6 @@ const Admin = () => {
     { name: "Dashboard", href: "/admin" },
   ];
 
-  const isPastDate = (dateString: string): boolean => {
-    // Parse the input date string into a Date object
-    const inputDate = new Date(dateString);
-
-    // Get the current date and reset its time to midnight
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Set time to 00:00:00 for accurate comparison
-
-    // Compare the input date with the current date
-    return inputDate < currentDate;
-  };
-
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
   const [tiers, setTiers] = useState<string[]>([]);
@@ -100,6 +88,11 @@ const Admin = () => {
   // Loading states for add buttons
   const [isAddingAdmins, setIsAddingAdmins] = useState(false);
   const [isAddingMembers, setIsAddingMembers] = useState(false);
+
+
+  const isPastDate = (dateString: string): boolean => {
+    return new Date(dateString) < new Date();
+  };
 
   // Reset input error state when clicking away from input
   const handleInputFocus = (inputType: "admin") => {
@@ -143,17 +136,15 @@ const Admin = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log("API response data:", data);
             // Process e-board members
             const admins = data
               .filter((item: UserInfo) => item.role === "e-board")
               .map((item: UserInfo) => item.email);
-            console.log(admins);
             setAdminEmails(admins);
             const members = data
               .filter((item: UserInfo) => item.role === "general-member")
               .map((item: UserInfo) => item.email);
-            console.log(members);
+
             setMembers(members);
             setLoadingAdmins(false);
             setLoadingMembers(false);
@@ -184,14 +175,12 @@ const Admin = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log("Sponsors:", data);
             const sponsors = data.map(
               (sponsor: ApiSponsor) => sponsor.company_name
             );
             const tiers = data.map(
               (sponsor: ApiSponsor) => sponsor.tier
             );
-            console.log("Sponsors:", sponsors);
             setSponsors(sponsors);
             setTiers(tiers);
             setLoadingSponsors(false);
@@ -221,13 +210,17 @@ const Admin = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log("Events:", data);
-            setPastEvents(
-              data.filter((event: Event) => isPastDate(event.event_date))
-            );
-            setUpcomingEvents(
-              data.filter((event: Event) => !isPastDate(event.event_date))
-            );
+            const { past, upcoming } = data.reduce((acc: { past: Event[], upcoming: Event[] }, event: Event) => {
+              if (isPastDate(event.event_date + "T" + event.event_time)) {
+                acc.past.push(event);
+              } else {
+                acc.upcoming.push(event);
+              }
+              return acc;
+            }, { past: [], upcoming: [] });
+
+            setPastEvents(past);
+            setUpcomingEvents(upcoming);
             setLoadingEvents(false);
           })
           .catch((error) => {
@@ -256,7 +249,6 @@ const Admin = () => {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log("Announcements:", data);
             // Sort announcements by date (newest first) and pinned status
             const sortedAnnouncements = data.sort((a: Announcement, b: Announcement) => {
               // First sort by pinned status (pinned items first)
@@ -504,7 +496,6 @@ const Admin = () => {
   };
 
   const handleDeleteSponsor = async (email: string) => {
-    console.log("Deleting sponsor:", email);
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -529,7 +520,6 @@ const Admin = () => {
       }
     }
   };
- 
 
   // Handle a newly created event
   const handleEventCreated = async (newEvent: Event) => {
@@ -591,7 +581,6 @@ const Admin = () => {
   };
 
   const handleSponsorAdded = (newSponsor: ApiSponsor) => {
-    console.log("New sponsor data:", newSponsor);
     setSponsors([...sponsors, newSponsor.company_name]);
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();

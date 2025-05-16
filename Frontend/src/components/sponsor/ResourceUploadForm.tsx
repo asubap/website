@@ -27,8 +27,6 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
       formData.append("description", resourceDescription); // Add description to FormData
       formData.append("file", file);
 
-      console.log("Uploading resource with key 'file'");
-
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`,
         {

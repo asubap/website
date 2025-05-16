@@ -12,6 +12,23 @@ interface EventCardProps {
   hideRSVP?: boolean;
 }
 
+export const formatDateTime = (date?: string, time?: string | null) => {
+  if (!date) return null;
+  const eventDate = new Date(`${date}T${time || '00:00:00'}`);
+  const formattedDate = eventDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const formattedTime = eventDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return time ? `${formattedDate} at ${formattedTime}` : formattedDate;
+};
+
 export const EventCard: React.FC<EventCardProps> = ({
   event,
   isPast,
@@ -21,40 +38,10 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const { session, role, loading } = useAuth();
 
-  useEffect(() => {
-    console.log("Auth state:", {
-      session: !!session,
-      role,
-      loading,
-      roleType: typeof role,
-    });
-  }, [session, role, loading]);
-
-  const formatDateTime = (date?: string, time?: string | null) => {
-    if (!date) return null;
-    const eventDate = new Date(date);
-    const formattedDate = eventDate.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    return time ? `${formattedDate} at ${time}` : formattedDate;
-  };
-
   // Role checking logic - Check for string role names
   const isMember = role === "general-member" || role === "admin";
   const isSponsor = role === "sponsor";
   const isLoggedIn = !!session;
-
-  // Debug log for role checks
-  console.log("Role checks (updated):", {
-    rawRole: role,
-    isMember,
-    isSponsor,
-    isLoggedIn,
-    shouldShowButtons: !isPast && isLoggedIn && !loading,
-  });
 
   // Define highlight classes using Tailwind ring utility - focusing on color transition
   const highlightClasses = isHighlighted
@@ -83,7 +70,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             <div>
               <span className="font-semibold text-gray-700">Date/Time: </span>
               <span className="text-gray-600">
-                {formatDateTime(event.event_date, event.event_time)}
+                {formatDateTime(event.event_date, event.event_time) || "no date"}
               </span>
             </div>
           )}

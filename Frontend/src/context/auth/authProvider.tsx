@@ -40,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       );
       const data = await response.json();
-      console.log("User role data:", data);
       setRole(data);
     } catch (error) {
       console.error("Error fetching role:", error);
@@ -56,13 +55,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        console.log("Session data:", session);
 
         if (session?.user?.email) {
           await fetchUserRole(session.access_token, session.user.email);
-          console.log("User role data:", role);
-          console.log("access_token: " + session.access_token);
-          console.log("user.email: " + session.user.email);
         } else {
           setLoading(false);
         }
@@ -76,8 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log("Auth state changed:", event);
+      (_, newSession) => {
         setSession(newSession);
 
         if (newSession?.user?.email) {

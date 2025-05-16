@@ -23,7 +23,7 @@ const ViewEvent = () => {
         const { data: session } = await supabase.auth.getSession();
         if (session) {
           const token = session?.session?.access_token;
-          fetch("${import.meta.env.VITE_BACKEND_URL}/events", {
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -34,7 +34,6 @@ const ViewEvent = () => {
             .then((response) => response.json())
             .then((data) => {
               setEvent(data[0]);
-              console.log(data[0]);
             })
             .catch((error) => console.error("Error fetching event:", error))
             .finally(() => setLoading(false));

@@ -84,12 +84,15 @@ const EventsPage: React.FC = () => {
   today.setHours(0, 0, 0, 0);
 
   const inSessionEvents = allEvents.filter(isEventInSession);
+  const getEventDateTime = (event: Event) =>
+    new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
+
   const upcomingEvents = allEvents
-    .filter((event) => !isEventInSession(event) && new Date(event.event_date) >= today)
-    .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+    .filter((event) => !isEventInSession(event) && getEventDateTime(event) >= today)
+    .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
   const pastEvents = allEvents
-    .filter((event) => !isEventInSession(event) && new Date(event.event_date) < today)
-    .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+    .filter((event) => !isEventInSession(event) && getEventDateTime(event) < today)
+    .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
 
   const handleLoadMorePastEvents = () => {
     setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);

@@ -100,9 +100,7 @@ const EditEventModal = ({
   useEffect(() => {
     if (!initialStateRef.current || !hasInitialized.current) return;
     if (JSON.stringify(formData) !== JSON.stringify(initialStateRef.current)) {
-      localStorage.setItem(`modal-event-edit-${eventToEdit?.id}`, JSON.stringify(formData));
-      console.log("EditEventModal: Saved changed state to localStorage:", formData);
-    }
+      localStorage.setItem(`modal-event-edit-${eventToEdit?.id}`, JSON.stringify(formData));    }
   }, [formData, eventToEdit]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

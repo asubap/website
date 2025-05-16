@@ -285,8 +285,6 @@ const NetworkingPage = () => {
   }, [isMembersLoading, isSponsorsLoading, networkEntities]);
 
   const handleSearch = (query: string, filters: Filters) => {
-    console.log("Search Query:", query);
-    console.log("Filters:", filters);
 
     let results = networkEntities; // Start with combined list
 
@@ -294,9 +292,7 @@ const NetworkingPage = () => {
     if (query.trim()) {
       try {
         const searchResults = fuse.search(query);
-        console.log("Raw Fuse Results:", searchResults);
         results = searchResults.map((result) => result.item);
-        console.log("Mapped Fuse Items:", results);
       } catch (error) {
         console.error("Error during fuse.search:", error);
         results = [];
@@ -323,7 +319,6 @@ const NetworkingPage = () => {
       }
     });
 
-    console.log("Filtered Entities:", filteredResults);
     setFilteredEntities(filteredResults);
   };
 
