@@ -12,6 +12,14 @@ interface EventCheckInProps {
   eventHours: number;
 }
 
+export const isEventInSession = (eventDate: string, eventTime: string, eventHours: number) => {
+  if (!eventDate || !eventTime || !eventHours) return false;
+  const start = new Date(`${eventDate}T${eventTime}`);
+  const end = new Date(start.getTime() + eventHours * 60 * 60 * 1000);
+  const now = new Date();
+  return now >= start && now <= end;
+};
+
 const EventCheckIn: React.FC<EventCheckInProps> = ({
   eventId,
   eventAttending = [],
@@ -28,16 +36,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
 
   const alreadyCheckedIn = (eventAttending || []).includes(session?.user?.id || "");
 
-  // Helper: is the event currently in session?
-  const isEventInSession = () => {
-    if (!eventDate || !eventTime || !eventHours) return false;
-    const start = new Date(`${eventDate}T${eventTime}`);
-    const end = new Date(start.getTime() + eventHours * 60 * 60 * 1000);
-    const now = new Date();
-    return now >= start && now <= end;
-  };
-
-  const inSession = isEventInSession();
+  const inSession = isEventInSession(eventDate, eventTime, eventHours);
 
   const checkIn = async () => {
     if (!inSession) {
