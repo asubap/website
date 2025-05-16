@@ -64,7 +64,7 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
       <div className="space-y-4">
         <div>
           <label htmlFor="resourceName" className="block mb-1 text-sm font-medium text-gray-700">
-            Resource Name *
+            Resource Name <span className="text-red-500">*</span>
           </label>
           <input
             id="resourceName"
@@ -79,7 +79,7 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
 
         <div>
           <label htmlFor="resourceDescription" className="block mb-1 text-sm font-medium text-gray-700">
-            Description
+            Description <span className="text-red-500">*</span>
           </label>
           <textarea
             id="resourceDescription"
@@ -88,12 +88,13 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-bapred focus:border-bapred"
             placeholder="Enter resource description"
             rows={3}
+            required
           />
         </div>
 
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
-            {isEditing ? "Replace File" : "File"} {isEditing ? "" : "*"}
+            {isEditing ? "Replace File" : "File"} {isEditing ? "" : <span className="text-red-500">*</span>}
           </label>
           
           {/* Show existing file information when editing */}
