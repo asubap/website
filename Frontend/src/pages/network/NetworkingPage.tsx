@@ -57,6 +57,7 @@ interface BackendSponsor {
   links?: string | null;
   pfp_url?: string;
   resources?: SponsorResource[]; // Properly typed resources array
+  tier?: string;
 }
 
 // --- Transformation Functions ---
@@ -81,6 +82,10 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
     name: memberName,
     email: item.user_email || "Not Provided",
     hours: item.total_hours?.toString() ?? "0",
+    developmentHours: item.development_hours?.toString() ?? "0",
+    professionalHours: item.professional_hours?.toString() ?? "0",
+    serviceHours: item.service_hours?.toString() ?? "0",
+    socialHours: item.social_hours?.toString() ?? "0",
     links: memberLinks,
     major: item.major || "Not Provided",
     about: memberAbout,
@@ -129,6 +134,7 @@ const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
     id: item.id?.toString(),
     type: "sponsor",
     name: item.company_name || "Unknown Sponsor",
+    tier: item.tier,
     about: item.about || "No description available.",
     links: parsedLinks,
     photoUrl: item.pfp_url || "/placeholder-logo.png",

@@ -44,6 +44,8 @@ interface ResourceFormData {
   description: string;
   file: File | null;
   categoryId: string;
+  existingResource?: boolean; // Flag to indicate an existing resource
+  existingFileName?: string; // Store the name of the existing file
 }
 
 // Utility function to format date
@@ -313,6 +315,10 @@ const ResourceManagement: React.FC = () => {
       description: resource.description,
       file: null,
       categoryId: category.id,
+      existingResource: true,
+      existingFileName: resource.file_key
+        ? resource.file_key.split("/").pop()
+        : "Existing file",
     };
     setResourceFormData(initialState);
     initialResourceStateRef.current = { ...initialState, file: null };
@@ -365,15 +371,7 @@ const ResourceManagement: React.FC = () => {
   };
 
   const handleEditResourceSubmit = async () => {
-    if (
-      !session?.access_token ||
-      !selectedCategory ||
-      !selectedResource ||
-      !resourceFormData.file
-    ) {
-      if (!resourceFormData.file) {
-        toast.error("Please select a file to update the resource.");
-      }
+    if (!session?.access_token || !selectedCategory || !selectedResource) {
       return;
     }
 
@@ -381,7 +379,14 @@ const ResourceManagement: React.FC = () => {
       const formData = new FormData();
       formData.append("name", resourceFormData.name);
       formData.append("description", resourceFormData.description);
-      formData.append("file", resourceFormData.file);
+
+      // Only append file if a new one was selected
+      if (resourceFormData.file) {
+        formData.append("file", resourceFormData.file);
+      } else {
+        // Explicitly indicate we want to keep the existing file
+        formData.append("keepExistingFile", "true");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources/${
@@ -482,7 +487,7 @@ const ResourceManagement: React.FC = () => {
       resourceFormData.name !== initialResourceStateRef.current.name ||
       resourceFormData.description !==
         initialResourceStateRef.current.description ||
-      !!resourceFormData.file
+      resourceFormData.file !== null // Only consider file a change if one is selected
     );
   };
 

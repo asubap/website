@@ -9,6 +9,7 @@ interface AddSponsorModalProps {
   onClose: () => void;
   onSponsorAdded: (newSponsor: {
     company_name: string;
+    tier: "platinum" | "gold" | "silver" | "bronze";
     email_list: string[];
     passcode: string;
   }) => void;
@@ -17,6 +18,7 @@ interface AddSponsorModalProps {
 // Define structure for errors state
 interface FormErrors {
   sponsor?: string;
+  tier?: "platinum" | "gold" | "silver" | "bronze";
   emailList?: string;
   passcode?: string;
 }
@@ -25,6 +27,9 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
   useScrollLock(true);
   const { showToast } = useToast();
   const [sponsor, setSponsor] = useState("");
+  const [tier, setTier] = useState<"platinum" | "gold" | "silver" | "bronze">(
+    "bronze"
+  );
   const [emailList, setEmailList] = useState<string[]>([]);
   const [passcode, setPasscode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,13 +39,14 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
   // Store initial state to check for changes
   const initialStateRef = useRef({
     sponsor,
+    tier,
     emailList,
     passcode,
   });
 
   // Function to check if form data has changed
   const hasChanges = () => {
-    const current = { sponsor, emailList, passcode };
+    const current = { sponsor, tier, emailList, passcode };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
   };
 
@@ -72,6 +78,7 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
 
     // --- Validation ---
     if (!sponsor.trim()) newErrors.sponsor = "Sponsor is required";
+    if (!tier) newErrors.tier = "platinum";
     if (!emailList.length) newErrors.emailList = "Email list is required";
     if (!passcode.trim()) newErrors.passcode = "Passcode is required";
 
@@ -100,6 +107,7 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
 
       const sponsorData = {
         sponsor_name: sponsor.trim(),
+        tier: tier,
         emailList: emailList,
         passcode: passcode,
       };
@@ -218,6 +226,42 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
             {errors.sponsor && (
               <p id="sponsor-error" className="text-red-500 text-xs mt-1">
                 {errors.sponsor}
+              </p>
+            )}
+          </div>
+
+          {/* Tier */}
+          <div>
+            <label
+              htmlFor="tier"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Tier *
+            </label>
+            <select
+              id="tier"
+              value={tier}
+              onChange={(e) => {
+                setTier(e.target.value as "platinum" | "gold" | "silver" | "bronze");
+                clearError("tier");
+              }}
+              className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred bg-white ${
+                errors.tier ? "border-red-500" : "border-gray-300"
+              }`}
+              required
+              aria-invalid={!!errors.tier}
+              aria-describedby={
+                errors.tier ? "tier-error" : undefined
+              }
+            >
+              <option value="platinum">Platinum</option>
+              <option value="gold">Gold</option>
+              <option value="silver">Silver</option>
+              <option value="bronze">Bronze</option>
+            </select>
+            {errors.tier && (
+              <p id="tier-error" className="text-red-500 text-xs mt-1">
+                {errors.tier}
               </p>
             )}
           </div>

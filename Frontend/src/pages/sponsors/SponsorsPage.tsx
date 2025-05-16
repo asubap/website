@@ -1,31 +1,9 @@
+import { useEffect, useState } from "react";
+
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import SponsorCard from "../../components/ui/SponsorCard";
 import SponsorTier from "../../components/ui/SponsorTier";
-
-// Import sponsor images
-import mossAdamsImg from "../../assets/sponsors/mossadams.jpeg";
-import bakerTillyImg from "../../assets/sponsors/bakertilly.jpeg";
-import deloitteImg from "../../assets/sponsors/deloitte.webp";
-import eideBaillyImg from "../../assets/sponsors/eidebaily.png";
-import eyImg from "../../assets/sponsors/ey.png";
-import forvisMazarsImg from "../../assets/sponsors/forvismazars.png";
-import grantThorntonImg from "../../assets/sponsors/grantthornton.webp";
-import pwcImg from "../../assets/sponsors/pwc.png";
-import rsmImg from "../../assets/sponsors/rsm.jpeg";
-import abdoImg from "../../assets/sponsors/abdo.png";
-import bdoImg from "../../assets/sponsors/bdo.png";
-import cbizImg from "../../assets/sponsors/cbiz.jpeg";
-import claImg from "../../assets/sponsors/cla.png";
-import frankRimermanImg from "../../assets/sponsors/frankrimerman.jpeg";
-import haynieImg from "../../assets/sponsors/haynieco.png";
-import hcvtImg from "../../assets/sponsors/hcvt.jpeg";
-import iiaImg from "../../assets/sponsors/ioia.jpeg";
-import kpmgImg from "../../assets/sponsors/kpmg.png";
-import mbeImg from "../../assets/sponsors/mbacpas.jpeg";
-import equityMethodsImg from "../../assets/sponsors/equitymethods.jpeg";
-import heinfeldMeechImg from "../../assets/sponsors/heinfeldmeech.png";
-import honeywellImg from "../../assets/sponsors/honeywell.png";
 
 // Interface for sponsor data
 interface Sponsor {
@@ -45,110 +23,57 @@ export default function SponsorsPage() {
     { name: "Log In", href: "/login" },
   ];
 
-  // Sample sponsor data with actual image imports
-  const sponsors: Sponsor[] = [
-    // Platinum sponsors
-    {
-      id: 1,
-      name: "Moss Adams",
-      tier: "platinum",
-      imageUrl: mossAdamsImg,
-    },
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [platinumSponsors, setPlatinumSponsors] = useState<Sponsor[]>([]);
+  const [goldSponsors, setGoldSponsors] = useState<Sponsor[]>([]);
+  const [silverSponsors, setSilverSponsors] = useState<Sponsor[]>([]);
+  const [bronzeSponsors, setBronzeSponsors] = useState<Sponsor[]>([]);
 
-    // Gold sponsors
-    {
-      id: 2,
-      name: "Baker Tilly",
-      tier: "gold",
-      imageUrl: bakerTillyImg,
-    },
-    {
-      id: 3,
-      name: "Deloitte",
-      tier: "gold",
-      imageUrl: deloitteImg,
-    },
-    {
-      id: 4,
-      name: "Eide Bailly",
-      tier: "gold",
-      imageUrl: eideBaillyImg,
-    },
-    { id: 5, name: "EY", tier: "gold", imageUrl: eyImg },
-    {
-      id: 6,
-      name: "Forvis Mazars",
-      tier: "gold",
-      imageUrl: forvisMazarsImg,
-    },
-    {
-      id: 7,
-      name: "Grant Thornton",
-      tier: "gold",
-      imageUrl: grantThorntonImg,
-    },
-    { id: 8, name: "PwC", tier: "gold", imageUrl: pwcImg },
-    { id: 9, name: "RSM", tier: "gold", imageUrl: rsmImg },
+  // Effect 1: Fetch sponsors on component mount
+  useEffect(() => {
+    const fetchSponsorsData = async () => {
+      try {
+        const response = await fetch("https://asubap-backend.vercel.app/sponsors/");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
 
-    // Silver sponsors
-    { id: 10, name: "Abdo", tier: "silver", imageUrl: abdoImg },
-    { id: 11, name: "BDO", tier: "silver", imageUrl: bdoImg },
-    { id: 12, name: "CBIZ", tier: "silver", imageUrl: cbizImg },
-    { id: 13, name: "CLA", tier: "silver", imageUrl: claImg },
-    {
-      id: 14,
-      name: "Frank, Rimerman + Co.",
-      tier: "silver",
-      imageUrl: frankRimermanImg,
-    },
-    {
-      id: 15,
-      name: "Haynie & Company",
-      tier: "silver",
-      imageUrl: haynieImg,
-    },
-    { id: 16, name: "HCVT", tier: "silver", imageUrl: hcvtImg },
-    {
-      id: 17,
-      name: "The Institute of Internal Auditors",
-      tier: "silver",
-      imageUrl: iiaImg,
-    },
-    { id: 18, name: "KPMG", tier: "silver", imageUrl: kpmgImg },
-    { id: 19, name: "MBE CPAs", tier: "silver", imageUrl: mbeImg },
+        // Transform the fetched data into the desired format
+        const formattedSponsors = data.map((sponsor: any) => ({
+          id: sponsor.id,
+          name: sponsor.company_name,
+          tier: sponsor.tier,
+          imageUrl: sponsor.pfp_url,
+        }));
 
-    // Bronze sponsors
-    {
-      id: 20,
-      name: "Equity Methods",
-      tier: "bronze",
-      imageUrl: equityMethodsImg,
-    },
-    {
-      id: 21,
-      name: "Heinfeld Meech",
-      tier: "bronze",
-      imageUrl: heinfeldMeechImg,
-    },
-    {
-      id: 22,
-      name: "Honeywell",
-      tier: "bronze",
-      imageUrl: honeywellImg,
-    },
-  ];
+        // Set the sponsors state ONCE with the complete list
+        setSponsors(formattedSponsors);
+      } catch (error) {
+        console.error("Error fetching sponsors:", error);
+      } finally {
+      }
+    };
 
-  // Filter sponsors by tier
-  const platinumSponsors = sponsors.filter(
-    (sponsor) => sponsor.tier === "platinum"
-  );
-  const goldSponsors = sponsors.filter((sponsor) => sponsor.tier === "gold");
-  const silverSponsors = sponsors.filter(
-    (sponsor) => sponsor.tier === "silver"
-  );
-  const bronzeSponsors = sponsors.filter(
-    (sponsor) => sponsor.tier === "bronze"
-  );
+    fetchSponsorsData();
+  }, []); // Empty dependency array: runs only once when the component mounts
+
+  // Effect 2: Sort sponsors whenever the 'sponsors' state changes
+  useEffect(() => {
+    // Only sort if there are sponsors to avoid unnecessary operations
+    if (sponsors.length > 0) {
+      setPlatinumSponsors(sponsors.filter((sponsor) => sponsor.tier === "platinum"));
+      setGoldSponsors(sponsors.filter((sponsor) => sponsor.tier === "gold"));
+      setSilverSponsors(sponsors.filter((sponsor) => sponsor.tier === "silver"));
+      setBronzeSponsors(sponsors.filter((sponsor) => sponsor.tier === "bronze"));
+    } else {
+      // Optionally, clear the sorted arrays if the main sponsors list is empty
+      setPlatinumSponsors([]);
+      setGoldSponsors([]);
+      setSilverSponsors([]);
+      setBronzeSponsors([]);
+    }
+  }, [sponsors]); // This effect runs whenever the 'sponsors' state array changes
 
   return (
     <div className="flex flex-col min-h-screen">

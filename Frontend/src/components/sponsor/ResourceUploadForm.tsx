@@ -13,6 +13,7 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [resourceName, setResourceName] = useState("");
+  const [resourceDescription, setResourceDescription] = useState(""); // New state for description
   const [uploading, setUploading] = useState(false);
 
   const handleResourceUpload = async (e: React.FormEvent) => {
@@ -23,6 +24,7 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
     try {
       const formData = new FormData();
       formData.append("resourceLabel", resourceName);
+      formData.append("description", resourceDescription); // Add description to FormData
       formData.append("file", file);
 
       const response = await fetch(
@@ -46,6 +48,7 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
 
       setFile(null);
       setResourceName("");
+      setResourceDescription(""); // Reset description field
       onUploadSuccess(); // Call the callback to refresh the list in parent
     } catch (error) {
       console.error("Error uploading resource:", error);
@@ -71,6 +74,16 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
             onChange={(e) => setResourceName(e.target.value)}
             className="w-full px-3 py-2 border rounded"
             required
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Description</label>
+          <input
+            type="text"
+            value={resourceDescription}
+            onChange={(e) => setResourceDescription(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+            placeholder="Enter a description for this resource"
           />
         </div>
         <div>
