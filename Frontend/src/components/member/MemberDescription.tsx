@@ -135,7 +135,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
   }
 
   return (
-    <main className="flex flex-col lg:flex-row flex-1 p-4 sm:p-6 gap-8 lg:gap-12 mt-[150px]">
+    <main className="flex flex-col lg:flex-row flex-1 py-4 px-8 sm:py-8 sm:px-16 gap-12 lg:gap-20 mt-[150px]">
       {/* Left Column - Profile */}
       <div className="w-full lg:w-1/2 relative"> 
         <button
