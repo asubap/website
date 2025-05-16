@@ -17,6 +17,7 @@ interface MemberDescriptionProps {
     year: string;
     internship: string;
     description: string;
+    rank: string; // Add the new rank field
 }
 
 const READ_ANNOUNCEMENTS_KEY = "readAnnouncementIds";
@@ -37,7 +38,7 @@ const addAnnouncementsToReadStorage = (idsToAdd: string[]) => {
   localStorage.setItem(READ_ANNOUNCEMENTS_KEY, JSON.stringify(Array.from(currentReadIds)));
 };
 
-const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name, major, description, email, phone, status, hours, year, internship }) => {
+const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name, major, description, email, phone, status, hours, year, internship, rank }) => {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAnnouncementsListModalOpen, setIsAnnouncementsListModalOpen] = useState(false); 
@@ -116,6 +117,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
     internship: internship,
     photoUrl: profileUrl,
     hours: hours,
+    rank: rank, // Add rank to the profile data
   });
   interface ProfileData {
     name: string;
@@ -128,6 +130,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
     internship: string;
     photoUrl: string;
     hours: string;
+    rank: string; // Add to the interface
   }
 
   const handleSaveProfile = (newData: ProfileData): void => {
@@ -183,6 +186,10 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
           </div>
           <div>
             <span className="font-bold">Hours:</span> {profileData.hours}
+          </div>
+          {/* Add rank display */}
+          <div>
+            <span className="font-bold">Rank:</span> {profileData.rank ? profileData.rank.charAt(0).toUpperCase() + profileData.rank.slice(1) : 'Not set'}
           </div>
         </div>
 

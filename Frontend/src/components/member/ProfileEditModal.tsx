@@ -1,9 +1,10 @@
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../../components/ui/Modal";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 
 type ProfileData = {
   name: string;
@@ -16,13 +17,14 @@ type ProfileData = {
   internship: string;
   photoUrl: string;
   hours: string;
+  rank: string; // Add this new field
 };
 
 interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileData: ProfileData;
-  onSave: (data: ProfileData) => void;
+  onSave: (formData: ProfileData) => void;
 }
 
 // Add environment variable for backend URL
@@ -38,7 +40,15 @@ export default function ProfileEditModal({
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     profileData.photoUrl || null
   );
+  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
+  const [showPicConfirmation, setShowPicConfirmation] = useState(false);
   const { session } = useAuth();
+
+  useEffect(() => {
+    if (isOpen && profileData.photoUrl) {
+      setPhotoPreview(`${profileData.photoUrl}?t=${Date.now()}`);
+    }
+  }, [isOpen, profileData.photoUrl]);
 
   if (!isOpen) return null;
 
@@ -56,47 +66,25 @@ export default function ProfileEditModal({
   ) => {
     if (!event.target.files || event.target.files.length === 0) return;
     const file = event.target.files[0];
+
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoPreview(previewUrl);
+
+    setUploadingProfilePic(true);
+
     try {
       const token = session?.access_token;
       const formData = new FormData();
       formData.append("file", file);
-      // Get the user's ID from the session or fetch it if needed
-      // Use the actual user ID instead of email
-      const response = await fetch(`${BACKEND_URL}/member-info/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_email: profileData.email,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-
-      const userData = await response.json();
-      const userId = userData[0]?.user_id;
-
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
-
-      // Now use the actual user ID for uploading the photo
-      const formDataWithId = new FormData();
-      formDataWithId.append("file", file);
-      formDataWithId.append("userId", userId);
 
       const uploadResponse = await fetch(
-        `${BACKEND_URL}/profile-photo/upload`,
+        `${BACKEND_URL}/member-info/${profileData.email}/pfp`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          body: formDataWithId,
+          body: formData,
         }
       );
 
@@ -105,41 +93,33 @@ export default function ProfileEditModal({
       }
 
       const data = await uploadResponse.json();
-      setPhotoPreview(data.photoUrl);
+
+      setPhotoPreview(`${data.photoUrl}?t=${Date.now()}`);
+
+      URL.revokeObjectURL(previewUrl);
     } catch (error) {
       console.error("Error uploading photo:", error);
+      alert(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploadingProfilePic(false);
     }
+  };
+
+  const confirmProfilePicDelete = () => {
+    setShowPicConfirmation(true);
+  };
+
+  const cancelProfilePicDelete = () => {
+    setShowPicConfirmation(false);
   };
 
   const handlePhotoDelete = async () => {
     try {
+      setUploadingProfilePic(true);
       const token = session?.access_token;
 
-      // Get the user's ID from the session or fetch it
-      const response = await fetch(`${BACKEND_URL}/member-info/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_email: profileData.email,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-
-      const userData = await response.json();
-      const userId = userData[0]?.user_id;
-
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
-
       const deleteResponse = await fetch(
-        `${BACKEND_URL}/profile-photo/${userId}`,
+        `${BACKEND_URL}/member-info/${profileData.email}/pfp`,
         {
           method: "DELETE",
           headers: {
@@ -155,13 +135,17 @@ export default function ProfileEditModal({
       setPhotoPreview(null);
     } catch (error) {
       console.error("Error deleting photo:", error);
+      alert("Failed to delete profile picture. Please try again.");
+    } finally {
+      setUploadingProfilePic(false);
+      setShowPicConfirmation(false);
     }
   };
 
   const handleSubmit = async () => {
     onSave(formData);
-    // Send the updated data to the server
-
+    console.log(formData.internship);
+    console.log(formData.status);
     fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
       method: "POST",
       headers: {
@@ -170,28 +154,30 @@ export default function ProfileEditModal({
       },
       body: JSON.stringify({
         user_email: formData.email,
-        about: formData.about, // leave this empty ("") if not being changed
-        internship_experience: formData.internship, // leave this empty ("") if not being changed
-        first_name: formData.name, // leave this empty ("") if not being changed
-        last_name: "", // leave this empty ("") if not being changed
-        year: formData.graduationDate, // leave this empty ("") if not being changed
-        major: formData.major, // leave this empty ("") if not being changed
-        contact_me: formData.phone, // leave this empty ("") if not being changed
-        graduation_year: "",
-        member_status: formData.status, // leave this empty ("") if not being changed
+        about: formData.about,
+        name: formData.name,
+        graduating_year: formData.graduationDate,
+        major: formData.major,
+        phone: formData.phone,
+        member_status: formData.status,
+        member_rank: formData.rank, // Add this new field to the API call
       }),
     })
       .then((response) => response.json())
       .catch((error) => console.error("Error editing:", error));
-
+    
     onClose();
   };
 
   const formContent = (
-    <div className="flex flex-col overflow-y-auto max-h-[60vh] sm:max-h-[75vh] p-1"> {/* Adjusted max-h for mobile and larger screens */}
-      {/* Center - Photo Upload - Moved to top */}
+    <div className="flex flex-col overflow-y-auto max-h-[60vh] sm:max-h-[75vh] p-1">
       <div className="w-full flex justify-center items-center p-6 pt-4 md:pt-6">
-        <div className="relative">
+        <div className="relative group">
+          {uploadingProfilePic && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+            </div>
+          )}
           <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
             {photoPreview ? (
               <img
@@ -206,20 +192,27 @@ export default function ProfileEditModal({
             )}
           </div>
           <div className="flex flex-col gap-2 mt-2">
-            <label className="px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm">
-              Upload Profile Photo
+            <label
+              className={`px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm ${
+                uploadingProfilePic ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+              title={uploadingProfilePic ? "Uploading..." : "Choose a profile photo"}
+            >
+              {uploadingProfilePic ? "Uploading..." : "Upload Profile Photo"}
               <input
                 accept="image/*"
                 className="hidden"
                 aria-label="Upload profile photo"
                 type="file"
                 onChange={handlePhotoUpload}
+                disabled={uploadingProfilePic}
               />
             </label>
-            {photoPreview && (
+            {photoPreview && !uploadingProfilePic && (
               <button
-                onClick={handlePhotoDelete}
+                onClick={confirmProfilePicDelete}
                 className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
+                disabled={uploadingProfilePic}
               >
                 Delete Photo
               </button>
@@ -228,7 +221,6 @@ export default function ProfileEditModal({
         </div>
       </div>
 
-      {/* Left Column - Edit Form - Now takes full width below photo */}
       <div className="w-full p-6 pt-0 md:pt-2">
         <form
           onSubmit={(e) => {
@@ -241,7 +233,6 @@ export default function ProfileEditModal({
               Profile
             </h3>
 
-            {/* Name Input */}
             <div className="mb-4">
               <label
                 htmlFor="name"
@@ -262,7 +253,6 @@ export default function ProfileEditModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {/* Email Input */}
               <div>
                 <label
                   htmlFor="email"
@@ -281,7 +271,6 @@ export default function ProfileEditModal({
                   required
                 />
               </div>
-              {/* Phone Input */}
               <div>
                 <label
                   htmlFor="phone"
@@ -301,8 +290,7 @@ export default function ProfileEditModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              {/* Major Input */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
               <div className="sm:col-span-1">
                 <label
                   htmlFor="major"
@@ -320,7 +308,6 @@ export default function ProfileEditModal({
                   className="border border-[#d9d9d9] rounded-lg p-3 w-full"
                 />
               </div>
-              {/* Graduation Date Input */}
               <div>
                 <label
                   htmlFor="graduationDate"
@@ -338,7 +325,6 @@ export default function ProfileEditModal({
                   className="border border-[#d9d9d9] rounded-lg p-3 w-full"
                 />
               </div>
-              {/* Status Select */}
               <div className="relative">
                 <label
                   htmlFor="status"
@@ -367,9 +353,33 @@ export default function ProfileEditModal({
                   size={16}
                 />
               </div>
+              
+              <div className="relative">
+                <label
+                  htmlFor="rank"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Member Rank
+                </label>
+                <select
+                  id="rank"
+                  name="rank"
+                  value={formData.rank}
+                  onChange={handleChange}
+                  className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
+                >
+                  <option value="">Select Rank</option>
+                  <option value="current">Current</option>
+                  <option value="pledge">Pledge</option>
+                  <option value="alumni">Alumni</option>
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"
+                  size={16}
+                />
+              </div>
             </div>
 
-            {/* About Textarea */}
             <div className="mb-4">
               <label
                 htmlFor="about"
@@ -389,6 +399,19 @@ export default function ProfileEditModal({
           </div>
         </form>
       </div>
+
+      {showPicConfirmation && (
+        <ConfirmDialog
+          isOpen={showPicConfirmation}
+          onClose={cancelProfilePicDelete}
+          onConfirm={handlePhotoDelete}
+          title="Confirm Deletion"
+          message="Are you sure you want to remove your profile picture?"
+          confirmText="Remove"
+          cancelText="Cancel"
+          preventOutsideClick={true}
+        />
+      )}
     </div>
   );
 
