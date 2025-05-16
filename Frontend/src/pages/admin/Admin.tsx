@@ -3,6 +3,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
+import SponsorList from "../../components/admin/SponsorList";
 import { useToast } from "../../context/toast/ToastContext";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
@@ -29,6 +30,7 @@ interface ApiSponsor {
   company_name: string;
   email_list: string[];
   passcode: string;
+  tier: string;
 }
 
 const Admin = () => {
@@ -78,6 +80,7 @@ const Admin = () => {
 
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
+  const [tiers, setTiers] = useState<string[]>([]);
   const [members, setMembers] = useState<string[]>([]);
 
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
@@ -185,8 +188,12 @@ const Admin = () => {
             const sponsors = data.map(
               (sponsor: ApiSponsor) => sponsor.company_name
             );
+            const tiers = data.map(
+              (sponsor: ApiSponsor) => sponsor.tier
+            );
             console.log("Sponsors:", sponsors);
             setSponsors(sponsors);
+            setTiers(tiers);
             setLoadingSponsors(false);
           })
           .catch((error) => {
@@ -878,8 +885,9 @@ const Admin = () => {
               {loadingSponsors ? (
                 <LoadingSpinner text="Loading sponsors..." size="md" />
               ) : (
-                <EmailList
+                <SponsorList
                   emails={sponsors}
+                  tiers={tiers}
                   onDelete={handleDeleteSponsor}
                   userType="sponsor"
                 />

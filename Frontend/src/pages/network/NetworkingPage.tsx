@@ -57,6 +57,7 @@ interface BackendSponsor {
   links?: string | null;
   pfp_url?: string;
   resources?: SponsorResource[]; // Properly typed resources array
+  tier?: string;
 }
 
 // --- Transformation Functions ---
@@ -129,6 +130,7 @@ const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
     id: item.id?.toString(),
     type: "sponsor",
     name: item.company_name || "Unknown Sponsor",
+    tier: item.tier,
     about: item.about || "No description available.",
     links: parsedLinks,
     photoUrl: item.pfp_url || "/placeholder-logo.png",
