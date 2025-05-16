@@ -26,27 +26,27 @@ const MemberView = () => {
   const [error, setError] = useState("");
 
   const [userDetails, setUserDetails] = useState<{
-    user_id: string;
+    id: string;
     user_email: string;
-    bio: string;
-    internship: string;
-    first_name: string;
-    last_name: string;
-    year: string;
+    about: string;
+    name: string;
+    graduating_year: string;
     major: string;
-    contact_me: string;
-    hours: string;
+    phone: string;
+    total_hours: string;
+    rank: string;
+    member_status: string;
   }>({
-    user_id: "",
+    id: "",
     user_email: "",
-    bio: "",
-    internship: "",
-    first_name: "",
-    last_name: "",
-    year: "",
+    about: "",
+    name: "",
+    graduating_year: "",
     major: "",
-    contact_me: "",
-    hours: "",
+    phone: "",
+    total_hours: "",
+    rank: "",
+    member_status: "",
   });
 
   // const [photoLoading, setPhotoLoading] = useState<boolean>(false);
@@ -123,15 +123,16 @@ const MemberView = () => {
         <>
           <MemberDescription
             profileUrl={profilePhotoUrl || sponsorProfileUrl}
-            name={userDetails.first_name || "N/A"}
+            name={userDetails.name || "N/A"}
             major={userDetails.major || "N/A"}
             email={email}
-            phone={userDetails.contact_me || "N/A"}
-            status={"Not-Grad"}
-            hours={userDetails.hours || "0"}
-            year={userDetails.year || "N/A"}
-            internship={userDetails.internship || "N/A"}
-            description={userDetails.bio || "No bio available"}
+            phone={userDetails.phone || "N/A"}
+            status={userDetails.member_status || "N/A"}
+            hours={userDetails.total_hours || "0"}
+            year={userDetails.graduating_year || "N/A"}
+            internship={ "N/A"}
+            description={userDetails.about || "No bio available"}
+            rank={userDetails.rank || "N/A"}
           />
         </>
       )}
