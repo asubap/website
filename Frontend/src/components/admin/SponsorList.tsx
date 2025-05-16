@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DeleteConfirmation from "./DeleteConfirmation";
 import { useToast } from "../../context/toast/ToastContext";
+import { useAuth } from "../../context/auth/authProvider";
 
 interface SponsorListProps {
   emails: string[];
@@ -12,7 +13,8 @@ interface SponsorListProps {
 const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const { showToast } = useToast();
-
+  const { session } = useAuth();
+  
   const handleDeleteClick = (email: string) => {
     setEmailToDelete(email);
   };
@@ -32,6 +34,29 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
     setEmailToDelete(null);
   };
 
+  const handleChangeTier = async (email: string, newTier: string) => {
+    const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/change-sponsor-tier`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ sponsor_name: email, tier: newTier }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        showToast(errorData.message, "error");
+      }
+
+      // refresh the page
+      window.location.reload();
+
+      showToast("Tier changed successfully", "success");
+  };
+
   return (
     <div className="w-full h-full flex flex-col py-2 gap-2 overflow-y-auto">
       {emails.map((email, index) => (
@@ -40,6 +65,19 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
           className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center"
         >
           <span>{email}</span>
+          <select
+            value={tiers[index]}
+            onChange={(e) => handleChangeTier(email, e.target.value)}
+            className="ml-auto pr-2 rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none"
+          >
+            <option value="platinum">Platinum</option>
+            <option value="gold">Gold</option>
+            <option value="silver">Silver</option>
+            <option value="bronze">Bronze</option>
+          </select>
+          <button
+            onClick={() => handleDeleteClick(email)}
+            className="text-bapred hover:text-bapreddark font-bold pl-8"
           <span className="text-bapgray ml-auto pr-4 rounded-md bg-bapgraylight">{tiers[index]}</span>
           <button
             onClick={() => handleDeleteClick(email)}
