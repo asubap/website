@@ -9,17 +9,17 @@ interface EventListShortProps {
 export const EventListShort: React.FC<EventListShortProps> = ({ events, onEdit }) => {
   const navigate = useNavigate();
 
-  // Helper function to format date (optional, but good practice)
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString(undefined, {
+      const date = new Date(dateString).toLocaleDateString(undefined, { 
         year: "numeric",
         month: "short",
         day: "numeric",
       });
+      return date;
     } catch (error) {
       console.error("Failed to format date:", error);
-      return dateString; // Return original if parsing fails
+      return dateString;
     }
   };
 
@@ -31,11 +31,14 @@ export const EventListShort: React.FC<EventListShortProps> = ({ events, onEdit }
           className="w-full border border-gray-200 rounded-lg px-4 py-3 flex flex-col shadow-sm"
         >
           <div className="flex justify-between items-center mb-1">
+            {/* event name */}
             <h3 className="text-base font-semibold text-gray-800">
               {event.event_name || "[No Title]"}
             </h3>
+            {/* event date */}
+            
             <span className="text-xs text-gray-500">
-              {event.event_date ? formatDate(event.event_date) : "[No Date]"}
+              {event.event_date ? formatDate(event.event_date + "T" + event.event_time) : "[No Date]"}
             </span>
           </div>
           <p className="text-sm text-gray-600 mb-2">

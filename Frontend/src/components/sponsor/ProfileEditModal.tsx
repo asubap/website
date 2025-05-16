@@ -100,21 +100,14 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     setLinksList(newLinksList);
     hasChangesRef.current.links = true;
 
-    console.log("Link added, changes set to true:", hasChangesRef.current);
-
     setNewLink("");
     setLinkError("");
   };
 
   const startEditLink = (index: number) => {
-    console.log("Starting to edit link at index:", index);
     setEditingLink({ index, value: linksList[index] });
     // Just starting to edit is enough to mark as having unsaved changes
     hasChangesRef.current.links = true;
-    console.log(
-      "Started editing link, changes set to true:",
-      hasChangesRef.current
-    );
   };
 
   const saveEditLink = () => {
@@ -150,7 +143,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleRemoveLink = (e?: React.MouseEvent) => {
-    console.log("Removing link:", linkToRemove);
 
     // Only stop propagation but not preventDefault
     if (e) {
@@ -313,13 +305,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     }
     setPreviewImageUrl(null);
 
-    console.log("Deleting profile picture...", {
-      endpoint: `${
-        import.meta.env.VITE_BACKEND_URL
-      }/sponsors/${sponsorName}/pfp`,
-      method: "DELETE",
-    });
-
     try {
       // Use the API endpoint provided
       const response = await fetch(
@@ -334,18 +319,13 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
       // Get response text regardless of success/failure
       const responseText = await response.text();
-      console.log(
-        `Delete profile picture response: ${response.status}`,
-        responseText || "(empty response body)"
-      );
+
 
       if (!response.ok) {
         throw new Error(
           `Failed to delete profile picture: ${response.status} ${responseText}`
         );
       }
-
-      console.log("Profile picture deletion successful");
 
       // Set default image or placeholder
       const placeholderUrl = "/placeholder-logo.png"; // Ensure this path is correct
@@ -491,10 +471,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                   setEditingLink({ ...editingLink, value: e.target.value });
                   // Force change tracking for link edits
                   hasChangesRef.current.links = true;
-                  console.log(
-                    "Editing link value, changes set to true:",
-                    hasChangesRef.current
-                  );
                 }}
                 className="flex-grow px-3 py-2 border rounded-md"
               />
@@ -565,17 +541,10 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
             // Update ref directly - much more reliable than state
             hasChangesRef.current.about = newValue !== initialAbout;
-
-            console.log("About text changed:", {
-              newValue,
-              initialAbout,
-              hasChanged: hasChangesRef.current.about,
-            });
           }}
           onBlur={() => {
             // Use ref directly on blur too
             hasChangesRef.current.about = about !== initialAbout;
-            console.log("Textarea blur - ref:", hasChangesRef.current);
           }}
           className="w-full px-3 py-2 border rounded-md min-h-[150px] focus:ring-bapred focus:border-bapred"
           maxLength={500}

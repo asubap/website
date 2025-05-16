@@ -140,7 +140,6 @@ const SponsorHome = () => {
 
   const fetchResources = useCallback(async () => {
     if (!sponsorData.name) {
-      console.log("Skipping resource fetch - sponsor name not available yet");
       setLoadingResources(false);
       return;
     }
@@ -231,7 +230,6 @@ const SponsorHome = () => {
       if (uploadedUrl) {
         // Add a cache-busting parameter to force browser to reload the image
         newProfileUrl = `${uploadedUrl}?t=${Date.now()}`; // Add timestamp to prevent caching
-        console.log("New profile URL with cache-buster:", newProfileUrl);
       } else {
         console.error(
           "Profile picture upload failed. Profile data not updated."
@@ -244,18 +242,14 @@ const SponsorHome = () => {
 
     // 2. Update other profile data (description, links)
     try {
-      console.log("Updating sponsor details...");
-
       // Format the request body for the new API endpoint
       const requestBody = {
         about: updatedProfile.description,
         links: updatedProfile.links, // Send links directly as an array
       };
 
-      console.log("Sending update with body:", requestBody);
-
       // Make the API call to update sponsor details using the new endpoint pattern
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
           sponsorData.name
         }/details`,
@@ -267,8 +261,6 @@ const SponsorHome = () => {
           },
         }
       );
-
-      console.log("Sponsor details updated successfully:", response.data);
 
       // Update local state on success
       setSponsorData((prevData) => ({
@@ -296,8 +288,6 @@ const SponsorHome = () => {
   };
 
   const handleResourceDelete = async (resource: SponsorResource) => {
-    console.log("handleResourceDelete called for resource URL:", resource.url);
-
     if (!token || !resource.url) {
       console.error("Cannot delete resource: missing token or resource URL");
       return;
@@ -320,9 +310,6 @@ const SponsorHome = () => {
             resourceUrl: resource.url,
           },
         }
-      );
-      console.log(
-        `Successfully sent delete request for resource URL: ${resource.url}`
       );
       // Refresh resource list after deletion
       fetchResources();

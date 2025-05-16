@@ -77,7 +77,6 @@ const MemberView = () => {
           }
 
           const data = await response.json();
-          console.log("API Response:", data);
 
           if (data && data.length > 0) {
             setUserDetails(data[0]);

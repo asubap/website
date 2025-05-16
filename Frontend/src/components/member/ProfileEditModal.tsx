@@ -182,9 +182,6 @@ export default function ProfileEditModal({
       }),
     })
       .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
       .catch((error) => console.error("Error editing:", error));
 
     onClose();

@@ -18,10 +18,6 @@ export default function AuthHome() {
 
   // Function to handle manual logout and redirect
   const handleManualLogoutAndRedirect = async () => {
-    console.log("Executing manual logout and redirect...");
-    // Clear any existing timers just in case
-    // (Though navigating away usually unmounts and cleans up)
-    // No need to explicitly clear interval/timeout here as unmount will handle it.
     try {
       await supabase.auth.signOut();
       setSession(null); // Clear session immediately
@@ -38,29 +34,22 @@ export default function AuthHome() {
   useEffect(() => {
     // Wait until authentication loading is complete
     if (loading) {
-      console.log("Auth loading...");
       setAuthorizationStatus("loading");
       return;
     }
 
-    console.log("Auth loaded. Current role:", role);
-
     // If authentication is done, check the role
     if (role === "e-board") {
-      console.log("Redirecting to admin page...");
       setAuthorizationStatus("authorized");
       navigate("/admin", { replace: true });
     } else if (role === "sponsor") {
-      console.log("Redirecting to sponsor page...");
       setAuthorizationStatus("authorized");
       navigate("/sponsor", { replace: true });
     } else if (role === "general-member") {
-      console.log("Redirecting to member page...");
       setAuthorizationStatus("authorized");
       navigate("/member", { replace: true });
     } else {
       // Role is null, undefined, or invalid after loading
-      console.log("Invalid or missing role:", role);
       setAuthorizationStatus("unauthorized");
       setCountdown(10); // Reset countdown when becoming unauthorized
     }
@@ -72,8 +61,6 @@ export default function AuthHome() {
       return; // Only run this effect when unauthorized
     }
 
-    console.log("Starting countdown timer...");
-
     // Start interval to decrement countdown
     const intervalId = setInterval(() => {
       setCountdown((prevCountdown) => prevCountdown - 1);
@@ -81,7 +68,6 @@ export default function AuthHome() {
 
     // Set timeout for the final action (logout/redirect)
     const timeoutId = setTimeout(async () => {
-      console.log("Executing logout and redirect...");
       clearInterval(intervalId); // Stop the interval
       try {
         await supabase.auth.signOut();
@@ -97,7 +83,6 @@ export default function AuthHome() {
 
     // Cleanup function to clear the interval and timeout
     return () => {
-      console.log("Clearing countdown interval and timeout.");
       clearInterval(intervalId);
       clearTimeout(timeoutId);
     };

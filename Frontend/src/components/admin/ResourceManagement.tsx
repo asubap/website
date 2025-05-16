@@ -104,27 +104,17 @@ const ResourceManagement: React.FC = () => {
   );
 
   const fetchResources = useCallback(async () => {
-    console.log("Fetching resources...");
-    console.log("Session:", session);
-    console.log("Access token:", session?.access_token);
-    console.log("Auth loading:", authLoading);
 
     if (authLoading) {
-      console.log("Auth is still loading, waiting...");
       return;
     }
 
     if (!session?.access_token) {
-      console.log("No access token available, stopping fetch");
       setIsLoading(false);
       return;
     }
 
     try {
-      console.log(
-        "Making API call to:",
-        `${import.meta.env.VITE_BACKEND_URL}/resources`
-      );
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources`,
         {
@@ -133,7 +123,6 @@ const ResourceManagement: React.FC = () => {
           },
         }
       );
-      console.log("API response:", response);
 
       if (!response.ok) {
         console.error("API error:", response.status, response.statusText);
@@ -141,7 +130,6 @@ const ResourceManagement: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log("Received data:", data);
       setCategories(data || []); // Ensure we always have an array
     } catch (error) {
       console.error("Error fetching resources:", error);
@@ -153,7 +141,6 @@ const ResourceManagement: React.FC = () => {
   }, [session, authLoading]);
 
   useEffect(() => {
-    console.log("ResourceManagement mounted or session token changed");
     if (!authLoading) {
       fetchResources();
     }
