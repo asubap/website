@@ -17,6 +17,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      frontend:
+        specifier: 'link:'
+        version: 'link:'
       fuse.js:
         specifier: ^7.1.0
         version: 7.1.0
