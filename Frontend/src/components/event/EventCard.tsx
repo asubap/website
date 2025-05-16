@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
