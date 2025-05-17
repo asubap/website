@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../ui/Modal";
-import { toast } from "react-hot-toast";
+import { useToast } from "../../context/toast/ToastContext";
 
 interface EventCheckInProps {
   eventId: string;
@@ -31,41 +31,56 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
   const [status, setStatus] = useState<
     "idle" | "locating" | "sending" | "success" | "error"
   >("idle");
-  const [showNotInSessionModal, setShowNotInSessionModal] = useState(false);
   const { session } = useAuth();
+  const { showToast } = useToast();
 
   const alreadyCheckedIn = (eventAttending || []).includes(session?.user?.id || "");
 
   const inSession = isEventInSession(eventDate, eventTime, eventHours);
 
   const checkIn = async () => {
+    console.log("inside checkin");
     if (!inSession) {
-      setShowNotInSessionModal(true);
+      showToast("You can only check in during the event session window.", "error");
       return;
     }
+    console.log("before geolocation");
     if (!navigator.geolocation) {
-      toast.error("Geolocation not supported by your browser.");
+      showToast("Geolocation not supported by your browser.", "error");
       return;
     }
+    console.log("before access token");
     if (!session?.access_token) {
       setStatus("error");
-      toast.error("Not authenticated. Please log in again.");
+      showToast("Not authenticated. Please log in again.", "error");
       return;
     }
+    console.log("before already checked in");
     if (alreadyCheckedIn) {
       setStatus("error");
-      toast.error("Already checked in.");
+      showToast("Already checked in.", "error");
       return;
     }
+    console.log("before rsvped");
     if (!(eventRSVPed || []).includes(session.user.id)) {
       setStatus("error");
-      toast.error("Cannot check in, not RSVP'd.");
+      showToast("Cannot check in, not RSVP'd.", "error");
       return;
     }
+    console.log("before location");
     setStatus("locating");
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        console.log("before location");
         const { latitude, longitude, accuracy } = pos.coords;
+        console.log("latitude", latitude);
+        console.log("longitude", longitude);
+        console.log("accuracy", accuracy);
+        if (latitude === 0 || longitude === 0 || accuracy === 0) {
+          setStatus("error");
+          showToast("Failed to retrieve your location. Please try again.", "error");
+          return;
+        }
         try {
           setStatus("sending");
           const res = await fetch(
@@ -83,22 +98,22 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
           const data = await res.json();
           if (res.ok) {
             setStatus("success");
-            toast.success(data.message);
+            showToast(data.message, "success");
           } else {
             setStatus("error");
-            toast.error(data.error || "Check-in failed.");
+            showToast(data.error || "Check-in failed.", "error");
           }
         } catch (err) {
           setStatus("error");
-          toast.error("Network error during check-in.");
+          showToast("Network error during check-in.", "error");
         }
       },
       (err) => {
         setStatus("error");
         if (err.code === err.PERMISSION_DENIED) {
-          toast.error("Permission denied. Please allow location access.");
+          showToast("Permission denied. Please allow location access.", "error");
         } else {
-          toast.error("Failed to retrieve your location.");
+          showToast("Failed to retrieve your location.", "error");
         }
       },
       {
@@ -136,15 +151,6 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
           ? "Try Again"
           : "Check In"}
       </button>
-      <Modal
-        isOpen={showNotInSessionModal}
-        onClose={() => setShowNotInSessionModal(false)}
-        title="Event not in session"
-        confirmText="OK"
-        onConfirm={() => setShowNotInSessionModal(false)}
-      >
-        <p className="text-gray-600">You can only check in during the event session window.</p>
-      </Modal>
     </div>
   );
 };
