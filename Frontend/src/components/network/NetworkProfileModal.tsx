@@ -134,18 +134,6 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
             </p>
           </div>
       )}
-
-      <div className="mt-2 flex justify-center sm:justify-start">
-        <a
-          href={`mailto:${member.email}`}
-          className={`px-6 py-2 bg-red-700 text-white rounded hover:bg-red-800 transition-colors inline-flex items-center ${!member.email || member.email === 'Not Provided' ? 'opacity-50 cursor-not-allowed' : ''}`}
-          onClick={(e) => {!member.email || member.email === 'Not Provided' ? e.preventDefault() : null}}
-          aria-disabled={!member.email || member.email === 'Not Provided'}
-        >
-          <Mail className="w-5 h-5 mr-2" />
-          Contact
-        </a>
-      </div>
     </div>
   );
 
