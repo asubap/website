@@ -5,6 +5,8 @@ import MemberAnnouncementsListModal from "./MemberAnnouncementsListModal";
 import { Bell } from 'lucide-react'; 
 import { supabase } from "../../context/auth/supabaseClient"; 
 import { Announcement } from "../../types";
+import { AnnouncementListShort } from "../announcement/AnnouncementListShort";
+import ViewAnnouncementModal from "../admin/ViewAnnouncementModal";
 
 interface MemberDescriptionProps {
     profileUrl: string;
@@ -69,6 +71,8 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
   const [announcementBadgeCount, setAnnouncementBadgeCount] = useState(0); 
   const [allFetchedAnnouncementIds, setAllFetchedAnnouncementIds] = useState<string[]>([]);
   const [allAnnouncementsData, setAllAnnouncementsData] = useState<Announcement[]>([]); // Store full announcement data
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [showViewDetailModal, setShowViewDetailModal] = useState(false);
 
   const calculateUnreadCount = useCallback(() => {
     const readIds = new Set(getReadAnnouncementIdsFromStorage());
@@ -243,6 +247,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
 
       {/* Right Column - Events */}
       <EventMember/>
+      
       {/* Edit Profile Modal */}
       <ProfileEditModal
         isOpen={isEditModalOpen}
