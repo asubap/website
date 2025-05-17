@@ -523,7 +523,6 @@ const Admin = () => {
 
   // Refactored handleEventCreated
   const handleEventCreated = async (newEvent: Event) => {
-    const isNewEventPast = isPastDate(newEvent.event_date);
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -567,7 +566,7 @@ const Admin = () => {
   };
 
   // Refactored handleEventUpdated
-  const handleEventUpdated = async (updatedEvent: Event) => {
+  const handleEventUpdated = async () => {
     // (Assume you have the update API call here, if not, keep the state update logic)
     // After successful update:
     showToast("Event updated successfully", "success");
