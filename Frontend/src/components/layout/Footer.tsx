@@ -40,9 +40,9 @@ const staticNavLinks = [
 const staticSocialLinks = [
   {
     name: "linkedin",
-    href: "https://www.linkedin.com/company/beta-alpha-psi-beta-tau",
+    href: "https://www.linkedin.com/company/bap-betatauchapter/",
   },
-  { name: "instagram", href: "https://www.instagram.com/asubap" },
+  { name: "instagram", href: "https://www.instagram.com/bapbetatauchapter/" },
 ];
 
 const Footer: React.FC<FooterProps> = ({ backgroundColor }) => {

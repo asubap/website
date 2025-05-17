@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
+import { useToast } from "../../context/toast/ToastContext";
 
 type ProfileData = {
   name: string;
@@ -42,7 +43,10 @@ export default function ProfileEditModal({
   );
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [showPicConfirmation, setShowPicConfirmation] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationError, setValidationError] = useState<string>("");
   const { session } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (isOpen && profileData.photoUrl) {
@@ -146,27 +150,50 @@ export default function ProfileEditModal({
     onSave(formData);
     console.log(formData.internship);
     console.log(formData.status);
-    fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify({
-        user_email: formData.email,
-        about: formData.about,
-        name: formData.name,
-        graduating_year: formData.graduationDate,
-        major: formData.major,
-        phone: formData.phone,
-        member_status: formData.status,
-        member_rank: formData.rank, // Add this new field to the API call
-      }),
-    })
-      .then((response) => response.json())
-      .catch((error) => console.error("Error editing:", error));
-    
-    onClose();
+    try {
+      const response = await fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          user_email: formData.email,
+          about: formData.about,
+          name: formData.name,
+          graduating_year: formData.graduationDate,
+          major: formData.major,
+          phone: formData.phone,
+          member_status: formData.status,
+          member_rank: formData.rank,
+        }),
+      });
+
+      const data = await response.json();
+      
+      // Debug: log the API response
+      console.log("API response:", data);
+      
+      if (!response.ok) {
+        if (data.error === "Validation failed" && (data.details || data.detail || data.message)) {
+          const errorMessage =
+            (Array.isArray(data.details) && data.details.join(", ")) ||
+            data.detail ||
+            data.message ||
+            "Validation failed";
+          showToast(errorMessage, "error");
+          return;
+        }
+        showToast(data.error || data.message || "Failed to update profile", "error");
+        return;
+      }
+
+      showToast("Profile updated successfully!", "success");
+      onClose();
+    } catch (error) {
+      console.error("Error editing:", error);
+      showToast(error instanceof Error ? error.message : "Failed to update profile", "error");
+    }
   };
 
   const formContent = (
