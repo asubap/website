@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAuth } from "../../context/auth/authProvider";
-import Modal from "../ui/Modal";
 import { useToast } from "../../context/toast/ToastContext";
 
 interface EventCheckInProps {
