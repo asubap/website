@@ -43,8 +43,6 @@ export default function ProfileEditModal({
   );
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [showPicConfirmation, setShowPicConfirmation] = useState(false);
-  const [showValidationError, setShowValidationError] = useState(false);
-  const [validationError, setValidationError] = useState<string>("");
   const { session } = useAuth();
   const { showToast } = useToast();
 
