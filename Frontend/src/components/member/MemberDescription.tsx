@@ -18,6 +18,10 @@ interface MemberDescriptionProps {
     internship: string;
     description: string;
     rank: string; // Add the new rank field
+    developmentHours: string;
+    professionalHours: string;
+    serviceHours: string;
+    socialHours: string;
 }
 
 const READ_ANNOUNCEMENTS_KEY = "readAnnouncementIds";
@@ -38,7 +42,26 @@ const addAnnouncementsToReadStorage = (idsToAdd: string[]) => {
   localStorage.setItem(READ_ANNOUNCEMENTS_KEY, JSON.stringify(Array.from(currentReadIds)));
 };
 
-const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name, major, description, email, phone, status, hours, year, internship, rank }) => {
+// Define a local type for the full profile data including hour breakdown
+type FullProfileData = {
+  name: string;
+  email: string;
+  phone: string;
+  major: string;
+  graduationDate: string;
+  status: string;
+  about: string;
+  internship: string;
+  photoUrl: string;
+  hours: string;
+  rank: string;
+  developmentHours: string;
+  professionalHours: string;
+  serviceHours: string;
+  socialHours: string;
+};
+
+const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name, major, description, email, phone, status, hours, year, internship, rank, developmentHours, professionalHours, serviceHours, socialHours }) => {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAnnouncementsListModalOpen, setIsAnnouncementsListModalOpen] = useState(false); 
@@ -106,7 +129,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
   };
 
   // Initial profile data state
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<FullProfileData>({
     name: name,
     email: email,
     phone: phone,
@@ -117,24 +140,19 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
     internship: internship,
     photoUrl: profileUrl,
     hours: hours,
-    rank: rank, // Add rank to the profile data
+    rank: rank,
+    developmentHours: developmentHours,
+    professionalHours: professionalHours,
+    serviceHours: serviceHours,
+    socialHours: socialHours,
   });
-  interface ProfileData {
-    name: string;
-    email: string;
-    phone: string;
-    major: string;
-    graduationDate: string;
-    status: string;
-    about: string;
-    internship: string;
-    photoUrl: string;
-    hours: string;
-    rank: string; // Add to the interface
-  }
 
-  const handleSaveProfile = (newData: ProfileData): void => {
-    setProfileData(newData);
+  // Wrapper for onSave to merge modal data into local state, preserving hour fields
+  const handleSaveProfile = (newData: Omit<FullProfileData, 'developmentHours' | 'professionalHours' | 'serviceHours' | 'socialHours'>): void => {
+    setProfileData((prev) => ({
+      ...prev,
+      ...newData,
+    }));
   }
 
   return (
@@ -190,6 +208,21 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
           {/* Add rank display */}
           <div>
             <span className="font-bold">Rank:</span> {profileData.rank ? profileData.rank.charAt(0).toUpperCase() + profileData.rank.slice(1) : 'Not set'}
+          </div>
+        </div>
+        {/* Hours breakdown */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 mb-6">
+          <div>
+            <span className="font-semibold">Social Hours:</span> {profileData.socialHours}
+          </div>
+          <div>
+            <span className="font-semibold">Professional Hours:</span> {profileData.professionalHours}
+          </div>
+          <div>
+            <span className="font-semibold">Service Hours:</span> {profileData.serviceHours}
+          </div>
+          <div>
+            <span className="font-semibold">Development Hours:</span> {profileData.developmentHours ?? "0"}
           </div>
         </div>
 

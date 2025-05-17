@@ -36,6 +36,10 @@ const MemberView = () => {
     total_hours: string;
     rank: string;
     member_status: string;
+    development_hours: string;
+    professional_hours: string;
+    service_hours: string;
+    social_hours: string;
   }>({
     id: "",
     user_email: "",
@@ -47,6 +51,10 @@ const MemberView = () => {
     total_hours: "",
     rank: "",
     member_status: "",
+    development_hours: "",
+    professional_hours: "",
+    service_hours: "",
+    social_hours: "",
   });
 
   // const [photoLoading, setPhotoLoading] = useState<boolean>(false);
@@ -132,6 +140,10 @@ const MemberView = () => {
             internship={ "N/A"}
             description={userDetails.about || "No bio available"}
             rank={userDetails.rank || "N/A"}
+            developmentHours={userDetails.development_hours || "0"}
+            professionalHours={userDetails.professional_hours || "0"}
+            serviceHours={userDetails.service_hours || "0"}
+            socialHours={userDetails.social_hours || "0"}
           />
         </>
       )}
