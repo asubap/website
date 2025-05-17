@@ -28,9 +28,6 @@ interface ProfileEditModalProps {
   onSave: (formData: ProfileData) => void;
 }
 
-// Add environment variable for backend URL
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
 export default function ProfileEditModal({
   isOpen,
   onClose,
@@ -80,7 +77,7 @@ export default function ProfileEditModal({
       formData.append("file", file);
 
       const uploadResponse = await fetch(
-        `${BACKEND_URL}/member-info/${profileData.email}/pfp`,
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/${profileData.email}/pfp`,
         {
           method: "POST",
           headers: {
@@ -96,7 +93,13 @@ export default function ProfileEditModal({
 
       const data = await uploadResponse.json();
 
-      setPhotoPreview(`${data.photoUrl}?t=${Date.now()}`);
+      const newPhotoUrl = `${data.photoUrl}?t=${Date.now()}`;
+      setPhotoPreview(newPhotoUrl);
+      setFormData((prev) => {
+        const updated = { ...prev, photoUrl: data.photoUrl };
+        onSave(updated);
+        return updated;
+      });
 
       URL.revokeObjectURL(previewUrl);
     } catch (error) {
@@ -121,7 +124,7 @@ export default function ProfileEditModal({
       const token = session?.access_token;
 
       const deleteResponse = await fetch(
-        `${BACKEND_URL}/member-info/${profileData.email}/pfp`,
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/${profileData.email}/pfp`,
         {
           method: "DELETE",
           headers: {
@@ -135,6 +138,11 @@ export default function ProfileEditModal({
       }
 
       setPhotoPreview(null);
+      setFormData((prev) => {
+        const updated = { ...prev, photoUrl: "" };
+        onSave(updated);
+        return updated;
+      });
     } catch (error) {
       console.error("Error deleting photo:", error);
       alert("Failed to delete profile picture. Please try again.");
@@ -145,11 +153,35 @@ export default function ProfileEditModal({
   };
 
   const handleSubmit = async () => {
+    // Validate all fields
+    const requiredFields = [
+      formData.name,
+      formData.email,
+      formData.phone,
+      formData.major,
+      formData.graduationDate,
+      formData.status,
+      formData.about,
+    ];
+    const fieldNames = [
+      "Name",
+      "Email",
+      "Phone Number",
+      "Major(s)",
+      "Graduation Date",
+      "Status",
+      "About"
+    ];
+    for (let i = 0; i < requiredFields.length; i++) {
+      if (!requiredFields[i] || requiredFields[i] === "N/A") {
+        showToast(`${fieldNames[i]} is required and cannot be empty or 'N/A'.`, "error");
+        return;
+      }
+    }
     onSave(formData);
-    console.log(formData.internship);
-    console.log(formData.status);
+
     try {
-      const response = await fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/edit-member-info/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,6 +219,7 @@ export default function ProfileEditModal({
       }
 
       showToast("Profile updated successfully!", "success");
+      onSave(formData);
       onClose();
     } catch (error) {
       console.error("Error editing:", error);
@@ -263,7 +296,7 @@ export default function ProfileEditModal({
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Name
+                Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -283,7 +316,7 @@ export default function ProfileEditModal({
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -301,7 +334,7 @@ export default function ProfileEditModal({
                   htmlFor="phone"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Phone Number
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -321,7 +354,7 @@ export default function ProfileEditModal({
                   htmlFor="major"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Major(s)
+                  Major(s) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -338,7 +371,7 @@ export default function ProfileEditModal({
                   htmlFor="graduationDate"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Grad Date
+                  Grad Date <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -355,7 +388,7 @@ export default function ProfileEditModal({
                   htmlFor="status"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Status
+                  Status <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="status"
@@ -384,7 +417,7 @@ export default function ProfileEditModal({
                   htmlFor="rank"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Member Rank
+                  Member Rank <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="rank"
@@ -410,7 +443,7 @@ export default function ProfileEditModal({
                 htmlFor="about"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                About
+                About <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="about"
