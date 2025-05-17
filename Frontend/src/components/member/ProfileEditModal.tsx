@@ -6,7 +6,6 @@ import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../context/toast/ToastContext";
-import { useNavigate } from "react-router-dom";
 
 type ProfileData = {
   name: string;
