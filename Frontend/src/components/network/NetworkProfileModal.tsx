@@ -1,6 +1,7 @@
 import { Member } from "../../types";
 import Modal from "../ui/Modal";
 import { Briefcase, Clock, GraduationCap, Info, Link as LinkIcon, Mail, User } from 'lucide-react';
+import { useToast } from "../../context/toast/ToastContext";
 
 interface NetworkProfileModalProps {
   member: Member;
@@ -19,10 +20,12 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { showToast } = useToast();
+
   // No need for modal container logic - it's handled by the Modal component
 
   const profileContent = (
-    <div className="p-2 space-y-6">
+    <div className="p-2 space-y-6 max-h-[80vh] overflow-y-auto">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="w-32 h-32 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border">
           {member.photoUrl ? (
@@ -56,7 +59,22 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 border-t pt-6">
           <div className="flex items-center">
             <Mail className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
-            <span className="truncate" title={member.email || ''}>{member.email || 'Not Provided'}</span>
+            {member.email ? (
+              <button
+                type="button"
+                className="truncate text-bapred font-medium hover:underline focus:outline-none"
+                title="Copy email to clipboard"
+                onClick={() => {
+                  navigator.clipboard.writeText(member.email);
+                  showToast("Email copied to clipboard!", "success");
+                }}
+              >
+                {member.email}
+                
+              </button>
+            ) : (
+              <span className="truncate text-gray-500">Not Provided</span>
+            )}
           </div>
           
           <div className="flex items-center">
@@ -65,31 +83,23 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
           </div>
           
           {/* Hours */}
-          <div className="flex items-center mt-2">
-            <Clock className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
-
-            {/* Hours details container */}
-            <div className="flex flex-col w-full">
-
-              {/* Individual hour categories */}
-              <div className="flex flex-row flex-wrap gap-x-4 gap-y-1 mb-1">
-                <span className="text-gray-600">
-                  Development: <span className="font-medium text-gray-800">{member.developmentHours ?? '0'} hrs</span>
-                </span>
-                <span className="text-gray-600">
-                  Professional: <span className="font-medium text-gray-800">{member.professionalHours ?? '0'} hrs</span>
-                </span>
-                <span className="text-gray-600">
-                  Service: <span className="font-medium text-gray-800">{member.serviceHours ?? '0'} hrs</span>
-                </span>
-                <span className="text-gray-600">
-                  Social: <span className="font-medium text-gray-800">{member.socialHours ?? '0'} hrs</span>
-                </span>
-              </div>
-
-              {/* Total hours */}
-              <span className="border-t border-gray-300 pt-2 mt-1 font-bold text-gray-800 text-left">
-                Total Hours: {member.hours ?? '0'} hrs
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-y-2 gap-x-5">
+            <div className="flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0"/>
+              <span className="font-bold text-gray-800 whitespace-nowrap">Total Hours: {member.hours ?? '0'} hrs</span>
+            </div>
+            <div className="flex flex-col md:flex-row gap-y-1 md:gap-y-0 gap-x-5 whitespace-nowrap">
+              <span className="text-gray-600">
+                Development: <span className="font-medium text-gray-800">{member.developmentHours ?? '0'} hrs</span>
+              </span>
+              <span className="text-gray-600">
+                Professional: <span className="font-medium text-gray-800">{member.professionalHours ?? '0'} hrs</span>
+              </span>
+              <span className="text-gray-600">
+                Service: <span className="font-medium text-gray-800">{member.serviceHours ?? '0'} hrs</span>
+              </span>
+              <span className="text-gray-600">
+                Social: <span className="font-medium text-gray-800">{member.socialHours ?? '0'} hrs</span>
               </span>
             </div>
           </div>
