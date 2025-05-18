@@ -82,7 +82,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         </div>
 
         <p className="text-gray-600 text-sm mb-4">
-          {event.event_description || "No description available"}
+          {event.event_description}
         </p>
       </div>
 
