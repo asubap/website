@@ -37,11 +37,8 @@ interface ApiSponsor {
 
 const Admin = () => {
   const { showToast } = useToast();
-  const adminFormRef = useRef<HTMLFormElement>(null);
   const sponsorFormRef = useRef<HTMLFormElement>(null);
-  const memberFormRef = useRef<HTMLFormElement>(null);
 
-  const [adminInputError, setAdminInputError] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
@@ -82,14 +79,6 @@ const Admin = () => {
   const [loadingMembers, setLoadingMembers] = useState(true);
 
   const { role } = useAuth();
-
-  // State for email inputs
-  const [adminEmailInput, setAdminEmailInput] = useState("");
-  const [memberEmailInput, setMemberEmailInput] = useState("");
-
-  // Loading states for add buttons
-  const [isAddingAdmins, setIsAddingAdmins] = useState(false);
-  const [isAddingMembers, setIsAddingMembers] = useState(false);
 
   // Add new state for member editing
   const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>({});
@@ -139,30 +128,6 @@ const Admin = () => {
 
   const isPastDate = (dateString: string): boolean => {
     return new Date(dateString) < new Date();
-  };
-
-  // Reset input error state when clicking away from input
-  const handleInputFocus = (inputType: "admin") => {
-    if (inputType === "admin") {
-      setAdminInputError(false);
-    }
-  };
-
-  // Validate email function to reuse code
-  const validateEmail = (email: string): boolean => {
-    if (!email) {
-      return false;
-    }
-
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-  };
-
-  const handleEmailInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>
-  ) => {
-    setter(e.target.value.replace(/\s+/g, "")); // Remove spaces
   };
 
   useEffect(() => {
@@ -282,203 +247,6 @@ const Admin = () => {
 
     fetchAnnouncements();
   }, []);
-
-  const handleRoleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>,
-    role: string
-  ) => {
-    e.preventDefault();
-    setIsAddingAdmins(true);
-
-    const emailsToAdd = adminEmailInput
-      .split(",")
-      .map((email) => email.trim())
-      .filter((email) => email);
-
-    if (emailsToAdd.length === 0) {
-      showToast("Please enter at least one email address.", "error");
-      setAdminInputError(true);
-      setIsAddingAdmins(false);
-      return;
-    }
-
-    const invalidEmails = emailsToAdd.filter((email) => !validateEmail(email));
-    if (invalidEmails.length > 0) {
-      showToast(
-        `Invalid email format for: ${invalidEmails.join(", ")}`,
-        "error"
-      );
-      setAdminInputError(true);
-      setIsAddingAdmins(false);
-      return;
-    }
-
-    setAdminInputError(false);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      showToast("Authentication error. Please log in again.", "error");
-      setIsAddingAdmins(false);
-      return;
-    }
-    const token = session.access_token;
-
-    const addUserPromises = emailsToAdd.map((email) =>
-      fetch(`${import.meta.env.VITE_BACKEND_URL}/users/add-user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ user_email: email, role: role }),
-      }).then(async (response) => {
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          return { email, success: false, error: errorData.message || `Failed to add ${email}` };
-        }
-        return { email, success: true };
-      }).catch(error => {
-        return { email, success: false, error: error.message || `Network error for ${email}` };
-      })
-    );
-
-    const results = await Promise.allSettled(addUserPromises);
-
-    const successfulEmails: string[] = [];
-    const failedEmails: string[] = [];
-
-    results.forEach((result) => {
-      if (result.status === "fulfilled" && result.value.success) {
-        successfulEmails.push(result.value.email);
-      } else if (result.status === "fulfilled" && !result.value.success) {
-        failedEmails.push(`${result.value.email} (${result.value.error})`);
-      } else if (result.status === "rejected") {
-        const reason = result.reason as any;
-        failedEmails.push(`Unknown email (Error: ${reason?.message || 'Unknown error'})`);
-      }
-    });
-
-    if (successfulEmails.length > 0) {
-      if (role === "e-board") {
-        setAdminEmails((prev) => [...prev, ...successfulEmails]);
-      }
-      showToast(
-        `${successfulEmails.length} admin(s) added successfully.`,
-        "success"
-      );
-      setAdminEmailInput(""); // Clear input
-    }
-
-    if (failedEmails.length > 0) {
-      showToast(
-        `Failed to add: ${failedEmails.join("; ")}`,
-        "error",
-        failedEmails.length > 1 ? 10000 : 5000
-      );
-    }
-    
-    if (adminFormRef.current && successfulEmails.length === emailsToAdd.length) {
-        adminFormRef.current.reset();
-        setAdminEmailInput(""); 
-    }
-    setIsAddingAdmins(false);
-  };
-
-  const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsAddingMembers(true);
-
-    const emailsToAdd = memberEmailInput
-      .split(",")
-      .map((email) => email.trim())
-      .filter((email) => email);
-
-    if (emailsToAdd.length === 0) {
-      showToast("Please enter at least one email address.", "error");
-      setIsAddingMembers(false);
-      return;
-    }
-
-    const invalidEmails = emailsToAdd.filter((email) => !validateEmail(email));
-    if (invalidEmails.length > 0) {
-      showToast(
-        `Invalid email format for: ${invalidEmails.join(", ")}`,
-        "error"
-      );
-      setIsAddingMembers(false);
-      return;
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      showToast("Authentication error. Please log in again.", "error");
-      setIsAddingMembers(false);
-      return;
-    }
-    const token = session.access_token;
-
-    const addUserPromises = emailsToAdd.map((email) =>
-      fetch(`${import.meta.env.VITE_BACKEND_URL}/users/add-user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ user_email: email, role: "general-member" }),
-      }).then(async (response) => {
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          return { email, success: false, error: errorData.message || `Failed to add ${email}` };
-        }
-        return { email, success: true };
-      }).catch(error => {
-        return { email, success: false, error: error.message || `Network error for ${email}` };
-      })
-    );
-
-    const results = await Promise.allSettled(addUserPromises);
-    const successfulEmails: string[] = [];
-    const failedEmails: string[] = [];
-
-    results.forEach((result) => {
-       if (result.status === "fulfilled" && result.value.success) {
-        successfulEmails.push(result.value.email);
-      } else if (result.status === "fulfilled" && !result.value.success) {
-        failedEmails.push(`${result.value.email} (${result.value.error})`);
-      } else if (result.status === "rejected") {
-        const reason = result.reason as any;
-        failedEmails.push(`Unknown email (Error: ${reason?.message || 'Unknown error'})`);
-      }
-    });
-
-    if (successfulEmails.length > 0) {
-      setMembers((prev) => [...prev, ...successfulEmails.map(email => ({ email }))]);
-      showToast(
-        `${successfulEmails.length} member(s) added successfully.`,
-        "success"
-      );
-      setMemberEmailInput(""); // Clear input
-    }
-
-    if (failedEmails.length > 0) {
-      showToast(
-        `Failed to add: ${failedEmails.join("; ")}`,
-        "error",
-        failedEmails.length > 1 ? 10000 : 5000
-      );
-    }
-    
-    if (memberFormRef.current && successfulEmails.length === emailsToAdd.length) {
-        memberFormRef.current.reset();
-        setMemberEmailInput("");
-    }
-    setIsAddingMembers(false);
-  };
 
   const handleDelete = async (email: string) => {
     const {
@@ -935,7 +703,7 @@ const Admin = () => {
                   onDelete={handleDelete}
                   userType="admin"
                   onEdit={handleMemberEdit}
-                  onSave={async (email) => {
+                  onSave={async () => {
                     await fetchMembers();
                   }}
                   memberDetails={memberDetails}
