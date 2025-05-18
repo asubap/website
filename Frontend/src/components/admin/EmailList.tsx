@@ -5,7 +5,7 @@ import AdminMemberEditModal from "./AdminMemberEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
 
 interface EmailListProps {
-  emails: { email: string; name?: string }[];
+  emails: { email: string; name?: string; role?: string }[];
   onDelete: (email: string) => void;
   userType: "admin" | "sponsor";
   onEdit?: (email: string) => void;
@@ -26,14 +26,16 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
   };
 
   const handleEditClick = async (email: string) => {
-    if (userType !== "admin") return;
+    // Find the member in the emails array
+    const member = emails.find(m => m.email === email);
 
-    // Always fetch fresh data from API
+    // If the member is e-board, do nothing
+    if (member?.role === "e-board") return;
+
     setIsLoading(true);
     await onEdit?.(email);
     setIsLoading(false);
 
-    // Always set after fetching
     setEmailToEdit(email);
   };
 
@@ -107,7 +109,7 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
           />
         )}
 
-        {emailToEdit && (
+        {emailToEdit && emails.find(m => m.email === emailToEdit)?.role !== "e-board" && (
           <AdminMemberEditModal
             isOpen={true}
             onClose={() => setEmailToEdit(null)}
