@@ -9,6 +9,7 @@ interface EventCheckInProps {
   eventDate: string;
   eventTime: string;
   eventHours: number;
+  checkInWindowMinutes?: number;
 }
 
 export const isEventInSession = (eventDate: string, eventTime: string, eventHours: number) => {
@@ -26,6 +27,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
   eventDate,
   eventTime,
   eventHours,
+  checkInWindowMinutes = 15,
 }) => {
   const [status, setStatus] = useState<
     "idle" | "locating" | "sending" | "success" | "error"
@@ -41,6 +43,13 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
     console.log("inside checkin");
     if (!inSession) {
       showToast("You can only check in during the event session window.", "error");
+      return;
+    }
+    const eventStart = new Date(`${eventDate}T${eventTime}`);
+    const now = new Date();
+    const checkInDeadline = new Date(eventStart.getTime() + checkInWindowMinutes * 60 * 1000);
+    if (now > checkInDeadline) {
+      showToast(`You are checking in after the allowed ${checkInWindowMinutes}-minute window.`, "error");
       return;
     }
     console.log("before geolocation");

@@ -28,6 +28,7 @@ interface FormErrors {
   time?: string;
   hours?: string;
   hoursType?: string;
+  checkInWindow?: number;
 }
 
 interface FormDataState {
@@ -39,6 +40,7 @@ interface FormDataState {
   time: string;
   hours: string;
   hoursType: string;
+  checkInWindow: number;
 }
 
 const EditEventModal = ({
@@ -57,6 +59,7 @@ const EditEventModal = ({
     time: "",
     hours: "",
     hoursType: "professional", // Default value
+    checkInWindow: 15,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -85,6 +88,7 @@ const EditEventModal = ({
       time: eventToEdit.event_time || "",
       hours: eventToEdit.event_hours?.toString() || "",
       hoursType: eventToEdit.event_hours_type || "professional",
+      checkInWindow: eventToEdit.check_in_window || 15,
     };
     initialStateRef.current = initialState;
 
@@ -193,6 +197,7 @@ const EditEventModal = ({
         description: formData.description.trim(),
         time: formData.time || "",
         sponsors: formData.sponsors,
+        check_in_window: formData.checkInWindow,
       };
       if (formData.hours.trim()) eventDataToUpdate.event_hours = parseFloat(formData.hours);
       if (formData.hoursType) eventDataToUpdate.event_hours_type = formData.hoursType;
@@ -233,6 +238,7 @@ const EditEventModal = ({
         id: eventToEdit.id,
         event_attending: eventToEdit.event_attending ?? null,
         event_rsvped: eventToEdit.event_rsvped ?? null,
+        check_in_window: formData.checkInWindow,
       };
 
       onEventUpdated(updatedEvent);

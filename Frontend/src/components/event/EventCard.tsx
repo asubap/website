@@ -136,6 +136,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 eventDate={event.event_date}
                 eventTime={event.event_time}
                 eventHours={event.event_hours}
+                checkInWindowMinutes={event.check_in_window}
               />
             </div>
           )}

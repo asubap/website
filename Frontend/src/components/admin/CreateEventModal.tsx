@@ -24,6 +24,7 @@ interface FormErrors {
   time?: string;
   hours?: string;
   hoursType?: string;
+  checkInWindow?: string;
   // No validation needed for sponsors or emailMembers currently
 }
 
@@ -41,6 +42,7 @@ const CreateEventModal = ({
   const [time, setTime] = useState("");
   const [hours, setHours] = useState("");
   const [hoursType, setHoursType] = useState("professional");
+  const [checkInWindow, setCheckInWindow] = useState(15);
   // const [emailMembers, setEmailMembers] = useState(false); // Keep if needed later, removed from UI
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -56,6 +58,7 @@ const CreateEventModal = ({
     time,
     hours,
     hoursType,
+    checkInWindow,
   });
 
   // Function to check if form data has changed
@@ -69,6 +72,7 @@ const CreateEventModal = ({
       time,
       hours,
       hoursType,
+      checkInWindow,
     };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
   };
@@ -107,11 +111,15 @@ const CreateEventModal = ({
     if (!time) newErrors.time = "Time is required";
     if (!hours.trim()) newErrors.hours = "Event hours are required";
     if (!hoursType) newErrors.hoursType = "Hours type is required";
-
+    if (!checkInWindow) newErrors.checkInWindow = "Check-in window is required";
+    
     const parsedHours = parseFloat(hours);
 
     if (hours.trim() && (isNaN(parsedHours) || parsedHours <= 0))
       newErrors.hours = "Must be a positive number";
+
+    if (isNaN(checkInWindow) || checkInWindow <= 0)
+      newErrors.checkInWindow = "Must be a positive number";
 
     // --- Update errors state and return if invalid ---
     if (Object.keys(newErrors).length > 0) {
@@ -369,7 +377,7 @@ const CreateEventModal = ({
           </div>
 
           {/* Hours & Type */}
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label
                 htmlFor="hours"
@@ -431,6 +439,37 @@ const CreateEventModal = ({
               {errors.hoursType && (
                 <p id="hoursType-error" className="text-red-500 text-xs mt-1">
                   {errors.hoursType}
+                </p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="checkInWindow"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Check-in Window (minutes) *
+              </label>
+              <input
+                id="checkInWindow"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 15"
+                value={checkInWindow}
+                onChange={(e) => {
+                  setCheckInWindow(Number(e.target.value));
+                  clearError("checkInWindow");
+                }}
+                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
+                  errors.checkInWindow ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                aria-invalid={!!errors.checkInWindow}
+                aria-describedby={errors.checkInWindow ? "checkInWindow-error" : undefined}
+              />
+              {errors.checkInWindow && (
+                <p id="checkInWindow-error" className="text-red-500 text-xs mt-1">
+                  {errors.checkInWindow}
                 </p>
               )}
             </div>

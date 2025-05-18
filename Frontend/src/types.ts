@@ -12,6 +12,7 @@ export type Event = {
   event_hours: number;
   event_hours_type: string;
   sponsors_attending: string[];
+  check_in_window: number;
 };
 
 export interface Member {
