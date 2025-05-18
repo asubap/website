@@ -10,6 +10,7 @@ interface EventCardProps {
   isHighlighted?: boolean;
   registerRef?: (element: HTMLDivElement | null) => void;
   hideRSVP?: boolean;
+  onEdit?: () => void;
 }
 
 export const formatDateTime = (date?: string, time?: string | null) => {
@@ -35,6 +36,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   isHighlighted,
   registerRef,
   hideRSVP = false,
+  onEdit,
 }) => {
   const { session, role, loading } = useAuth();
 
@@ -42,6 +44,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isMember = role === "general-member" || role === "admin";
   const isSponsor = role === "sponsor";
   const isLoggedIn = !!session;
+  const isAdmin = role === "e-board";
 
   // Define highlight classes using Tailwind ring utility - focusing on color transition
   const highlightClasses = isHighlighted
@@ -55,9 +58,11 @@ export const EventCard: React.FC<EventCardProps> = ({
       className={`p-6 bg-white rounded-lg shadow-md grid grid-cols-2 border border-gray-200 ring-2 ring-inset transition-colors duration-200 ease-in-out ${highlightClasses}`}
     >
       <div className="col-span-1">
-        <h3 className="text-xl font-semibold mb-3 text-[#8C1D40]">
-          {event.event_name}
-        </h3>
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="text-xl font-semibold text-[#8C1D40]">
+            {event.event_name}
+          </h3>
+        </div>
 
         <div className="space-y-2 mb-4">
           {event.event_location && (
@@ -82,6 +87,16 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       <div className="col-span-1">
+        <div className="flex justify-end items-start mb-3">
+          {isAdmin && onEdit && (
+            <button
+              onClick={onEdit}
+              className="px-3 py-1 text-sm bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
+            >
+              Edit
+            </button>
+          )}
+        </div>
         {event.event_hours_type && (
           <div>
             <span className="font-semibold text-gray-700">Hours: </span>

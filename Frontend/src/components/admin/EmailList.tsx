@@ -11,9 +11,10 @@ interface EmailListProps {
   onEdit?: (email: string) => void;
   memberDetails?: { [key: string]: any };
   onSave?: (email: string) => Promise<void> | void;
+  clickable?: boolean;
 }
 
-const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onSave }: EmailListProps) => {
+const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onSave, clickable = true }: EmailListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [emailToEdit, setEmailToEdit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,16 +81,16 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
           </div>
         </div>
       )}
-      <div className="w-full h-full flex flex-col py-2 gap-2 overflow-y-auto">
+      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {filteredEmails.map(({ email, name }) => (
           <div
             key={email}
-            onClick={() => handleEditClick(email)}
+            onClick={clickable ? () => handleEditClick(email) : undefined}
             className={`w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center ${
-              userType === "admin" ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""
+              clickable && userType === "admin" ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""
             }`}
           >
-            <span>{name ? name : email}</span>
+            <span className="text-gray-800 text-m pr-2">{name ? name : email}</span>
             <button
               onClick={(e) => handleDeleteClick(email, e)}
               className="text-bapred hover:text-bapreddark font-bold"

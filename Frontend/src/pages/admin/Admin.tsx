@@ -568,47 +568,10 @@ const Admin = () => {
       {/* Add padding-top to account for fixed navbar */}
       <div className="flex flex-col flex-grow pt-24">
         <main className="order-1 md:order-1">
-          <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 mb-6">
+          <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 pt-8 mb-6">
             Admin Dashboard
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-8 sm:px-16 lg:px-24">
-            {/* Events column */}
-            <div className="order-1 md:order-1">
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold">Upcoming Events</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowCreateEventModal(true)}
-                >
-                  + <span className="hidden md:inline">New </span>Event
-                </button>
-              </div>
-              {loadingEvents ? (
-                <LoadingSpinner text="Loading upcoming events..." size="md" />
-              ) : upcomingEvents.length > 0 ? (
-                <EventListShort events={upcomingEvents} onEdit={handleEditEventClick} />
-              ) : (
-                <p className="text-gray-500 text-sm">
-                  No upcoming events scheduled.
-                </p>
-              )}
-            </div>
-
-            {/* Past Events - now order-2 on mobile to appear directly after Upcoming Events */}
-            <div className="order-2 md:order-3">
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold">Past Events</h2>
-              </div>
-              <div className="max-h-72 overflow-y-auto pr-2">
-                {loadingEvents ? (
-                  <LoadingSpinner text="Loading events..." size="md" />
-                ) : pastEvents.length > 0 ? (
-                  <EventListShort events={pastEvents} onEdit={handleEditEventClick} />
-                ) : (
-                  <p className="text-gray-500 text-sm">No past events found.</p>
-                )}
-              </div>
-            </div>
 
             {/* Announcements column - now order-3 on mobile to appear after Past Events */}
             <div className="order-3 md:order-2">
@@ -621,7 +584,6 @@ const Admin = () => {
                   + <span className="hidden md:inline">New </span>Announcement
                 </button>
               </div>
-              <div className="max-h-72 overflow-y-auto pr-2">
                 {loadingAnnouncements ? (
                   <LoadingSpinner text="Loading announcements..." size="md" />
                 ) : announcements.length > 0 ? (
@@ -632,11 +594,10 @@ const Admin = () => {
                     onDelete={handleDeleteAnnouncementClick}
                   />
                 ) : (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-500 text-m">
                     No announcements available.
                   </p>
                 )}
-              </div>
             </div>
 
             {/* Admin Users */}
@@ -657,6 +618,7 @@ const Admin = () => {
                   emails={adminEmails.map(email => ({ email }))}
                   onDelete={handleDelete}
                   userType="admin"
+                  clickable={false}
                 />
               )}
             </div>
@@ -712,7 +674,7 @@ const Admin = () => {
             </div>
 
             {/* Resource Management */}
-            <div className="order-7 md:order-7 col-span-1 md:col-span-2">
+            <div className="order-7 md:order-7 col-span-1 md:col-span-2 pb-8">
               <ResourceManagement />
             </div>
           </div>
