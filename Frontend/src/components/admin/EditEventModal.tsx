@@ -339,7 +339,7 @@ const EditEventModal = ({
           </div>
 
           {/* ... Hours & Type ... */}
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">Event Hours *</label>
               <input id="hours" name="hours" type="number" min="0.5" step="0.5" placeholder="e.g., 2" value={formData.hours} onChange={handleInputChange} className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${errors.hours ? 'border-red-500' : 'border-gray-300'}`} required aria-invalid={!!errors.hours} aria-describedby={errors.hours ? 'hours-error' : undefined} />
@@ -350,10 +350,34 @@ const EditEventModal = ({
               <select id="hoursType" name="hoursType" value={formData.hoursType} onChange={handleInputChange} className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred bg-white ${errors.hoursType ? 'border-red-500' : 'border-gray-300'}`} required aria-invalid={!!errors.hoursType} aria-describedby={errors.hoursType ? 'hoursType-error' : undefined} >
                 <option value="professional">Professional</option>
                 <option value="social">Social</option>
-                 <option value="service">Service</option>
+                <option value="service">Service</option>
                 <option value="development">Development</option>
               </select>
               {errors.hoursType && <p id="hoursType-error" className="text-red-500 text-xs mt-1">{errors.hoursType}</p>}
+            </div>
+            <div>
+              <label htmlFor="checkInWindow" className="block text-sm font-medium text-gray-700 mb-1">Check-in Window (minutes) *</label>
+              <input
+                id="checkInWindow"
+                name="checkInWindow"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 15"
+                value={formData.checkInWindow}
+                onChange={handleInputChange}
+                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
+                  errors.checkInWindow ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                aria-invalid={!!errors.checkInWindow}
+                aria-describedby={errors.checkInWindow ? "checkInWindow-error" : undefined}
+              />
+              {errors.checkInWindow && (
+                <p id="checkInWindow-error" className="text-red-500 text-xs mt-1">
+                  {errors.checkInWindow}
+                </p>
+              )}
             </div>
           </div>
 
