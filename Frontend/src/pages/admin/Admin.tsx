@@ -13,6 +13,7 @@ import CreateAnnouncementModal from "../../components/admin/CreateAnnouncementMo
 import EditAnnouncementModal from "../../components/admin/EditAnnouncementModal";
 import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
+import AddUserModal from "../../components/admin/AddUserModal";
 
 import { Event, Announcement } from "../../types";
 import { EventListShort } from "../../components/event/EventListShort";
@@ -24,6 +25,7 @@ import { useAuth } from "../../context/auth/authProvider";
 interface UserInfo {
   email: string;
   role: string;
+  name?: string;
 }
 
 interface ApiSponsor {
@@ -69,7 +71,7 @@ const Admin = () => {
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
   const [tiers, setTiers] = useState<string[]>([]);
-  const [members, setMembers] = useState<string[]>([]);
+  const [members, setMembers] = useState<{ email: string, name?: string }[]>([]);
 
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
@@ -88,6 +90,15 @@ const Admin = () => {
   // Loading states for add buttons
   const [isAddingAdmins, setIsAddingAdmins] = useState(false);
   const [isAddingMembers, setIsAddingMembers] = useState(false);
+
+  // Add new state for member editing
+  const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>({});
+
+  // Add new state for showAddMemberModal
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+
+  // Add new state for showAddAdminModal
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
 
   // Move fetchEvents here so it's accessible
   const fetchEvents = async () => {
@@ -179,8 +190,7 @@ const Admin = () => {
             setAdminEmails(admins);
             const members = data
               .filter((item: UserInfo) => item.role === "general-member")
-              .map((item: UserInfo) => item.email);
-
+              .map((item: UserInfo) => ({ email: item.email, name: item.name }));
             setMembers(members);
             setLoadingAdmins(false);
             setLoadingMembers(false);
@@ -447,7 +457,7 @@ const Admin = () => {
     });
 
     if (successfulEmails.length > 0) {
-      setMembers((prev) => [...prev, ...successfulEmails]);
+      setMembers((prev) => [...prev, ...successfulEmails.map(email => ({ email }))]);
       showToast(
         `${successfulEmails.length} member(s) added successfully.`,
         "success"
@@ -488,7 +498,7 @@ const Admin = () => {
         // Update the state to remove the deleted email
         setAdminEmails(adminEmails.filter((e) => e !== email));
         setSponsors(sponsors.filter((e) => e !== email));
-        setMembers(members.filter((e) => e !== email));
+        setMembers(members.filter((m) => m.email !== email));
       } catch (error) {
         console.error("Error deleting admin:", error);
       }
@@ -690,6 +700,92 @@ const Admin = () => {
     }
   };
 
+  // Update handleMemberEdit to implement the recommended pattern
+  const handleMemberEdit = async (email: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast("Authentication error. Please log in again.", "error");
+        return;
+      }
+
+      const token = session.access_token;
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_email: email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch member details");
+      }
+
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const raw = data[0];
+        const freshData = {
+          email: raw.user_email || raw.email || "",
+          name: raw.name || "",
+          phone: raw.phone || "",
+          major: raw.major || "",
+          graduationDate: raw.graduating_year ? String(raw.graduating_year) : (raw.graduationDate || ""),
+          status: raw.member_status || raw.status || "",
+          about: raw.about || "",
+          internship: raw.internship || "",
+          photoUrl: raw.profile_photo_url || raw.photoUrl || "",
+          hours: raw.total_hours !== undefined ? String(raw.total_hours) : (raw.hours || ""),
+          rank: raw.rank || "",
+          role: raw.role || "general-member"
+        };
+        
+        // Update member details with fresh data
+        setMemberDetails(prev => ({
+          ...prev,
+          [email.trim().toLowerCase()]: freshData
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching member details:", error);
+      showToast("Failed to fetch member details", "error");
+    }
+  };
+
+  // Add fetchMembers function
+  const fetchMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast("Authentication error. Please log in again.", "error");
+        return;
+      }
+      const token = session.access_token;
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch members");
+      }
+      const data = await response.json();
+      const members = data
+        .filter((item: UserInfo) => item.role === "general-member")
+        .map((item: UserInfo) => ({ email: item.email, name: item.name }));
+      setMembers(members);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      showToast("Failed to fetch members", "error");
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen font-outfit">
       <Navbar
@@ -777,46 +873,20 @@ const Admin = () => {
 
             {/* Admin Users */}
             <div className="order-4 md:order-4">
-              <h2 className="text-2xl font-semibold mb-2">Admin Users</h2>
-              <form
-                className="flex gap-4 justify-between items-center"
-                onSubmit={(e) => handleRoleSubmit(e, "e-board")}
-                ref={adminFormRef}
-              >
-                <input
-                  type="text"
-                  placeholder="Enter admin email(s), comma-separated"
-                  value={adminEmailInput}
-                  onChange={(e) => handleEmailInputChange(e, setAdminEmailInput)}
-                  className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
-                    adminInputError
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  name="email"
-                  onFocus={() => handleInputFocus("admin")}
-                  disabled={isAddingAdmins}
-                />
-                <button 
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">Admin Users</h2>
+                <button
                   className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  disabled={isAddingAdmins}
+                  onClick={() => setShowAddAdminModal(true)}
                 >
-                  {isAddingAdmins ? (
-                    
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <>+ <span className="hidden md:inline">Add </span>Admin</>
-                  )}
+                  + <span className="hidden md:inline">Add </span>Admin
                 </button>
-              </form>
+              </div>
               {loadingAdmins ? (
                 <LoadingSpinner text="Loading admins..." size="md" />
               ) : (
                 <EmailList
-                  emails={adminEmails}
+                  emails={adminEmails.map(email => ({ email }))}
                   onDelete={handleDelete}
                   userType="admin"
                 />
@@ -848,40 +918,15 @@ const Admin = () => {
 
             {/* General Members */}
             <div className="order-6 md:order-6">
-              <h2 className="text-2xl font-semibold mb-2">General Members</h2>
-              <form
-                className="flex gap-4 justify-between items-center"
-                onSubmit={(e) => handleMemberSubmit(e)}
-                ref={memberFormRef}
-              >
-                <input
-                  type="text"
-                  placeholder="Enter member email(s), comma-separated"
-                  value={memberEmailInput}
-                  onChange={(e) => handleEmailInputChange(e, setMemberEmailInput)}
-                  className={`w-3/4 px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors ${
-                    adminInputError
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  name="email"
-                  onFocus={() => handleInputFocus("admin")}
-                  disabled={isAddingMembers}
-                />
-                <button 
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">General Members</h2>
+                <button
                   className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  disabled={isAddingMembers}
+                  onClick={() => setShowAddMemberModal(true)}
                 >
-                  {isAddingMembers ? (
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <>+ <span className="hidden md:inline">Add </span>Member</>
-                  )}
+                  + <span className="hidden md:inline">Add </span>Member
                 </button>
-              </form>
+              </div>
               {loadingMembers ? (
                 <LoadingSpinner text="Loading members..." size="md" />
               ) : (
@@ -889,6 +934,11 @@ const Admin = () => {
                   emails={members}
                   onDelete={handleDelete}
                   userType="admin"
+                  onEdit={handleMemberEdit}
+                  onSave={async (email) => {
+                    await fetchMembers();
+                  }}
+                  memberDetails={memberDetails}
                 />
               )}
             </div>
@@ -974,6 +1024,30 @@ const Admin = () => {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {/* Add Member Modal */}
+      {showAddMemberModal && (
+        <AddUserModal
+          role="general-member"
+          title="Add General Member"
+          label="Email Addresses"
+          buttonText="Add Member"
+          onClose={() => setShowAddMemberModal(false)}
+          onUserAdded={(newMembers: string[]) => setMembers((prev) => [...prev, ...newMembers.map((email: string) => ({ email }))])}
+        />
+      )}
+
+      {/* Add Admin Modal */}
+      {showAddAdminModal && (
+        <AddUserModal
+          role="e-board"
+          title="Add Admin"
+          label="Email Addresses"
+          buttonText="Add Admin"
+          onClose={() => setShowAddAdminModal(false)}
+          onUserAdded={(newAdmins: string[]) => setAdminEmails((prev) => [...prev, ...newAdmins])}
+        />
+      )}
     </div>
   );
 };
