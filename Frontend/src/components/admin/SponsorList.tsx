@@ -2,6 +2,8 @@ import { useState } from "react";
 import DeleteConfirmation from "./DeleteConfirmation";
 import { useToast } from "../../context/toast/ToastContext";
 import { useAuth } from "../../context/auth/authProvider";
+import ProfileEditModal from "../sponsor/ProfileEditModal";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 interface SponsorListProps {
   emails: string[];
@@ -12,10 +14,54 @@ interface SponsorListProps {
 
 const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sponsorToEdit, setSponsorToEdit] = useState<string | null>(null);
+  const [sponsorProfile, setSponsorProfile] = useState<any>(null);
   const { showToast } = useToast();
   const { session } = useAuth();
+  const [loadingSponsor, setLoadingSponsor] = useState(false);
+
   const handleDeleteClick = (email: string) => {
     setEmailToDelete(email);
+  };
+
+  // Fetch sponsor profile info (mocked for now, replace with real fetch if needed)
+  const handleEditClick = async (email: string) => {
+    if (!session?.access_token) return;
+    setLoadingSponsor(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/get-one-sponsor-info`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ sponsor_name: email }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch sponsor details");
+      const data = await response.json();
+      setSponsorProfile({
+        sponsorName: data.company_name || email,
+        sponsorDescription: data.about || data.description || "",
+        links: data.links || [],
+        profileUrl: data.pfp_url || data.profileUrl || "",
+      });
+      setSponsorToEdit(email);
+    } catch (error) {
+      showToast("Failed to fetch sponsor details", "error");
+    } finally {
+      setLoadingSponsor(false);
+    }
+  };
+
+  const handleSponsorUpdate = (updatedProfile: any) => {
+    // Implement update logic here (API call, etc.)
+    showToast("Sponsor updated successfully", "success");
+    setSponsorToEdit(null);
+    setSponsorProfile(null);
   };
 
   const handleConfirmDelete = () => {
@@ -56,43 +102,84 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
       showToast("Tier changed successfully", "success");
   };
 
-  return (
-    <div className="w-full h-full flex flex-col py-2 gap-2 overflow-y-auto">
-      {emails.map((email, index) => (
-        <div
-          key={email}
-          className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center"
-        >
-          <span>{email}</span>
-          <select
-            value={tiers[index]}
-            onChange={(e) => handleChangeTier(email, e.target.value)}
-            className="ml-auto pr-2 rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none"
-          >
-            <option value="platinum">Platinum</option>
-            <option value="gold">Gold</option>
-            <option value="silver">Silver</option>
-            <option value="bronze">Bronze</option>
-          </select>
-          <button
-            onClick={() => handleDeleteClick(email)}
-            className="text-bapred hover:text-bapreddark font-bold pl-8"
-            aria-label={`Delete ${email}`}
-          >
-            ×
-          </button>
-        </div>
-      ))}
+  // Filter sponsors based on search query
+  const filteredSponsors = emails
+    .map((email, index) => ({ email, tier: tiers[index] }))
+    .filter(({ email }) => email.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      {emailToDelete && (
-        <DeleteConfirmation
-          email={emailToDelete}
-          userType={userType}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
+  return (
+    <>
+      {/* Search Bar */}
+      <div className="mb-2">
+        <input
+          type="text"
+          placeholder="Search sponsors by name or email..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
         />
-      )}
-    </div>
+      </div>
+      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
+        {loadingSponsor && (
+          <div className="fixed inset-0 z-50">
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="relative bg-white rounded-lg p-6 shadow-xl">
+                <LoadingSpinner text="Loading sponsor details..." size="lg" />
+              </div>
+            </div>
+          </div>
+        )}
+        {filteredSponsors.map(({ email, tier }) => (
+          <div
+            key={email}
+            className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => handleEditClick(email)}
+          >
+            <span className="text-gray-800 text-m pr-2">{email}</span>
+            <select
+              value={tier}
+              onChange={(e) => handleChangeTier(email, e.target.value)}
+              className="ml-auto pr-1 rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none"
+              onClick={e => e.stopPropagation()}
+            >
+              <option value="platinum">Platinum</option>
+              <option value="gold">Gold</option>
+              <option value="silver">Silver</option>
+              <option value="bronze">Bronze</option>
+            </select>
+            <button
+              onClick={e => { e.stopPropagation(); handleDeleteClick(email); }}
+              className="text-bapred pl-3 hover:text-bapreddark font-bold"
+              aria-label={`Delete ${email}`}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+
+        {emailToDelete && (
+          <DeleteConfirmation
+            email={emailToDelete}
+            userType={userType}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          />
+        )}
+
+        {sponsorToEdit && sponsorProfile && (
+          <ProfileEditModal
+            isOpen={true}
+            onClose={() => { setSponsorToEdit(null); setSponsorProfile(null); }}
+            sponsorName={sponsorProfile.sponsorName}
+            sponsorDescription={sponsorProfile.sponsorDescription}
+            onUpdate={handleSponsorUpdate}
+            token={session?.access_token || ""}
+            profileUrl={sponsorProfile.profileUrl}
+            links={sponsorProfile.links}
+          />
+        )}
+      </div>
+    </>
   );
 };
 

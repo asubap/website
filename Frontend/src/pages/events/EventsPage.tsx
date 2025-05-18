@@ -7,20 +7,98 @@ import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { isEventInSession } from "../../components/event/EventCheckIn";
+import CreateEventModal from "../../components/admin/CreateEventModal";
+import EditEventModal from "../../components/admin/EditEventModal";
+import { useToast } from "../../context/toast/ToastContext";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
+  const { showToast } = useToast();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const location = useLocation();
 
+  // Add state for event editing
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [showEditEventModal, setShowEditEventModal] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+
   // State for pagination/load more
   const PAST_EVENTS_INCREMENT = 3;
   const [visiblePastEventsCount, setVisiblePastEventsCount] = useState(
     PAST_EVENTS_INCREMENT
   );
+
+  // Add search state
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Add event handling functions
+  const handleEventCreated = async (newEvent: Event) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/add-event`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          event_name: newEvent.event_name,
+          event_description: newEvent.event_description,
+          event_location: newEvent.event_location,
+          event_lat: newEvent.event_lat,
+          event_long: newEvent.event_long,
+          event_date: newEvent.event_date,
+          event_time: newEvent.event_time,
+          event_hours: newEvent.event_hours,
+          event_hours_type: newEvent.event_hours_type,
+          sponsors_attending: newEvent.sponsors_attending,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create event");
+      }
+
+      showToast("Event created successfully", "success");
+      // Refresh events
+      const eventsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const eventsData = await eventsResponse.json();
+      setAllEvents(eventsData);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      showToast("Failed to create event", "error");
+    }
+  };
+
+  const handleEventUpdated = async () => {
+    try {
+      // Refresh events
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const data = await response.json();
+      setAllEvents(data);
+      showToast("Event updated successfully", "success");
+    } catch (error) {
+      console.error("Error updating event:", error);
+      showToast("Failed to update event", "error");
+    }
+    setShowEditEventModal(false);
+    setEventToEdit(null);
+  };
+
+  const handleEditEventClick = (event: Event) => {
+    setEventToEdit(event);
+    setShowEditEventModal(true);
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -77,11 +155,21 @@ const EventsPage: React.FC = () => {
   const getEventDateTime = (event: Event) =>
     new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
 
-  const inSessionEvents = allEvents.filter(event => isEventInSession(event.event_date, event.event_time, event.event_hours));
-  const upcomingEvents = allEvents
+  // Filter events based on search query
+  const filteredEvents = allEvents.filter(event => {
+    const query = searchQuery.toLowerCase();
+    return (
+      event.event_name.toLowerCase().includes(query) ||
+      (event.event_location && event.event_location.toLowerCase().includes(query)) ||
+      (event.event_description && event.event_description.toLowerCase().includes(query))
+    );
+  });
+
+  const inSessionEvents = filteredEvents.filter(event => isEventInSession(event.event_date, event.event_time, event.event_hours));
+  const upcomingEvents = filteredEvents
     .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) >= today)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
-  const pastEvents = allEvents
+  const pastEvents = filteredEvents
     .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) < today)
     .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
 
@@ -121,6 +209,16 @@ const EventsPage: React.FC = () => {
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
+          {/* Search Bar */}
+          <div className="mb-8">
+            <input
+              type="text"
+              placeholder="Search events by name, location, or description..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
+            />
+          </div>
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
             <div className="space-y-4">
@@ -147,7 +245,17 @@ const EventsPage: React.FC = () => {
           </section>
 
           <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Upcoming Events</h2>
+              {role === "e-board" && (
+                <button
+                  className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  onClick={() => setShowCreateEventModal(true)}
+                >
+                  + <span className="hidden md:inline">New </span>Event
+                </button>
+              )}
+            </div>
             <div className="space-y-4">
               {loading ? (
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
@@ -162,6 +270,7 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
+                    onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -176,7 +285,6 @@ const EventsPage: React.FC = () => {
               {loading ? (
                 <LoadingSpinner text="Loading past events..." size="md" />
               ) : pastEvents.length > 0 ? (
-                // Slice the array based on visible count
                 pastEvents.slice(0, visiblePastEventsCount).map((event) => (
                   <EventCard
                     key={event.id}
@@ -187,6 +295,7 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
+                    onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -208,6 +317,27 @@ const EventsPage: React.FC = () => {
         </div>
       </main>
       <Footer backgroundColor="#AF272F" />
+
+      {/* Event Creation Modal */}
+      {showCreateEventModal && (
+        <CreateEventModal
+          onClose={() => setShowCreateEventModal(false)}
+          onEventCreated={handleEventCreated}
+        />
+      )}
+
+      {/* Edit Event Modal */}
+      {showEditEventModal && eventToEdit && (
+        <EditEventModal
+          isOpen={showEditEventModal}
+          onClose={() => {
+            setShowEditEventModal(false);
+            setEventToEdit(null);
+          }}
+          eventToEdit={eventToEdit}
+          onEventUpdated={handleEventUpdated}
+        />
+      )}
     </div>
   );
 };
