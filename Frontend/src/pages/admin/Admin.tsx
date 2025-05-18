@@ -5,18 +5,15 @@ import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
 import SponsorList from "../../components/admin/SponsorList";
 import { useToast } from "../../context/toast/ToastContext";
-import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
 import ResourceManagement from "../../components/admin/ResourceManagement";
-import EditEventModal from "../../components/admin/EditEventModal";
 import CreateAnnouncementModal from "../../components/admin/CreateAnnouncementModal";
 import EditAnnouncementModal from "../../components/admin/EditAnnouncementModal";
 import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import AddUserModal from "../../components/admin/AddUserModal";
 
-import { Event, Announcement } from "../../types";
-import { EventListShort } from "../../components/event/EventListShort";
+import { Announcement } from "../../types";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
@@ -38,11 +35,7 @@ interface ApiSponsor {
 const Admin = () => {
   const { showToast } = useToast();
   const sponsorFormRef = useRef<HTMLFormElement>(null);
-
-  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
-  const [showEditEventModal, setShowEditEventModal] = useState(false);
-  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   // New state for announcements
   const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
@@ -70,12 +63,8 @@ const Admin = () => {
   const [tiers, setTiers] = useState<string[]>([]);
   const [members, setMembers] = useState<{ email: string, name?: string }[]>([]);
 
-  const [pastEvents, setPastEvents] = useState<Event[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
-  const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
   const { role } = useAuth();
@@ -89,46 +78,6 @@ const Admin = () => {
   // Add new state for showAddAdminModal
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
 
-  // Move fetchEvents here so it's accessible
-  const fetchEvents = async () => {
-    setLoadingEvents(true);
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      const token = session.access_token;
-      fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const { past, upcoming } = data.reduce((acc: { past: Event[], upcoming: Event[] }, event: Event) => {
-            if (isPastDate(event.event_date + "T" + event.event_time)) {
-              acc.past.push(event);
-            } else {
-              acc.upcoming.push(event);
-            }
-            return acc;
-          }, { past: [], upcoming: [] });
-
-          setPastEvents(past);
-          setUpcomingEvents(upcoming);
-          setLoadingEvents(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching events:", error);
-          setLoadingEvents(false);
-        });
-    }
-  };
-
-  const isPastDate = (dateString: string): boolean => {
-    return new Date(dateString) < new Date();
-  };
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -204,8 +153,6 @@ const Admin = () => {
     };
 
     fetchSponsors();
-
-    fetchEvents();
 
     // New function to fetch announcements
     const fetchAnnouncements = async () => {
@@ -299,63 +246,10 @@ const Admin = () => {
     }
   };
 
-  // Refactored handleEventCreated
-  const handleEventCreated = async (newEvent: Event) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      const token = session.access_token;
-      try {
-        await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/events/add-event`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              event_name: newEvent.event_name,
-              event_description: newEvent.event_description,
-              event_location: newEvent.event_location,
-              event_lat: newEvent.event_lat,
-              event_long: newEvent.event_long,
-              event_date: newEvent.event_date,
-              event_time: newEvent.event_time,
-              event_hours: newEvent.event_hours,
-              event_hours_type: newEvent.event_hours_type,
-              sponsors_attending: newEvent.sponsors_attending,
-            }),
-          }
-        );
-        showToast("Event created successfully", "success");
-        await fetchEvents(); // SPA-style refresh
-      } catch (error) {
-        console.error("Error creating Event:", error);
-      }
-    }
-  };
-
   const handleSponsorAdded = (newSponsor: ApiSponsor) => {
     setSponsors([...sponsors, newSponsor.company_name]);
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
-  };
-
-  // Refactored handleEventUpdated
-  const handleEventUpdated = async () => {
-    // (Assume you have the update API call here, if not, keep the state update logic)
-    // After successful update:
-    showToast("Event updated successfully", "success");
-    await fetchEvents(); // SPA-style refresh
-    setShowEditEventModal(false);
-    setEventToEdit(null);
-  };
-
-  const handleEditEventClick = (event: Event) => {
-    setEventToEdit(event);
-    setShowEditEventModal(true);
   };
 
   // Handle a newly created announcement
@@ -683,31 +577,10 @@ const Admin = () => {
 
       <Footer backgroundColor="#AF272F" />
 
-      {/* Event Creation Modal */}
-      {showCreateEventModal && (
-        <CreateEventModal
-          onClose={() => setShowCreateEventModal(false)}
-          onEventCreated={handleEventCreated}
-        />
-      )}
-
       {showAddSponsorModal && (
         <AddSponsorModal
           onClose={() => setShowAddSponsorModal(false)}
           onSponsorAdded={handleSponsorAdded}
-        />
-      )}
-
-      {/* Edit Event Modal */}
-      {showEditEventModal && eventToEdit && (
-        <EditEventModal
-          isOpen={showEditEventModal}
-          onClose={() => {
-            setShowEditEventModal(false);
-            setEventToEdit(null);
-          }}
-          eventToEdit={eventToEdit}
-          onEventUpdated={handleEventUpdated}
         />
       )}
 

@@ -57,11 +57,30 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
     }
   };
 
-  const handleSponsorUpdate = (updatedProfile: any) => {
-    // Implement update logic here (API call, etc.)
-    showToast("Sponsor updated successfully", "success");
-    setSponsorToEdit(null);
-    setSponsorProfile(null);
+  const handleSponsorUpdate = async (updatedProfile: any) => {
+    if (!sponsorToEdit || !session?.access_token) return;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorToEdit}/details`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            about: updatedProfile.description,
+            links: updatedProfile.links,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update sponsor details");
+      showToast("Sponsor updated successfully", "success");
+      setSponsorToEdit(null);
+      setSponsorProfile(null);
+    } catch (error) {
+      showToast("Failed to update sponsor details", "error");
+    }
   };
 
   const handleConfirmDelete = () => {
