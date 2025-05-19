@@ -35,6 +35,7 @@ const staticNavLinks = [
   { name: "Our Sponsors", href: "/sponsors" },
   { name: "Events", href: "/events" },
   { name: "Membership", href: "/membership" },
+  { name: "Contact Us", href: "/contact-us" },
 ];
 
 const staticSocialLinks = [
