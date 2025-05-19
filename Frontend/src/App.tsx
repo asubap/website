@@ -20,6 +20,7 @@ import Toast from "./components/ui/Toast";
 import { ToastContext } from "./context/toast/ToastContext";
 import ResourcesPage from "./pages/resources/ResourcesPage";
 import ContactUsPage from "./pages/contact-us/ContactUsPage";
+import EboardFacultyPage from "./pages/eboard-faculty/EboardFacultyPage";
 
 function App() {
   const [toast, setToast] = useState<{
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/" element={<Homepage />} />
                 <Route path="/events" element={<EventsPage />} />
                 <Route path="/contact-us" element={<ContactUsPage />} />
+                <Route path="/eboard-faculty" element={<EboardFacultyPage />} />
 
                 {/* Protected routes */}
                 <Route element={<ProtectedRoute />}>

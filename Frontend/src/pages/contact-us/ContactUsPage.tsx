@@ -85,7 +85,7 @@ const ContactUsPage: React.FC = () => {
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-left w-full">
+        <h1 className="text-4xl font-bold text-left w-full mb-6">
           Contact Us
         </h1>
 
