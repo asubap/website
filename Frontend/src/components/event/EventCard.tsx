@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
@@ -39,6 +39,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   onEdit,
 }) => {
   const { session, role, loading } = useAuth();
+  const [attendees, setAttendees] = useState<{id: string, name: string}[]>([]);
+  const [rsvps, setRSVPs] = useState<{id: string, name: string}[]>([]);
 
   // Role checking logic - Check for string role names
   const isMember = role === "general-member" || role === "admin";
@@ -50,6 +52,43 @@ export const EventCard: React.FC<EventCardProps> = ({
   const highlightClasses = isHighlighted
     ? "ring-bapred" // Apply red ring color when highlighted
     : "ring-transparent"; // Use transparent ring color when not highlighted
+
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/get-members-info-by-ids`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ user_ids: event.event_attending }),
+      });
+      const data = await response.json();
+      setAttendees(data);
+    };
+
+    const fetchRSVPs = async () => {
+      console.log(event.event_rsvped);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/get-members-info-by-ids`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ user_ids: event.event_rsvped }),
+      });
+      const data = await response.json();
+      console.log(data);
+      setRSVPs(data);
+    };
+
+    if (event.event_attending) {
+      fetchAttendees();
+    }
+    if (event.event_rsvped) {
+      fetchRSVPs();
+    }
+  }, [event]);
 
   return (
     <div
@@ -140,6 +179,57 @@ export const EventCard: React.FC<EventCardProps> = ({
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* show admins the list of attendees */}
+      {!loading && isAdmin && (
+        <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
+          <div className="w-full sm:w-40">
+            <div>
+              <span className="font-semibold text-gray-700">Attendees: </span>
+              <span className="text-gray-600">
+                {/* show the list of attendees */}
+                {attendees.length > 0 ? (
+                  attendees.map((attendee) => (
+                    attendee && (
+                      <div key={attendee.id}>
+                        {attendee.name}
+                      </div>
+                    )
+                  ))
+                ) : (
+                  <div>
+                    No attendees
+                  </div>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* show admins list of rsvps for not past events */}
+      {!loading && isAdmin && (
+        <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
+          <div className="w-full sm:w-40">
+            <div>
+              <span className="font-semibold text-gray-700">RSVPs: </span>
+              <span className="text-gray-600">
+                {rsvps.length > 0 ? (
+                  rsvps.map((rsvp) => (
+                    rsvp && (
+                      <div key={rsvp.id}>
+                        {rsvp.name}
+                      </div>
+                    )
+                  ))
+                ) : (
+                  <span className="text-gray-400">No RSVPs</span>
+                )}
+              </span>
+            </div>
+          </div>
         </div>
       )}
     </div>
