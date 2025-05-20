@@ -39,8 +39,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   onEdit,
 }) => {
   const { session, role, loading } = useAuth();
-  const [attendees, setAttendees] = useState<{id: string, name: string}[]>([]);
-  const [rsvps, setRSVPs] = useState<{id: string, name: string}[]>([]);
+  const [attendees, setAttendees] = useState<{name: string, email: string}[]>([]);
+  const [rsvps, setRSVPs] = useState<{name: string, email: string}[]>([]);
 
   // Role checking logic - Check for string role names
   const isMember = role === "general-member" || role === "admin";
@@ -55,7 +55,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   useEffect(() => {
     const fetchAttendees = async () => {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/get-members-info-by-ids`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/get-users-by-ids`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,12 +64,20 @@ export const EventCard: React.FC<EventCardProps> = ({
         body: JSON.stringify({ user_ids: event.event_attending }),
       });
       const data = await response.json();
-      setAttendees(data);
+      if (data.length === 0) {
+        setAttendees([]);
+        return;
+      }
+
+      const results = data.map((user: any) => ({
+        name: user.name || "No name",
+        email: user.email,
+      }));
+      setAttendees(results);
     };
 
     const fetchRSVPs = async () => {
-      console.log(event.event_rsvped);
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/get-members-info-by-ids`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/get-users-by-ids`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,8 +86,15 @@ export const EventCard: React.FC<EventCardProps> = ({
         body: JSON.stringify({ user_ids: event.event_rsvped }),
       });
       const data = await response.json();
-      console.log(data);
-      setRSVPs(data);
+      if (data.length === 0) {
+        setRSVPs([]);
+        return;
+      }
+      const results = data.map((user: any) => ({
+        name: user.name || "No name",
+        email: user.email,
+      }));
+      setRSVPs(results);
     };
 
     if (event.event_attending) {
@@ -185,7 +200,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* show admins the list of attendees */}
       {!loading && isAdmin && (
         <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
-          <div className="w-full sm:w-40">
+          <div className="w-full">
             <div>
               <span className="font-semibold text-gray-700">Attendees: </span>
               <span className="text-gray-600">
@@ -193,13 +208,13 @@ export const EventCard: React.FC<EventCardProps> = ({
                 {attendees.length > 0 ? (
                   attendees.map((attendee) => (
                     attendee && (
-                      <div key={attendee.id}>
-                        {attendee.name}
+                      <div key={attendee.email}>
+                        {attendee.name} ({attendee.email})
                       </div>
                     )
                   ))
                 ) : (
-                  <div>
+                  <div className="text-gray-400">
                     No attendees
                   </div>
                 )}
@@ -212,20 +227,22 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* show admins list of rsvps for not past events */}
       {!loading && isAdmin && (
         <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
-          <div className="w-full sm:w-40">
+          <div className="w-full">
             <div>
               <span className="font-semibold text-gray-700">RSVPs: </span>
               <span className="text-gray-600">
                 {rsvps.length > 0 ? (
                   rsvps.map((rsvp) => (
                     rsvp && (
-                      <div key={rsvp.id}>
-                        {rsvp.name}
+                      <div key={rsvp.email}>
+                        {rsvp.name} ({rsvp.email})
                       </div>
                     )
                   ))
                 ) : (
-                  <span className="text-gray-400">No RSVPs</span>
+                  <div className="text-gray-400">
+                    No RSVPs
+                  </div>
                 )}
               </span>
             </div>
