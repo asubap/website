@@ -1,5 +1,5 @@
 import Modal from "../ui/Modal";
-import { Info, User } from 'lucide-react';
+import { User } from 'lucide-react';
 
 interface EventRSVPsModalProps {
   rsvps: {name: string, email: string}[];
