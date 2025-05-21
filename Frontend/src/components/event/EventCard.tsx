@@ -3,7 +3,8 @@ import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
-
+import EventRSVPsModal from "./EventRSVPsModal";
+import EventAttendeesModal from "./EventAttendeesModal";
 interface EventCardProps {
   event: Event;
   isPast: boolean;
@@ -41,6 +42,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   const { session, role, loading } = useAuth();
   const [attendees, setAttendees] = useState<{name: string, email: string}[]>([]);
   const [rsvps, setRSVPs] = useState<{name: string, email: string}[]>([]);
+  const [selectedEntityMenu, setSelectedEntityMenu] = useState<"attendees" | "rsvps" | null>(null);
 
   // Role checking logic - Check for string role names
   const isMember = role === "general-member" || role === "admin";
@@ -197,57 +199,60 @@ export const EventCard: React.FC<EventCardProps> = ({
         </div>
       )}
 
-      {/* show admins the list of attendees */}
+      {/* show admins the number of attendees */}
       {!loading && isAdmin && (
         <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
           <div className="w-full">
             <div>
               <span className="font-semibold text-gray-700">Attendees: </span>
-              <span className="text-gray-600">
-                {/* show the list of attendees */}
-                {attendees.length > 0 ? (
-                  attendees.map((attendee) => (
-                    attendee && (
-                      <div key={attendee.email}>
-                        {attendee.name} ({attendee.email})
-                      </div>
-                    )
-                  ))
-                ) : (
-                  <div className="text-gray-400">
-                    No attendees
-                  </div>
-                )}
+              {/* if attendees length is greater than 0, highlight red and make clickable */}
+              <span className={`${attendees.length > 0 ? "truncate text-bapred font-medium hover:underline focus:outline-none cursor-pointer" : "text-gray-600 "}`}
+                onClick={() => setSelectedEntityMenu("attendees")}
+              >
+                {attendees.length}
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* show admins list of rsvps for not past events */}
+      {/* show admins number of rsvps */}
       {!loading && isAdmin && (
         <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
           <div className="w-full">
             <div>
               <span className="font-semibold text-gray-700">RSVPs: </span>
-              <span className="text-gray-600">
-                {rsvps.length > 0 ? (
-                  rsvps.map((rsvp) => (
-                    rsvp && (
-                      <div key={rsvp.email}>
-                        {rsvp.name} ({rsvp.email})
-                      </div>
-                    )
-                  ))
-                ) : (
-                  <div className="text-gray-400">
-                    No RSVPs
-                  </div>
-                )}
+              {/* if rsvp length is greater than 0, highlight red and make clickable */}
+              <span className={`${rsvps.length > 0 ? "truncate text-bapred font-medium hover:underline focus:outline-none cursor-pointer" : "text-gray-600 "}`}
+                onClick={() => setSelectedEntityMenu("rsvps")}
+              >
+                {rsvps.length}
               </span>
             </div>
           </div>
         </div>
+      )}
+
+      {/* show the attendees in modal when clicked */}
+      {selectedEntityMenu === "attendees" && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <EventAttendeesModal
+            attendees={attendees}
+            event_name={event.event_name}
+            isOpen={selectedEntityMenu === "attendees"}
+            onClose={() => setSelectedEntityMenu(null)}
+          />
+        </div>
+      )}
+
+      {/* show the rsvps in modal when clicked */}
+      {selectedEntityMenu === "rsvps" && (
+        <EventRSVPsModal
+          rsvps={rsvps}
+          event_name={event.event_name}
+          isOpen={selectedEntityMenu === "rsvps"}
+          onClose={() => setSelectedEntityMenu(null)}
+        />
       )}
     </div>
   );
