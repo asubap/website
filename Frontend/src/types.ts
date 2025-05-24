@@ -45,6 +45,7 @@ export interface Sponsor {
   photoUrl: string | null; // Maps to API 'pfp_url' (can be null)
   resources: string[] | null; // Maps to API 'resources' (can be null)
   tier?: string;        // Add this line to include the tier property
+  emails: string[];     // Add emails array for sponsor emails
 }
 
 export interface Announcement {

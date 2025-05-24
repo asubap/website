@@ -362,7 +362,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   }, [previewImageUrl]); // Rerun only if previewImageUrl changes
 
   const modalContent = (
-    <>
+    <div className="max-h-[70vh] overflow-y-auto px-2">
       {/* Profile Picture Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
@@ -411,12 +411,8 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
               disabled={uploadingProfilePic}
             />
           </div>
-
           <div className="flex flex-col">
             <h4 className="text-xl font-bold">{sponsorName}</h4>
-            
-            {/* Remove the "Upload New Picture" button since we auto-upload */}
-            
             {!uploadingProfilePic && (
               <button
                 onClick={confirmProfilePicDelete}
@@ -614,7 +610,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
           preventOutsideClick={true}
         />
       )}
-    </>
+    </div>
   );
 
   return (

@@ -53,7 +53,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                 : handleSponsorClick(entity)
             }
           >
-            <div className="p-5">
+            <div className="p-5 flex flex-col h-full">
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border">
                   {entity.photoUrl ? (
@@ -83,7 +83,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2 flex-1">
                 {entity.type === "member" && (
                   <>
                     <div className="flex items-center text-sm">
@@ -193,9 +193,10 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                 )}
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 pt-2 flex-shrink-0">
                 <button
                   className="w-full bg-red-700 text-white py-2 rounded hover:bg-red-800 transition-colors"
+                  style={{ marginTop: "auto" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (entity.type === "member") {

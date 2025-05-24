@@ -1,6 +1,8 @@
 import { Sponsor } from "../../types";
 import Modal from "../ui/Modal";
-import { Info, Link as LinkIcon } from 'lucide-react';
+import { Info, Link as LinkIcon, Mail, Check } from 'lucide-react';
+import { useToast } from "../../context/toast/ToastContext";
+import { useState } from "react";
 
 interface SponsorProfileModalProps {
   sponsor: Sponsor;
@@ -13,6 +15,16 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const { showToast } = useToast();
+
+  const handleCopyEmail = (email: string) => {
+    navigator.clipboard.writeText(email);
+    setCopiedEmail(email);
+    showToast("Email copied to clipboard!", "success");
+    setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
   const profileContent = (
     <div className="p-2 space-y-6">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
@@ -80,6 +92,32 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
           </ul>
         ) : (
           <p className="text-gray-500 italic">No resources provided</p>
+        )}
+      </div>
+
+      <div>
+        <h4 className="text-lg font-semibold mb-2 flex items-center">
+          <Mail className="w-5 h-5 mr-2 text-gray-500" /> Emails
+        </h4>
+        {sponsor.emails && sponsor.emails.length > 0 ? (
+          <div className="flex flex-col space-y-1">
+            {sponsor.emails.map((email, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="truncate text-bapred font-medium hover:underline focus:outline-none text-left flex items-center"
+                title="Copy email to clipboard"
+                onClick={() => handleCopyEmail(email)}
+              >
+                {email}
+                {copiedEmail === email && (
+                  <Check className="w-4 h-4 ml-2 text-green-500" />
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className="text-gray-500 italic">No emails provided</span>
         )}
       </div>
     </div>
