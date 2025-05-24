@@ -105,9 +105,6 @@ const ResourcesPage: React.FC = () => {
     fetchResources();
   }, [session]);
 
-  // Separate categories by resourceType
-  const firmCategories = categories.filter(cat => cat.resourceType === "firm");
-  const chapterCategories = categories.filter(cat => cat.resourceType === "chapter");
 
   // Fuzzy search logic (same as admin page)
   const fuseOptions = {
