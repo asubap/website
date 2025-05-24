@@ -24,16 +24,23 @@ interface Category {
 
 interface ResourceCategoryProps {
   category: Category;
+  expanded?: boolean;
+  onToggle?: () => void;
 }
 
-const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category, expanded, onToggle }) => {
+  // If expanded prop is provided, use it; otherwise, use internal state
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = typeof expanded === "boolean" ? expanded : internalOpen;
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setInternalOpen((prev) => !prev);
+    }
+  };
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [resourceToPreview, setResourceToPreview] = useState<typeof category.resources[0] | null>(null);
-
-  const toggleOpen = () => {
-    setIsOpen(!isOpen);
-  };
 
   const handleOpenPreviewModal = (resource: typeof category.resources[0]) => {
     setResourceToPreview(resource);
@@ -70,7 +77,7 @@ const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category }) => {
     <div className="border rounded-lg shadow-sm overflow-hidden">
       {/* Category Header */}
       <button
-        onClick={toggleOpen}
+        onClick={handleToggle}
         className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 text-left"
       >
         <div className="flex-1">
