@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
-
+import EventRSVPsModal from "./EventRSVPsModal";
+import EventAttendeesModal from "./EventAttendeesModal";
 interface EventCardProps {
   event: Event;
   isPast: boolean;
@@ -39,6 +40,9 @@ export const EventCard: React.FC<EventCardProps> = ({
   onEdit,
 }) => {
   const { session, role, loading } = useAuth();
+  const [attendees, setAttendees] = useState<{name: string, email: string}[]>([]);
+  const [rsvps, setRSVPs] = useState<{name: string, email: string}[]>([]);
+  const [selectedEntityMenu, setSelectedEntityMenu] = useState<"attendees" | "rsvps" | null>(null);
 
   // Role checking logic - Check for string role names
   const isMember = role === "general-member" || role === "admin";
@@ -50,6 +54,58 @@ export const EventCard: React.FC<EventCardProps> = ({
   const highlightClasses = isHighlighted
     ? "ring-bapred" // Apply red ring color when highlighted
     : "ring-transparent"; // Use transparent ring color when not highlighted
+
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/get-users-by-ids`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ user_ids: event.event_attending }),
+      });
+      const data = await response.json();
+      if (data.length === 0) {
+        setAttendees([]);
+        return;
+      }
+
+      const results = data.map((user: any) => ({
+        name: user.name || "No name",
+        email: user.email,
+      }));
+      setAttendees(results);
+    };
+
+    const fetchRSVPs = async () => {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/get-users-by-ids`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ user_ids: event.event_rsvped }),
+      });
+      const data = await response.json();
+      if (data.length === 0) {
+        setRSVPs([]);
+        return;
+      }
+      const results = data.map((user: any) => ({
+        name: user.name || "No name",
+        email: user.email,
+      }));
+      setRSVPs(results);
+    };
+
+    if (event.event_attending) {
+      fetchAttendees();
+    }
+    if (event.event_rsvped) {
+      fetchRSVPs();
+    }
+  }, [event]);
 
   return (
     <div
@@ -141,6 +197,62 @@ export const EventCard: React.FC<EventCardProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* show admins the number of attendees */}
+      {!loading && isAdmin && (
+        <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
+          <div className="w-full">
+            <div>
+              <span className="font-semibold text-gray-700">Attendees: </span>
+              {/* if attendees length is greater than 0, highlight red and make clickable */}
+              <span className={`${attendees.length > 0 ? "truncate text-bapred font-medium hover:underline focus:outline-none cursor-pointer" : "text-gray-600 "}`}
+                onClick={() => setSelectedEntityMenu("attendees")}
+              >
+                {attendees.length}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* show admins number of rsvps */}
+      {!loading && isAdmin && (
+        <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
+          <div className="w-full">
+            <div>
+              <span className="font-semibold text-gray-700">RSVPs: </span>
+              {/* if rsvp length is greater than 0, highlight red and make clickable */}
+              <span className={`${rsvps.length > 0 ? "truncate text-bapred font-medium hover:underline focus:outline-none cursor-pointer" : "text-gray-600 "}`}
+                onClick={() => setSelectedEntityMenu("rsvps")}
+              >
+                {rsvps.length}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* show the attendees in modal when clicked */}
+      {selectedEntityMenu === "attendees" && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <EventAttendeesModal
+            attendees={attendees}
+            event_name={event.event_name}
+            isOpen={selectedEntityMenu === "attendees"}
+            onClose={() => setSelectedEntityMenu(null)}
+          />
+        </div>
+      )}
+
+      {/* show the rsvps in modal when clicked */}
+      {selectedEntityMenu === "rsvps" && (
+        <EventRSVPsModal
+          rsvps={rsvps}
+          event_name={event.event_name}
+          isOpen={selectedEntityMenu === "rsvps"}
+          onClose={() => setSelectedEntityMenu(null)}
+        />
       )}
     </div>
   );

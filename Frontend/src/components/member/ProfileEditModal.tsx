@@ -26,6 +26,7 @@ interface ProfileEditModalProps {
   onClose: () => void;
   profileData: ProfileData;
   onSave: (formData: ProfileData) => void;
+  showRank?: boolean; // Add this new prop
 }
 
 export default function ProfileEditModal({
@@ -33,6 +34,7 @@ export default function ProfileEditModal({
   onClose,
   profileData,
   onSave,
+  showRank = false, // Default to false
 }: ProfileEditModalProps) {
   const [formData, setFormData] = useState<ProfileData>(profileData);
   const [photoPreview, setPhotoPreview] = useState<string | null>(
@@ -348,8 +350,8 @@ export default function ProfileEditModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
-              <div className="sm:col-span-1">
+            <div className="flex flex-row gap-4 mb-4">
+              <div className="flex-1">
                 <label
                   htmlFor="major"
                   className="block text-sm font-medium text-gray-700 mb-1"
@@ -366,12 +368,12 @@ export default function ProfileEditModal({
                   className="border border-[#d9d9d9] rounded-lg p-3 w-full"
                 />
               </div>
-              <div>
+              <div className="flex-1">
                 <label
                   htmlFor="graduationDate"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Grad Date <span className="text-red-500">*</span>
+                  Graduation Date <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -383,7 +385,7 @@ export default function ProfileEditModal({
                   className="border border-[#d9d9d9] rounded-lg p-3 w-full"
                 />
               </div>
-              <div className="relative">
+              <div className="flex-1 relative">
                 <label
                   htmlFor="status"
                   className="block text-sm font-medium text-gray-700 mb-1"
@@ -411,31 +413,32 @@ export default function ProfileEditModal({
                   size={16}
                 />
               </div>
-              
-              <div className="relative">
-                <label
-                  htmlFor="rank"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Member Rank <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="rank"
-                  name="rank"
-                  value={formData.rank}
-                  onChange={handleChange}
-                  className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
-                >
-                  <option value="">Select Rank</option>
-                  <option value="current">Current</option>
-                  <option value="pledge">Pledge</option>
-                  <option value="alumni">Alumni</option>
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"
-                  size={16}
-                />
-              </div>
+              {showRank && (
+                <div className="flex-1 relative">
+                  <label
+                    htmlFor="rank"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Member Rank <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="rank"
+                    name="rank"
+                    value={formData.rank}
+                    onChange={handleChange}
+                    className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
+                  >
+                    <option value="">Select Rank</option>
+                    <option value="current">Current</option>
+                    <option value="pledge">Pledge</option>
+                    <option value="alumni">Alumni</option>
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"
+                    size={16}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="mb-4">

@@ -123,6 +123,7 @@ export default function AdminMemberEditModal({
       onClose={onClose}
       profileData={formData}
       onSave={handleSave}
+      showRank={true}
     />
   );
 } 
