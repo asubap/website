@@ -160,7 +160,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({ profileUrl, name,
       <div className="w-full lg:w-1/2 relative"> 
         <button
           onClick={handleOpenAnnouncementsModal}
-          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
+          className="absolute top-16 sm:top-2 right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
           aria-label="View Announcements"
           title="View Announcements"
         >
