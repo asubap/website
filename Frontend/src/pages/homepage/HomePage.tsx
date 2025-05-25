@@ -3,7 +3,7 @@ import Footer from "../../components/layout/Footer";
 import Hero from "../../components/Hero/Hero";
 import WhoWeAre from "../../components/Hero/WhoWeAre";
 import { useAuth } from "../../context/auth/authProvider";
-import { navLinks } from "../../components/nav/NavLink";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 export default function Homepage() {
   const { session, role } = useAuth();
@@ -13,7 +13,7 @@ export default function Homepage() {
       {/* Add padding-top to account for fixed navbar */}
       <div>
         <Navbar
-          links={navLinks}
+          links={getNavLinks(!!session)}
           isLogged={!!session}
           title="Beta Alpha Psi | Beta Tau Chapter"
           backgroundColor="#FFFFFF"
