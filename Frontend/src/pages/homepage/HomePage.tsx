@@ -3,29 +3,10 @@ import Footer from "../../components/layout/Footer";
 import Hero from "../../components/Hero/Hero";
 import WhoWeAre from "../../components/Hero/WhoWeAre";
 import { useAuth } from "../../context/auth/authProvider";
+import { navLinks } from "../../components/nav/NavLink";
 
 export default function Homepage() {
   const { session, role } = useAuth();
-
-  let navLinks;
-
-  if (session) {
-    // Links for logged-in users
-    navLinks = [
-      { name: "Network", href: "/network" },
-      { name: "Events", href: "/events" },
-      { name: "Dashboard", href: "/admin" },
-    ];
-  } else {
-    // Links for logged-out users
-    navLinks = [
-      { name: "About Us", href: "/about" },
-      { name: "Our Sponsors", href: "/sponsors" },
-      { name: "Events", href: "/events" },
-      { name: "Membership", href: "/membership" },
-      { name: "Log In", href: "/login" },
-    ];
-  }
 
   return (
     <div className="flex flex-col min-h-screen">

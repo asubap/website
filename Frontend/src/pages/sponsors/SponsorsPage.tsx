@@ -4,6 +4,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import SponsorCard from "../../components/ui/SponsorCard";
 import SponsorTier from "../../components/ui/SponsorTier";
+import { navLinks } from "../../components/nav/NavLink";
 
 // Interface for sponsor data
 interface Sponsor {
@@ -15,13 +16,7 @@ interface Sponsor {
 
 export default function SponsorsPage() {
   // Define navigation links to pass to Navbar
-  const navLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Our Sponsors", href: "/sponsors" },
-    { name: "Events", href: "/events" },
-    { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
-  ];
+  
 
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [platinumSponsors, setPlatinumSponsors] = useState<Sponsor[]>([]);
