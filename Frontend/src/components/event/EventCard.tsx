@@ -5,7 +5,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
 import EventRSVPsModal from "./EventRSVPsModal";
 import EventAttendeesModal from "./EventAttendeesModal";
-import { Megaphone } from "lucide-react";
+import { Megaphone, Trash2 } from "lucide-react";
 interface EventCardProps {
   event: Event;
   isPast: boolean;
@@ -14,6 +14,7 @@ interface EventCardProps {
   hideRSVP?: boolean;
   onEdit?: () => void;
   onAnnounce?: () => void; // Add new prop for announcing events
+  onDelete?: () => void; // Add new prop for deleting events
 }
 
 export const formatDateTime = (date?: string, time?: string | null) => {
@@ -41,6 +42,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   hideRSVP = false,
   onEdit,
   onAnnounce,
+  onDelete,
 }) => {
   const { session, role, loading } = useAuth();
   const [attendees, setAttendees] = useState<{name: string, email: string}[]>([]);
@@ -147,6 +149,16 @@ export const EventCard: React.FC<EventCardProps> = ({
 
       <div className="col-span-1">
         <div className="flex justify-end items-start mb-3 space-x-2">
+          {/* Add Delete button if onDelete prop is provided */}
+          {isAdmin && onDelete && (
+            <button
+              onClick={onDelete}
+              className="px-2 py-1 text-sm bg-bapred text-white rounded hover:bg-bapreddark transition-colors flex items-center"
+              title="Delete this event"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
           {/* Add Announce button if onAnnounce prop is provided */}
           {onAnnounce && !isPast && (
             <button

@@ -10,6 +10,7 @@ import { isEventInSession } from "../../components/event/EventCheckIn";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import EditEventModal from "../../components/admin/EditEventModal";
 import { useToast } from "../../context/toast/ToastContext";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
@@ -25,6 +26,10 @@ const EventsPage: React.FC = () => {
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
+  // Add state for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+
   // State for pagination/load more
   const PAST_EVENTS_INCREMENT = 3;
   const [visiblePastEventsCount, setVisiblePastEventsCount] = useState(
@@ -35,45 +40,8 @@ const EventsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Add event handling functions
-  const handleEventCreated = async (newEvent: Event) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/add-event`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
-          event_name: newEvent.event_name,
-          event_description: newEvent.event_description,
-          event_location: newEvent.event_location,
-          event_lat: newEvent.event_lat,
-          event_long: newEvent.event_long,
-          event_date: newEvent.event_date,
-          event_time: newEvent.event_time,
-          event_hours: newEvent.event_hours,
-          event_hours_type: newEvent.event_hours_type,
-          sponsors_attending: newEvent.sponsors_attending,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create event");
-      }
-
-      showToast("Event created successfully", "success");
-      // Refresh events
-      const eventsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-      const eventsData = await eventsResponse.json();
-      setAllEvents(eventsData);
-    } catch (error) {
-      console.error("Error creating event:", error);
-      showToast("Failed to create event", "error");
-    }
+  const handleEventCreated = () => {
+    window.location.reload();
   };
 
   const handleEventUpdated = async () => {
@@ -100,14 +68,51 @@ const EventsPage: React.FC = () => {
     setShowEditEventModal(true);
   };
 
+  const handleDeleteEventClick = (event: Event) => {
+    setEventToDelete(event);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!eventToDelete || !session?.access_token) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/delete-event`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          event_id: eventToDelete.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete event");
+      }
+
+      // Remove the deleted event from the local state
+      setAllEvents(allEvents.filter(event => event.id !== eventToDelete.id));
+
+      showToast("Event deleted successfully", "success");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      showToast("Failed to delete event", "error");
+    } finally {
+      setShowDeleteModal(false);
+      setEventToDelete(null);
+    }
+  };
+
   // Update the announce event function to send the complete event object
   const handleAnnounceEvent = async (event: Event) => {
     try {
-      if (!session?.access_token) {
-        showToast("You must be logged in to announce events", "error");
+      if (!session?.access_token && role !== "e-board") {
+        showToast("You must be logged in to announce events and be part of Eboard", "error");
         return;
       }
-      
+
       // Send the full event object as provided from the EventCard component
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/send-event`, {
         method: "POST",
@@ -281,6 +286,7 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     hideRSVP={true}
+                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -316,8 +322,8 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
-                    // Add announce button if user is logged in
-                    onAnnounce={session?.access_token ? () => handleAnnounceEvent(event) : undefined}
+                    onAnnounce={role === "e-board" ? () => handleAnnounceEvent(event) : undefined}
+                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -343,6 +349,7 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
+                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -383,6 +390,22 @@ const EventsPage: React.FC = () => {
           }}
           eventToEdit={eventToEdit}
           onEventUpdated={handleEventUpdated}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && eventToDelete && (
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setEventToDelete(null);
+          }}
+          onConfirm={handleDeleteEvent}
+          title="Delete Event"
+          message={`Are you sure you want to delete the event "${eventToDelete.event_name}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
         />
       )}
     </div>
