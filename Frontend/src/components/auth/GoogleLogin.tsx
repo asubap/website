@@ -9,7 +9,8 @@ const GoogleLogin = () => {
   const baseUrl =
     import.meta.env.VITE_ENV_STATE === "development"
       ? "http://localhost:5173"
-      : "https://frontend-iota-gules-58.vercel.app";
+      // : "https://frontend-iota-gules-58.vercel.app";
+      : "http://asubap.com";
 
   // Redirect to saved path or default to auth home
   const getRedirectUrl = useCallback(() => {
