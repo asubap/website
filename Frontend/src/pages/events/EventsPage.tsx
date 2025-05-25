@@ -100,6 +100,51 @@ const EventsPage: React.FC = () => {
     setShowEditEventModal(true);
   };
 
+  // Update the announce event function to send the complete event object
+  const handleAnnounceEvent = async (event: Event) => {
+    try {
+      if (!session?.access_token) {
+        showToast("You must be logged in to announce events", "error");
+        return;
+      }
+      
+      // Send the full event object as provided from the EventCard component
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/send-event`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          // Include all event fields explicitly to ensure nothing is missed
+          id: event.id,
+          event_name: event.event_name,
+          event_description: event.event_description,
+          event_location: event.event_location,
+          event_lat: event.event_lat,
+          event_long: event.event_long,
+          event_date: event.event_date,
+          event_time: event.event_time,
+          event_rsvped: event.event_rsvped,
+          event_attending: event.event_attending,
+          event_hours: event.event_hours,
+          event_hours_type: event.event_hours_type,
+          sponsors_attending: event.sponsors_attending,
+          check_in_window: event.check_in_window
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to announce event");
+      }
+
+      showToast("Event announcement sent successfully!", "success");
+    } catch (error) {
+      console.error("Error announcing event:", error);
+      showToast("Failed to announce event", "error");
+    }
+  };
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -271,6 +316,8 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
+                    // Add announce button if user is logged in
+                    onAnnounce={session?.access_token ? () => handleAnnounceEvent(event) : undefined}
                   />
                 ))
               ) : (
