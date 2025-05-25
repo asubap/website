@@ -3,7 +3,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useToast } from "../../context/toast/ToastContext";
 import { useAuth } from "../../context/auth/authProvider";
-import { navLinks } from "../../components/nav/NavLink";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 import President from "../../assets/eboard-faculty/president.jpg";
 import VicePresident from "../../assets/eboard-faculty/vice_president.jpg";
@@ -127,7 +127,7 @@ const EboardFacultyPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

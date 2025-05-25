@@ -5,6 +5,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import { supabase } from "../../context/auth/supabaseClient";
 import MemberDescription from "../../components/member/MemberDescription";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 // Add environment variable for backend URL
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -12,11 +13,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const MemberView = () => {
   const { session, role } = useAuth();
   const email = session?.user?.email || "";
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/admin" },
-  ];
 
   const [sponsorProfileUrl] = useState(
     "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -110,7 +106,7 @@ const MemberView = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks}
+        links={getNavLinks(!!session)}
         isLogged={!!session}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"

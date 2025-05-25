@@ -12,6 +12,7 @@ import EditAnnouncementModal from "../../components/admin/EditAnnouncementModal"
 import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import AddUserModal from "../../components/admin/AddUserModal";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 import { Announcement } from "../../types";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
@@ -52,11 +53,7 @@ const Admin = () => {
   const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] = useState(false);
   const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
 
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/admin" },
-  ];
+  const { role, session } = useAuth();
 
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
@@ -66,8 +63,6 @@ const Admin = () => {
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
-
-  const { role } = useAuth();
 
   // Add new state for member editing
   const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>({});
@@ -451,11 +446,11 @@ const Admin = () => {
   return (
     <div className="flex flex-col min-h-screen font-outfit">
       <Navbar
-        links={navLinks}
-        isLogged={true}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
+        isLogged={!!session}
         role={role}
       />
 

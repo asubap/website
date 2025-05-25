@@ -4,17 +4,11 @@ import { useAuth } from "../../context/auth/authProvider";
 
 interface NetworkingLayoutProps {
   children: React.ReactNode;
+  navLinks: { name: string; href: string }[];
 }
 
-const NetworkingLayout = ({ children }: NetworkingLayoutProps) => {
+const NetworkingLayout = ({ children, navLinks }: NetworkingLayoutProps) => {
   const { session, role } = useAuth();
-  
-  // Define the navigation links for authenticated users in the networking section
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/admin" },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -2,17 +2,11 @@ import { useEffect } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import BAPMap from "../../assets/BAP_Map.png";
+import { getNavLinks } from "../../components/nav/NavLink";
+import { useAuth } from "../../context/auth/authProvider";
 
 export default function AboutPage() {
-  // Define navigation links to pass to Navbar
-  const navLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Our Sponsors", href: "/sponsors" },
-    { name: "Events", href: "/events" },
-    { name: "E-Board & Faculty", href: "/eboard-faculty" },
-    { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
-  ];
+  const { session } = useAuth();
 
   // Load Vimeo embed script
   useEffect(() => {
@@ -31,8 +25,8 @@ export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={false}
-        links={navLinks}
+        isLogged={!!session}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

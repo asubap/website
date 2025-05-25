@@ -7,7 +7,7 @@ import Footer from "../../components/layout/Footer";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import { useAuth } from "../../context/auth/authProvider";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { navLinks } from "../../components/nav/NavLink";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 const LogInPage = () => {
   const { session, loading } = useAuth();
@@ -47,7 +47,7 @@ const LogInPage = () => {
       <div className="flex flex-col flex-grow">
         <Navbar
           isLogged={false}
-          links={navLinks}
+          links={getNavLinks(!!session)}
           title="Beta Alpha Psi | Beta Tau Chapter"
           backgroundColor="#FFFFFF"
           outlineColor="#AF272F"

@@ -7,6 +7,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import Fuse from "fuse.js";
 import { Info } from "lucide-react";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 // Define the interfaces for our data structure
 interface Resource {
@@ -37,13 +38,6 @@ const ResourcesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-
-  // Define navigation links based on authentication status
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/admin" },
-  ];
 
   useEffect(() => {
     // If the user is a sponsor, redirect them back to the previous page or /auth/Home
@@ -151,7 +145,7 @@ const ResourcesPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

@@ -10,7 +10,7 @@ import { isEventInSession } from "../../components/event/EventCheckIn";
 import CreateEventModal from "../../components/admin/CreateEventModal";
 import EditEventModal from "../../components/admin/EditEventModal";
 import { useToast } from "../../context/toast/ToastContext";
-import { navLinks } from "../../components/nav/NavLink";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
@@ -181,7 +181,7 @@ const EventsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

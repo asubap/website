@@ -4,10 +4,11 @@ import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
-import { navLinks } from "../../components/nav/NavLink";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 export const ProcessFlow = () => {
   const { session } = useAuth();
+  const navLinks = getNavLinks(!!session);
   
   const steps = [
     {
