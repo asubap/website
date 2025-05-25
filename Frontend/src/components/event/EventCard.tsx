@@ -5,6 +5,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
 import EventRSVPsModal from "./EventRSVPsModal";
 import EventAttendeesModal from "./EventAttendeesModal";
+import { Megaphone } from "lucide-react";
 interface EventCardProps {
   event: Event;
   isPast: boolean;
@@ -12,6 +13,7 @@ interface EventCardProps {
   registerRef?: (element: HTMLDivElement | null) => void;
   hideRSVP?: boolean;
   onEdit?: () => void;
+  onAnnounce?: () => void; // Add new prop for announcing events
 }
 
 export const formatDateTime = (date?: string, time?: string | null) => {
@@ -38,6 +40,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   registerRef,
   hideRSVP = false,
   onEdit,
+  onAnnounce,
 }) => {
   const { session, role, loading } = useAuth();
   const [attendees, setAttendees] = useState<{name: string, email: string}[]>([]);
@@ -143,7 +146,18 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       <div className="col-span-1">
-        <div className="flex justify-end items-start mb-3">
+        <div className="flex justify-end items-start mb-3 space-x-2">
+          {/* Add Announce button if onAnnounce prop is provided */}
+          {onAnnounce && !isPast && (
+            <button
+              onClick={onAnnounce}
+              className="px-3 py-1 text-sm bg-bapred text-white rounded hover:bg-bapreddark transition-colors flex items-center"
+              title="Announce this event"
+            >
+              <Megaphone size={16} className="mr-1" /> 
+              <span className="hidden sm:inline">Announce</span>
+            </button>
+          )}
           {isAdmin && onEdit && (
             <button
               onClick={onEdit}

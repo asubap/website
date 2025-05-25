@@ -155,6 +155,7 @@ const CreateEventModal = ({
         event_hours: parsedHours, // Send parsed number
         event_hours_type: hoursType,
         sponsors_attending: sponsors,
+        check_in_window: checkInWindow,
       };
 
       const response = await fetch(
