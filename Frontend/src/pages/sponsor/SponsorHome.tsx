@@ -11,6 +11,7 @@ import ProfileEditModal from "../../components/sponsor/ProfileEditModal";
 import ResourceUploadForm from "../../components/sponsor/ResourceUploadForm";
 import ResourceList from "../../components/sponsor/ResourceList";
 import ResourcePreviewModal from "../../components/ui/ResourcePreviewModal";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 // Define Resource type consistently
 interface SponsorResource {
@@ -27,12 +28,6 @@ interface SponsorResource {
 const SponsorHome = () => {
   const { session, role } = useAuth();
   const token = session?.access_token;
-
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/sponsor" },
-  ];
 
   const [sponsorData, setSponsorData] = useState<{
     name: string;
@@ -353,8 +348,8 @@ const SponsorHome = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={true}
-        links={navLinks}
+        links={getNavLinks(!!session)}
+        isLogged={!!session}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

@@ -3,6 +3,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useToast } from "../../context/toast/ToastContext";
 import { useAuth } from "../../context/auth/authProvider";
+import { navLinks } from "../../components/nav/NavLink";
 
 const socialIcons = {
   linkedin: (
@@ -41,25 +42,6 @@ const ContactUsPage: React.FC = () => {
   const { session, role } = useAuth();
   const { showToast } = useToast();
   // showToast("Event created successfully", "success");
-  let navLinks;
-
-  if (session) {
-    // Links for logged-in users
-    navLinks = [
-      { name: "Network", href: "/network" },
-      { name: "Events", href: "/events" },
-      { name: "Dashboard", href: "/admin" },
-    ];
-  } else {
-    // Links for logged-out users
-    navLinks = [
-      { name: "About Us", href: "/about" },
-      { name: "Our Sponsors", href: "/sponsors" },
-      { name: "Events", href: "/events" },
-      { name: "Membership", href: "/membership" },
-      { name: "Log In", href: "/login" },
-    ];
-  }
 
   const contactDetails = [
     { role: "President", email: "president.asubap@gmail.com" },
@@ -76,11 +58,11 @@ const ContactUsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks} // Pass the conditionally defined links
+        links={navLinks}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={Boolean(session)} // Let Navbar know the auth state
+        isLogged={Boolean(session)}
         role={role}
       />
       <main className="flex-grow p-8 pt-32">

@@ -4,6 +4,8 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import SponsorCard from "../../components/ui/SponsorCard";
 import SponsorTier from "../../components/ui/SponsorTier";
+import { getNavLinks } from "../../components/nav/NavLink";
+import { useAuth } from "../../context/auth/authProvider";
 
 // Interface for sponsor data
 interface Sponsor {
@@ -14,14 +16,7 @@ interface Sponsor {
 }
 
 export default function SponsorsPage() {
-  // Define navigation links to pass to Navbar
-  const navLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Our Sponsors", href: "/sponsors" },
-    { name: "Events", href: "/events" },
-    { name: "Membership", href: "/membership" },
-    { name: "Log In", href: "/login" },
-  ];
+  const { session } = useAuth();
 
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [platinumSponsors, setPlatinumSponsors] = useState<Sponsor[]>([]);
@@ -78,8 +73,8 @@ export default function SponsorsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={false}
-        links={navLinks}
+        isLogged={!!session}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
