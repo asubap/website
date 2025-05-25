@@ -43,7 +43,7 @@ const staticSocialLinks = [
     name: "linkedin",
     href: "https://www.linkedin.com/company/bap-betatauchapter/",
   },
-  { name: "instagram", href: "https://www.instagram.com/bapbetatauchapter/" },
+  { name: "instagram", href: "https://www.instagram.com/asubap/" },
 ];
 
 const Footer: React.FC<FooterProps> = ({ backgroundColor }) => {
