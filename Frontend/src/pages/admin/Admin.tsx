@@ -75,174 +75,177 @@ const Admin = () => {
 
 
   useEffect(() => {
+    if (!session) return; // Don't fetch if no session
+
     const fetchAdmins = async () => {
       setLoadingAdmins(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        // Fetch user role
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      const token = session.access_token;
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Process e-board members
+          const admins = data
+            .filter((item: UserInfo) => item.role === "e-board")
+            .map((item: UserInfo) => item.email);
+          setAdminEmails(admins);
+          const members = data
+            .filter((item: UserInfo) => item.role === "general-member")
+            .map((item: UserInfo) => ({ email: item.email, name: item.name }));
+          setMembers(members);
+          setLoadingAdmins(false);
+          setLoadingMembers(false);
         })
-          .then((response) => response.json())
-          .then((data) => {
-            // Process e-board members
-            const admins = data
-              .filter((item: UserInfo) => item.role === "e-board")
-              .map((item: UserInfo) => item.email);
-            setAdminEmails(admins);
-            const members = data
-              .filter((item: UserInfo) => item.role === "general-member")
-              .map((item: UserInfo) => ({ email: item.email, name: item.name }));
-            setMembers(members);
-            setLoadingAdmins(false);
-            setLoadingMembers(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching member info:", error);
-            setLoadingAdmins(false);
-            setLoadingMembers(false);
-          });
-      }
+        .catch((error) => {
+          console.error("Error fetching member info:", error);
+          setLoadingAdmins(false);
+          setLoadingMembers(false);
+        });
     };
-
-    fetchAdmins();
 
     const fetchSponsors = async () => {
       setLoadingSponsors(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      const token = session.access_token;
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          const sponsors = data.map(
+            (sponsor: ApiSponsor) => sponsor.company_name
+          );
+          const tiers = data.map(
+            (sponsor: ApiSponsor) => sponsor.tier
+          );
+          setSponsors(sponsors);
+          setTiers(tiers);
+          setLoadingSponsors(false);
         })
-          .then((response) => response.json())
-          .then((data) => {
-            const sponsors = data.map(
-              (sponsor: ApiSponsor) => sponsor.company_name
-            );
-            const tiers = data.map(
-              (sponsor: ApiSponsor) => sponsor.tier
-            );
-            setSponsors(sponsors);
-            setTiers(tiers);
-            setLoadingSponsors(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching sponsors:", error);
-            setLoadingSponsors(false);
-          });
-      }
+        .catch((error) => {
+          console.error("Error fetching sponsors:", error);
+          setLoadingSponsors(false);
+        });
     };
-
-    fetchSponsors();
 
     // New function to fetch announcements
     const fetchAnnouncements = async () => {
       setLoadingAnnouncements(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/announcements`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            // Sort announcements by date (newest first) and pinned status
-            const sortedAnnouncements = data.sort((a: Announcement, b: Announcement) => {
-              // First sort by pinned status (pinned items first)
-              if (a.is_pinned && !b.is_pinned) return -1;
-              if (!a.is_pinned && b.is_pinned) return 1;
-              
-              // Then sort by created_at (newer first) - safely handle null values
-              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-              return dateB - dateA;
-            });
-            setAnnouncements(sortedAnnouncements);
-            setLoadingAnnouncements(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching announcements:", error);
-            setLoadingAnnouncements(false);
+      const token = session.access_token;
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/announcements`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Sort announcements by date (newest first) and pinned status
+          const sortedAnnouncements = data.sort((a: Announcement, b: Announcement) => {
+            // First sort by pinned status (pinned items first)
+            if (a.is_pinned && !b.is_pinned) return -1;
+            if (!a.is_pinned && b.is_pinned) return 1;
+            
+            // Then sort by created_at (newer first) - safely handle null values
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return dateB - dateA;
           });
-      }
+          setAnnouncements(sortedAnnouncements);
+          setLoadingAnnouncements(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching announcements:", error);
+          setLoadingAnnouncements(false);
+        });
     };
 
+    fetchAdmins();
+    fetchSponsors();
     fetchAnnouncements();
-  }, []);
+  }, [session]); // Add session as dependency
 
   const handleDelete = async (email: string) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      const token = session.access_token;
-      try {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/delete-user`, {
+    if (!session) return;
+    
+    const token = session.access_token;
+    try {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/delete-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_email: email }),
+      });
+      // Update the state to remove the deleted email
+      setAdminEmails(adminEmails.filter((e) => e !== email));
+      setSponsors(sponsors.filter((e) => e !== email));
+      setMembers(members.filter((m) => m.email !== email));
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+    }
+  };
+
+  const handleDeleteSponsor = async (email: string) => {
+    if (!session) return;
+    
+    const token = session.access_token;
+    try {
+      await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/delete-sponsor`,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ user_email: email }),
-        });
-        // Update the state to remove the deleted email
-        setAdminEmails(adminEmails.filter((e) => e !== email));
-        setSponsors(sponsors.filter((e) => e !== email));
-        setMembers(members.filter((m) => m.email !== email));
-      } catch (error) {
-        console.error("Error deleting admin:", error);
-      }
+          body: JSON.stringify({ sponsor_name: email }),
+        }
+      );
+      setSponsors(sponsors.filter((e) => e !== email));
+      showToast("Sponsor deleted successfully", "success");
+    } catch (error) {
+      console.error("Error deleting sponsor:", error);
     }
   };
 
-  const handleDeleteSponsor = async (email: string) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
+  const handleSponsorAdded = async (newSponsor: ApiSponsor) => {
+    // Re-fetch sponsors from server to ensure data consistency
+    try {
+      if (!session) return;
+      
       const token = session.access_token;
-      try {
-        await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/sponsors/delete-sponsor`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ sponsor_name: email }),
-          }
-        );
-        setSponsors(sponsors.filter((e) => e !== email));
-        showToast("Sponsor deleted successfully", "success");
-      } catch (error) {
-        console.error("Error deleting sponsor:", error);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const sponsors = data.map((sponsor: ApiSponsor) => sponsor.company_name);
+        const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+        setSponsors(sponsors);
+        setTiers(tiers);
       }
+    } catch (error) {
+      console.error("Error re-fetching sponsors:", error);
+      // Fallback to local state update if re-fetch fails
+      setSponsors([...sponsors, newSponsor.company_name]);
     }
-  };
-
-  const handleSponsorAdded = (newSponsor: ApiSponsor) => {
-    setSponsors([...sponsors, newSponsor.company_name]);
+    
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
   };
@@ -314,40 +317,34 @@ const Admin = () => {
   };
 
   const handleConfirmDeleteAnnouncement = async () => {
-    if (!announcementToDelete) return;
+    if (!announcementToDelete || !session) return;
     
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      
-      if (session) {
-        const token = session.access_token;
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/announcements/delete-announcement`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ 
-              announcement_id: announcementToDelete.id 
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete announcement");
+      const token = session.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/announcements/delete-announcement`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            announcement_id: announcementToDelete.id 
+          }),
         }
+      );
 
-        // Remove the deleted announcement from state
-        setAnnouncements(prevAnnouncements => 
-          prevAnnouncements.filter(a => a.id !== announcementToDelete.id)
-        );
-        
-        showToast("Announcement deleted successfully", "success");
+      if (!response.ok) {
+        throw new Error("Failed to delete announcement");
       }
+
+      // Remove the deleted announcement from state
+      setAnnouncements(prevAnnouncements => 
+        prevAnnouncements.filter(a => a.id !== announcementToDelete.id)
+      );
+      
+      showToast("Announcement deleted successfully", "success");
     } catch (error) {
       console.error("Error deleting announcement:", error);
       showToast("Failed to delete announcement. Please try again.", "error");
@@ -360,7 +357,6 @@ const Admin = () => {
   // Update handleMemberEdit to implement the recommended pattern
   const handleMemberEdit = async (email: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         showToast("Authentication error. Please log in again.", "error");
         return;
@@ -414,7 +410,6 @@ const Admin = () => {
   const fetchMembers = async () => {
     setLoadingMembers(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         showToast("Authentication error. Please log in again.", "error");
         return;
@@ -440,6 +435,36 @@ const Admin = () => {
       showToast("Failed to fetch members", "error");
     } finally {
       setLoadingMembers(false);
+    }
+  };
+
+  // Function to re-fetch sponsors data
+  const refetchSponsors = async () => {
+    if (!session) return;
+    
+    setLoadingSponsors(true);
+    try {
+      const token = session.access_token;
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const sponsors = data.map((sponsor: ApiSponsor) => sponsor.company_name);
+        const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+        setSponsors(sponsors);
+        setTiers(tiers);
+      }
+    } catch (error) {
+      console.error("Error re-fetching sponsors:", error);
+      showToast("Failed to refresh sponsor data", "error");
+    } finally {
+      setLoadingSponsors(false);
     }
   };
 
@@ -531,6 +556,7 @@ const Admin = () => {
                   tiers={tiers}
                   onDelete={handleDeleteSponsor}
                   userType="sponsor"
+                  onTierChanged={refetchSponsors}
                 />
               )}
             </div>
