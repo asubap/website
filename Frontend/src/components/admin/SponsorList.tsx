@@ -10,9 +10,10 @@ interface SponsorListProps {
   tiers: string[];
   onDelete: (email: string) => void;
   userType: "admin" | "sponsor";
+  onTierChanged?: () => void;
 }
 
-const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) => {
+const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sponsorToEdit, setSponsorToEdit] = useState<string | null>(null);
@@ -99,7 +100,8 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
   };
 
   const handleChangeTier = async (email: string, newTier: string) => {
-    const response = await fetch(
+    try {
+      const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/change-sponsor-tier`,
         {
           method: "POST",
@@ -110,15 +112,23 @@ const SponsorList = ({ emails, tiers, onDelete, userType }: SponsorListProps) =>
           body: JSON.stringify({ sponsor_name: email, tier: newTier }),
         }
       );
+      
       if (!response.ok) {
         const errorData = await response.json();
-        showToast(errorData.message, "error");
+        showToast(errorData.message || "Failed to change tier", "error");
+        return;
       }
 
-      // refresh the page
-      window.location.reload();
-
       showToast("Tier changed successfully", "success");
+      
+      // Call the callback to refresh sponsor data instead of reloading the page
+      if (onTierChanged) {
+        onTierChanged();
+      }
+    } catch (error) {
+      console.error("Error changing tier:", error);
+      showToast("Failed to change tier. Please try again.", "error");
+    }
   };
 
   // Filter sponsors based on search query
