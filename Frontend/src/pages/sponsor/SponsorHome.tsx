@@ -11,6 +11,7 @@ import ProfileEditModal from "../../components/sponsor/ProfileEditModal";
 import ResourceUploadForm from "../../components/sponsor/ResourceUploadForm";
 import ResourceList from "../../components/sponsor/ResourceList";
 import ResourcePreviewModal from "../../components/ui/ResourcePreviewModal";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 // Define Resource type consistently
 interface SponsorResource {
@@ -27,12 +28,6 @@ interface SponsorResource {
 const SponsorHome = () => {
   const { session, role } = useAuth();
   const token = session?.access_token;
-
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/sponsor" },
-  ];
 
   const [sponsorData, setSponsorData] = useState<{
     name: string;
@@ -57,6 +52,8 @@ const SponsorHome = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [resourceToDelete, setResourceToDelete] =
     useState<SponsorResource | null>(null);
+
+  const [reloadTimestamp, setReloadTimestamp] = useState<number>(Date.now());
 
   // Helper function to format dates properly
   const formatDate = (dateString: string | undefined) => {
@@ -138,7 +135,6 @@ const SponsorHome = () => {
 
   const fetchResources = useCallback(async () => {
     if (!sponsorData.name) {
-      console.log("Skipping resource fetch - sponsor name not available yet");
       setLoadingResources(false);
       return;
     }
@@ -227,7 +223,8 @@ const SponsorHome = () => {
         updatedProfile.newProfilePic
       );
       if (uploadedUrl) {
-        newProfileUrl = uploadedUrl; // Update URL if upload succeeded
+        // Add a cache-busting parameter to force browser to reload the image
+        newProfileUrl = `${uploadedUrl}?t=${Date.now()}`; // Add timestamp to prevent caching
       } else {
         console.error(
           "Profile picture upload failed. Profile data not updated."
@@ -240,18 +237,14 @@ const SponsorHome = () => {
 
     // 2. Update other profile data (description, links)
     try {
-      console.log("Updating sponsor details...");
-
       // Format the request body for the new API endpoint
       const requestBody = {
         about: updatedProfile.description,
         links: updatedProfile.links, // Send links directly as an array
       };
 
-      console.log("Sending update with body:", requestBody);
-
       // Make the API call to update sponsor details using the new endpoint pattern
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
           sponsorData.name
         }/details`,
@@ -264,8 +257,6 @@ const SponsorHome = () => {
         }
       );
 
-      console.log("Sponsor details updated successfully:", response.data);
-
       // Update local state on success
       setSponsorData((prevData) => ({
         ...prevData,
@@ -273,6 +264,9 @@ const SponsorHome = () => {
         links: updatedProfile.links,
         profileUrl: newProfileUrl,
       }));
+
+      // Force a component re-render by updating a timestamp state
+      setReloadTimestamp(Date.now());
     } catch (error) {
       console.error("Error updating sponsor details:", error);
       alert("Failed to update sponsor details. Please try again.");
@@ -289,8 +283,6 @@ const SponsorHome = () => {
   };
 
   const handleResourceDelete = async (resource: SponsorResource) => {
-    console.log("handleResourceDelete called for resource URL:", resource.url);
-
     if (!token || !resource.url) {
       console.error("Cannot delete resource: missing token or resource URL");
       return;
@@ -313,9 +305,6 @@ const SponsorHome = () => {
             resourceUrl: resource.url,
           },
         }
-      );
-      console.log(
-        `Successfully sent delete request for resource URL: ${resource.url}`
       );
       // Refresh resource list after deletion
       fetchResources();
@@ -359,8 +348,8 @@ const SponsorHome = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={true}
-        links={navLinks}
+        links={getNavLinks(!!session)}
+        isLogged={!!session}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
@@ -403,7 +392,7 @@ const SponsorHome = () => {
                   </h1>
                 </div>
                 <SponsorDescription
-                  profileUrl={sponsorData.profileUrl}
+                  profileUrl={`${sponsorData.profileUrl}?t=${reloadTimestamp}`} // Add cache-busting
                   name={sponsorData.name}
                   description={sponsorData.description}
                   links={sponsorData.links}
@@ -429,9 +418,9 @@ const SponsorHome = () => {
                     onDeleteConfirm={confirmResourceDelete}
                     onPreview={showResourcePreview}
                     formatDate={formatDate}
-                        />
-                      </div>
-                  </div>
+                  />
+                </div>
+              </div>
             </div>
           )}
         </main>
@@ -453,8 +442,8 @@ const SponsorHome = () => {
 
       {/* Resource Preview Modal */}
       <ResourcePreviewModal
-              isOpen={!!previewResource}
-              onClose={closePreview}
+        isOpen={!!previewResource}
+        onClose={closePreview}
         resource={
           previewResource
             ? {

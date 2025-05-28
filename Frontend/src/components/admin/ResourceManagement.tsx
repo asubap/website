@@ -36,6 +36,7 @@ interface Category {
   id: string;
   name: string;
   description: string;
+  resourceType: "firm" | "chapter" | "Firm Resource" | "Chapter Resource";
   resources: Resource[];
 }
 
@@ -44,6 +45,8 @@ interface ResourceFormData {
   description: string;
   file: File | null;
   categoryId: string;
+  existingResource?: boolean; // Flag to indicate an existing resource
+  existingFileName?: string; // Store the name of the existing file
 }
 
 // Utility function to format date
@@ -80,6 +83,7 @@ const ResourceManagement: React.FC = () => {
   const [categoryFormData, setCategoryFormData] = useState({
     name: "",
     description: "",
+    resourceType: "firm" as "firm" | "chapter"
   });
   const [resourceFormData, setResourceFormData] = useState<ResourceFormData>({
     name: "",
@@ -87,7 +91,11 @@ const ResourceManagement: React.FC = () => {
     file: null,
     categoryId: "",
   });
-  const initialCategoryStateRef = useRef({ name: "", description: "" });
+  const initialCategoryStateRef = useRef({ 
+    name: "", 
+    description: "", 
+    resourceType: "firm" as "firm" | "chapter" 
+  });
   const initialResourceStateRef = useRef<ResourceFormData>({
     name: "",
     description: "",
@@ -104,27 +112,16 @@ const ResourceManagement: React.FC = () => {
   );
 
   const fetchResources = useCallback(async () => {
-    console.log("Fetching resources...");
-    console.log("Session:", session);
-    console.log("Access token:", session?.access_token);
-    console.log("Auth loading:", authLoading);
-
     if (authLoading) {
-      console.log("Auth is still loading, waiting...");
       return;
     }
 
     if (!session?.access_token) {
-      console.log("No access token available, stopping fetch");
       setIsLoading(false);
       return;
     }
 
     try {
-      console.log(
-        "Making API call to:",
-        `${import.meta.env.VITE_BACKEND_URL}/resources`
-      );
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources`,
         {
@@ -133,7 +130,6 @@ const ResourceManagement: React.FC = () => {
           },
         }
       );
-      console.log("API response:", response);
 
       if (!response.ok) {
         console.error("API error:", response.status, response.statusText);
@@ -141,8 +137,16 @@ const ResourceManagement: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log("Received data:", data);
-      setCategories(data || []); // Ensure we always have an array
+      // Map resource_type to resourceType and default to 'firm' if null/undefined
+      const mapped = (data || []).map((cat: any) => ({
+        ...cat,
+        resourceType:
+          cat.resource_type === "chapter" || cat.resource_type === "firm"
+            ? cat.resource_type
+            : "firm",
+        resources: cat.resources || [],
+      }));
+      setCategories(mapped);
     } catch (error) {
       console.error("Error fetching resources:", error);
       toast.error("Failed to load resources");
@@ -153,7 +157,6 @@ const ResourceManagement: React.FC = () => {
   }, [session, authLoading]);
 
   useEffect(() => {
-    console.log("ResourceManagement mounted or session token changed");
     if (!authLoading) {
       fetchResources();
     }
@@ -166,6 +169,7 @@ const ResourceManagement: React.FC = () => {
     keys: [
       { name: "name", weight: 0.7 }, // Category name
       { name: "description", weight: 0.3 }, // Category description
+      { name: "resourceType", weight: 0.2 }, // Resource type
       { name: "resources.name", weight: 0.7 }, // Resource name
       { name: "resources.description", weight: 0.5 }, // Resource description
     ],
@@ -184,27 +188,7 @@ const ResourceManagement: React.FC = () => {
     return results
       .map((result) => {
         const category = { ...result.item }; // Get the original category item
-
-        // If the category itself didn't score high, maybe only some resources did
-        // Refine results to only include matching resources if the main category match is weak
-        // Note: Fuse.js v6+ returns matches array indicating which parts matched.
-        // For simplicity here, we'll show the whole category if it matches,
-        // or filter resources if the category match itself isn't strong.
-        // A more advanced implementation could use the `matches` array.
-
-        // Let's refine this: If a category matches, keep all its resources for context.
-        // If only resources match, we need a slightly different approach (not directly supported by simple mapping).
-
-        // Simpler approach: Filter categories based on search, then filter resources within those categories.
-        // Re-initialize fuse for resources within matched categories if needed.
-        // Or, just return the category if it or any of its resources broadly match.
         return category;
-
-        // ---- Revised Simpler Logic ----
-        // Let Fuse decide which categories match based on the keys.
-        // If a category appears in the results, return it as is.
-        // The default Fuse behavior might already include categories where only a resource matches.
-        // return result.item;
       })
       .filter(Boolean); // Filter out any potential undefined/null results if logic gets complex
   }, [searchQuery, categories, fuse]);
@@ -227,7 +211,11 @@ const ResourceManagement: React.FC = () => {
 
   const handleOpenAddCategoryModal = () => {
     setSelectedCategory(null);
-    const initialState = { name: "", description: "" };
+    const initialState = { 
+      name: "", 
+      description: "", 
+      resourceType: "firm" as "firm" | "chapter" 
+    };
     setCategoryFormData(initialState);
     initialCategoryStateRef.current = { ...initialState };
     setShowCategoryModal(true);
@@ -235,9 +223,23 @@ const ResourceManagement: React.FC = () => {
 
   const handleOpenEditCategoryModal = (category: Category) => {
     setSelectedCategory(category);
+    // Normalize resourceType
+    let resourceType: "firm" | "chapter" = "chapter";
+    if (
+      category.resourceType === "chapter" ||
+      category.resourceType === "Chapter Resource"
+    ) {
+      resourceType = "chapter";
+    } else if (
+      category.resourceType === "firm" ||
+      category.resourceType === "Firm Resource"
+    ) {
+      resourceType = "firm";
+    }
     const initialState = {
       name: category.name,
       description: category.description,
+      resourceType
     };
     setCategoryFormData(initialState);
     initialCategoryStateRef.current = { ...initialState };
@@ -245,7 +247,7 @@ const ResourceManagement: React.FC = () => {
   };
 
   const handleCategoryDataChange = (
-    field: "name" | "description",
+    field: "name" | "description" | "resourceType",
     value: string
   ) => {
     setCategoryFormData((prev) => ({ ...prev, [field]: value }));
@@ -326,6 +328,10 @@ const ResourceManagement: React.FC = () => {
       description: resource.description,
       file: null,
       categoryId: category.id,
+      existingResource: true,
+      existingFileName: resource.file_key
+        ? resource.file_key.split("/").pop()
+        : "Existing file",
     };
     setResourceFormData(initialState);
     initialResourceStateRef.current = { ...initialState, file: null };
@@ -378,15 +384,7 @@ const ResourceManagement: React.FC = () => {
   };
 
   const handleEditResourceSubmit = async () => {
-    if (
-      !session?.access_token ||
-      !selectedCategory ||
-      !selectedResource ||
-      !resourceFormData.file
-    ) {
-      if (!resourceFormData.file) {
-        toast.error("Please select a file to update the resource.");
-      }
+    if (!session?.access_token || !selectedCategory || !selectedResource) {
       return;
     }
 
@@ -394,7 +392,14 @@ const ResourceManagement: React.FC = () => {
       const formData = new FormData();
       formData.append("name", resourceFormData.name);
       formData.append("description", resourceFormData.description);
-      formData.append("file", resourceFormData.file);
+
+      // Only append file if a new one was selected
+      if (resourceFormData.file) {
+        formData.append("file", resourceFormData.file);
+      } else {
+        // Explicitly indicate we want to keep the existing file
+        formData.append("keepExistingFile", "true");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/resources/${
@@ -453,6 +458,36 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (
+      !session?.access_token ||
+      !window.confirm(
+        "Are you sure you want to delete this category? All resources in this category will also be deleted."
+      )
+    )
+      return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/resources/${categoryId}/delete`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete category");
+
+      toast.success("Category deleted successfully");
+      fetchResources();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Failed to delete category");
+    }
+  };
+
   const hasCategoryChanges = () => {
     return (
       JSON.stringify(categoryFormData) !==
@@ -465,7 +500,7 @@ const ResourceManagement: React.FC = () => {
       resourceFormData.name !== initialResourceStateRef.current.name ||
       resourceFormData.description !==
         initialResourceStateRef.current.description ||
-      !!resourceFormData.file
+      resourceFormData.file !== null // Only consider file a change if one is selected
     );
   };
 
@@ -488,8 +523,16 @@ const ResourceManagement: React.FC = () => {
   const closeAndResetCategoryModal = () => {
     setShowCategoryModal(false);
     setSelectedCategory(null);
-    setCategoryFormData({ name: "", description: "" });
-    initialCategoryStateRef.current = { name: "", description: "" };
+    setCategoryFormData({ 
+      name: "", 
+      description: "", 
+      resourceType: "firm" as "firm" | "chapter" 
+    });
+    initialCategoryStateRef.current = { 
+      name: "", 
+      description: "", 
+      resourceType: "firm" as "firm" | "chapter" 
+    };
   };
 
   const closeAndResetResourceModal = () => {
@@ -571,6 +614,13 @@ const ResourceManagement: React.FC = () => {
                       Edit Category
                     </button>
                     <button
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200 text-sm"
+                      title="Delete Category"
+                    >
+                      Delete Category
+                    </button>
+                    <button
                       onClick={() => handleOpenAddResourceModal(category)}
                       className="bg-bapred text-white px-3 py-1 rounded-md hover:bg-opacity-90 text-sm"
                     >
@@ -580,7 +630,12 @@ const ResourceManagement: React.FC = () => {
                 </div>
                 {expandedCategories.has(category.id) && (
                   <div className="mt-4 pl-6">
-                    <p className="text-gray-600 mb-4">{category.description}</p>
+                    <div className="flex items-center gap-2 mb-4">
+                      <p className="text-gray-600">{category.description}</p>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+                        {category.resourceType === "firm" ? "Firm Resource" : "Chapter Resource"}
+                      </span>
+                    </div>
                     <div className="space-y-2">
                       {category.resources &&
                         category.resources.map((resource) => (

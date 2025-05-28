@@ -36,8 +36,6 @@ const ProtectedRoute = () => {
     }
     // Add more route permission checks as needed
 
-    console.log("User has permission for this route");
-
     return true;
   };
 
@@ -53,7 +51,6 @@ const ProtectedRoute = () => {
   // If not authenticated, redirect to login
   if (!session) {
     // Save the attempted URL for redirecting back after login
-    console.log("Redirecting to login");
     localStorage.setItem("redirectAfterLogin", location.pathname);
     return <Navigate to="/login" />;
   }

@@ -33,6 +33,7 @@ const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
   resource,
 }) => {
   const [imageZoomLevel, setImageZoomLevel] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Reset zoom when resource changes or modal opens/closes
   useEffect(() => {
@@ -49,6 +50,39 @@ const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
 
   const handleResetZoom = () => {
     setImageZoomLevel(1); // Reset to 1x
+  };
+
+  // New function to handle file download
+  const handleDownload = async () => {
+    if (!resource || !resource.signed_url) return;
+
+    try {
+      setIsDownloading(true);
+      // Fetch the file
+      const response = await fetch(resource.signed_url);
+      const blob = await response.blob();
+
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = resource.name || "download"; // Use resource name or fallback
+      document.body.appendChild(link);
+
+      // Trigger download
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download the file. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (!resource) {
@@ -84,17 +118,16 @@ const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
               <ExternalLink size={16} />
               Open
             </a>
-            {/* Download Button */}
-            <a
-              href={resource.signed_url}
-              download={resource.name} // Suggest original filename
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            {/* Download Button - Changed to button with onClick */}
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-75"
               title="Download file"
-              // target="_blank" // Can cause issues on some browsers for direct downloads
             >
               <Download size={16} />
-              Download
-            </a>
+              {isDownloading ? "Downloading..." : "Download"}
+            </button>
           </div>
         )}
 

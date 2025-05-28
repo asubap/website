@@ -5,6 +5,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import { supabase } from "../../context/auth/supabaseClient";
 import MemberDescription from "../../components/member/MemberDescription";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 // Add environment variable for backend URL
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -12,11 +13,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const MemberView = () => {
   const { session, role } = useAuth();
   const email = session?.user?.email || "";
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/admin" },
-  ];
 
   const [sponsorProfileUrl] = useState(
     "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -26,27 +22,35 @@ const MemberView = () => {
   const [error, setError] = useState("");
 
   const [userDetails, setUserDetails] = useState<{
-    user_id: string;
+    id: string;
     user_email: string;
-    bio: string;
-    internship: string;
-    first_name: string;
-    last_name: string;
-    year: string;
+    about: string;
+    name: string;
+    graduating_year: string;
     major: string;
-    contact_me: string;
-    hours: string;
+    phone: string;
+    total_hours: string;
+    rank: string;
+    member_status: string;
+    development_hours: string;
+    professional_hours: string;
+    service_hours: string;
+    social_hours: string;
   }>({
-    user_id: "",
+    id: "",
     user_email: "",
-    bio: "",
-    internship: "",
-    first_name: "",
-    last_name: "",
-    year: "",
+    about: "",
+    name: "",
+    graduating_year: "",
     major: "",
-    contact_me: "",
-    hours: "",
+    phone: "",
+    total_hours: "",
+    rank: "",
+    member_status: "",
+    development_hours: "",
+    professional_hours: "",
+    service_hours: "",
+    social_hours: "",
   });
 
   // const [photoLoading, setPhotoLoading] = useState<boolean>(false);
@@ -77,7 +81,6 @@ const MemberView = () => {
           }
 
           const data = await response.json();
-          console.log("API Response:", data);
 
           if (data && data.length > 0) {
             setUserDetails(data[0]);
@@ -103,7 +106,7 @@ const MemberView = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks}
+        links={getNavLinks(!!session)}
         isLogged={!!session}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
@@ -123,15 +126,20 @@ const MemberView = () => {
         <>
           <MemberDescription
             profileUrl={profilePhotoUrl || sponsorProfileUrl}
-            name={userDetails.first_name || "N/A"}
+            name={userDetails.name || "N/A"}
             major={userDetails.major || "N/A"}
             email={email}
-            phone={userDetails.contact_me || "N/A"}
-            status={"Not-Grad"}
-            hours={userDetails.hours || "0"}
-            year={userDetails.year || "N/A"}
-            internship={userDetails.internship || "N/A"}
-            description={userDetails.bio || "No bio available"}
+            phone={userDetails.phone || "N/A"}
+            status={userDetails.member_status || "N/A"}
+            hours={userDetails.total_hours || "0"}
+            year={userDetails.graduating_year || "N/A"}
+            internship={ "N/A"}
+            description={userDetails.about || "No bio available"}
+            rank={userDetails.rank || "N/A"}
+            developmentHours={userDetails.development_hours || "0"}
+            professionalHours={userDetails.professional_hours || "0"}
+            serviceHours={userDetails.service_hours || "0"}
+            socialHours={userDetails.social_hours || "0"}
           />
         </>
       )}

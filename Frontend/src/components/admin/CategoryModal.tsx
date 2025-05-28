@@ -6,8 +6,12 @@ interface CategoryModalProps {
   onClose: () => void;
   onConfirm: () => void;
   isEditing: boolean;
-  categoryData: { name: string; description: string };
-  onCategoryDataChange: (field: "name" | "description", value: string) => void;
+  categoryData: { 
+    name: string; 
+    description: string;
+    resourceType: "firm" | "chapter";
+  };
+  onCategoryDataChange: (field: "name" | "description" | "resourceType", value: string) => void;
 }
 
 const CategoryModal: React.FC<CategoryModalProps> = ({
@@ -46,13 +50,34 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
           />
         </div>
 
+        {/* Resource Type Dropdown */}
+        <div>
+          <label
+            htmlFor="resourceType"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Resource Type <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="resourceType"
+            value={categoryData.resourceType}
+            onChange={(e) => onCategoryDataChange("resourceType", e.target.value)}
+            className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
+            required
+          >
+            <option value="">Select resource type...</option>
+            <option value="firm">Firm Resource</option>
+            <option value="chapter">Chapter Resource</option>
+          </select>
+        </div>
+
         {/* Category Description Input */}
         <div>
           <label
             htmlFor="categoryDescription"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Description
+            Description <span className="text-red-500">*</span>
           </label>
           <textarea
             id="categoryDescription"
@@ -63,6 +88,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
             rows={3}
             className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
             placeholder="Enter description (optional)..."
+            required
           />
         </div>
       </div>

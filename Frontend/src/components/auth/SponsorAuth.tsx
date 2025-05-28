@@ -26,7 +26,6 @@ const SponsorAuth = () => {
         const companyNames = data.map(
           (item: { company_name: string }) => item.company_name
         );
-        console.log(companyNames);
         setSponsors(companyNames);
       } catch (error) {
         console.error("Error fetching sponsors:", error);
@@ -39,7 +38,8 @@ const SponsorAuth = () => {
   const baseUrl =
     import.meta.env.VITE_ENV_STATE === "development"
       ? "http://localhost:5173"
-      : "https://frontend-iota-gules-58.vercel.app";
+      // : "https://frontend-iota-gules-58.vercel.app";
+      : "http://asubap.com";
 
   // Redirect to saved path or default to auth home
   const getRedirectUrl = () => {
@@ -78,15 +78,11 @@ const SponsorAuth = () => {
     const companyName = sponsorElement.value;
     const passcode = passcodeElement.value;
 
-    console.log(companyName, passcode);
-
     // After backend says "auth success" and sends token
     const { data, error } = await supabase.auth.signInWithPassword({
       email: `${companyName.toLowerCase()}@example.com`,
       password: `${passcode}`,
     });
-
-    console.log(data);
 
     if (error) {
       console.error("Error signing in:", error);
@@ -98,8 +94,6 @@ const SponsorAuth = () => {
 
     // Store in localStorage as well for persistence
     localStorage.setItem("sponsorName", companyName);
-
-    console.log("Sign in successful");
   };
 
   return (

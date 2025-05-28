@@ -53,14 +53,14 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                 : handleSponsorClick(entity)
             }
           >
-            <div className="p-5">
+            <div className="p-5 flex flex-col h-full">
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border">
                   {entity.photoUrl ? (
                     <img
                       src={entity.photoUrl}
                       alt={`${entity.name}'s profile/logo`}
-                      className="w-full h-full object-contain p-1"
+                      className="w-full h-full object-cover object-center"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-red-700 text-white text-xl font-bold">
@@ -75,13 +75,15 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                       {entity.major || "Not Provided"}
                     </p>
                   )}
-                  {entity.type === "sponsor" && (
-                    <p className="text-sm text-blue-600 font-medium">Sponsor</p>
+                  {entity.type === "sponsor" && entity.tier && (
+                    <p className="text-sm text-blue-600 font-medium">
+                      {entity.tier[0].toUpperCase() + entity.tier.slice(1)} Sponsor
+                    </p>
                   )}
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2 flex-1">
                 {entity.type === "member" && (
                   <>
                     <div className="flex items-center text-sm">
@@ -92,7 +94,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     </div>
                     <div className="flex items-center text-sm">
                       <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">
+                      <span className="text-gray-700 font-bold">
                         Total Hours: {entity.hours ?? "0"}
                       </span>
                     </div>
@@ -191,9 +193,10 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                 )}
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 pt-2 flex-shrink-0">
                 <button
                   className="w-full bg-red-700 text-white py-2 rounded hover:bg-red-800 transition-colors"
+                  style={{ marginTop: "auto" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (entity.type === "member") {

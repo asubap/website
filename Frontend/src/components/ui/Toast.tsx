@@ -37,7 +37,7 @@ const Toast = ({ message, duration = 3000, onClose, type = 'success' }: ToastPro
   // Create a portal to render at the body level
   return createPortal(
     <div 
-      className={`fixed bottom-24 right-4 z-50 transform transition-opacity duration-300 ease-in-out ${
+      className={`fixed bottom-24 right-4 z-[9999] transform transition-opacity duration-300 ease-in-out ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -45,17 +45,17 @@ const Toast = ({ message, duration = 3000, onClose, type = 'success' }: ToastPro
         <div className="flex items-center">
           {type === 'success' && (
             <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}/>
             </svg>
           )}
           {type === 'error' && (
             <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
             </svg>
           )}
           {type === 'info' && (
             <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
             </svg>
           )}
           <p>{message}</p>

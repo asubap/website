@@ -1,9 +1,11 @@
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../../components/ui/Modal";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
+import { useToast } from "../../context/toast/ToastContext";
 
 type ProfileData = {
   name: string;
@@ -16,29 +18,38 @@ type ProfileData = {
   internship: string;
   photoUrl: string;
   hours: string;
+  rank: string; // Add this new field
 };
 
 interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileData: ProfileData;
-  onSave: (data: ProfileData) => void;
+  onSave: (formData: ProfileData) => void;
+  showRank?: boolean; // Add this new prop
 }
-
-// Add environment variable for backend URL
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function ProfileEditModal({
   isOpen,
   onClose,
   profileData,
   onSave,
+  showRank = false, // Default to false
 }: ProfileEditModalProps) {
   const [formData, setFormData] = useState<ProfileData>(profileData);
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     profileData.photoUrl || null
   );
+  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
+  const [showPicConfirmation, setShowPicConfirmation] = useState(false);
   const { session } = useAuth();
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (isOpen && profileData.photoUrl) {
+      setPhotoPreview(`${profileData.photoUrl}?t=${Date.now()}`);
+    }
+  }, [isOpen, profileData.photoUrl]);
 
   if (!isOpen) return null;
 
@@ -56,47 +67,25 @@ export default function ProfileEditModal({
   ) => {
     if (!event.target.files || event.target.files.length === 0) return;
     const file = event.target.files[0];
+
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoPreview(previewUrl);
+
+    setUploadingProfilePic(true);
+
     try {
       const token = session?.access_token;
       const formData = new FormData();
       formData.append("file", file);
-      // Get the user's ID from the session or fetch it if needed
-      // Use the actual user ID instead of email
-      const response = await fetch(`${BACKEND_URL}/member-info/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_email: profileData.email,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-
-      const userData = await response.json();
-      const userId = userData[0]?.user_id;
-
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
-
-      // Now use the actual user ID for uploading the photo
-      const formDataWithId = new FormData();
-      formDataWithId.append("file", file);
-      formDataWithId.append("userId", userId);
 
       const uploadResponse = await fetch(
-        `${BACKEND_URL}/profile-photo/upload`,
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/${profileData.email}/pfp`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          body: formDataWithId,
+          body: formData,
         }
       );
 
@@ -105,41 +94,39 @@ export default function ProfileEditModal({
       }
 
       const data = await uploadResponse.json();
-      setPhotoPreview(data.photoUrl);
+
+      const newPhotoUrl = `${data.photoUrl}?t=${Date.now()}`;
+      setPhotoPreview(newPhotoUrl);
+      setFormData((prev) => {
+        const updated = { ...prev, photoUrl: data.photoUrl };
+        onSave(updated);
+        return updated;
+      });
+
+      URL.revokeObjectURL(previewUrl);
     } catch (error) {
       console.error("Error uploading photo:", error);
+      alert(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploadingProfilePic(false);
     }
+  };
+
+  const confirmProfilePicDelete = () => {
+    setShowPicConfirmation(true);
+  };
+
+  const cancelProfilePicDelete = () => {
+    setShowPicConfirmation(false);
   };
 
   const handlePhotoDelete = async () => {
     try {
+      setUploadingProfilePic(true);
       const token = session?.access_token;
 
-      // Get the user's ID from the session or fetch it
-      const response = await fetch(`${BACKEND_URL}/member-info/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_email: profileData.email,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-
-      const userData = await response.json();
-      const userId = userData[0]?.user_id;
-
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
-
       const deleteResponse = await fetch(
-        `${BACKEND_URL}/profile-photo/${userId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/${profileData.email}/pfp`,
         {
           method: "DELETE",
           headers: {
@@ -153,47 +140,148 @@ export default function ProfileEditModal({
       }
 
       setPhotoPreview(null);
+      setFormData((prev) => {
+        const updated = { ...prev, photoUrl: "" };
+        onSave(updated);
+        return updated;
+      });
     } catch (error) {
       console.error("Error deleting photo:", error);
+      alert("Failed to delete profile picture. Please try again.");
+    } finally {
+      setUploadingProfilePic(false);
+      setShowPicConfirmation(false);
     }
   };
 
   const handleSubmit = async () => {
+    // Validate all fields
+    const requiredFields = [
+      formData.name,
+      formData.email,
+      formData.phone,
+      formData.major,
+      formData.graduationDate,
+      formData.status,
+      formData.about,
+    ];
+    const fieldNames = [
+      "Name",
+      "Email",
+      "Phone Number",
+      "Major(s)",
+      "Graduation Date",
+      "Status",
+      "About"
+    ];
+    for (let i = 0; i < requiredFields.length; i++) {
+      if (!requiredFields[i] || requiredFields[i] === "N/A") {
+        showToast(`${fieldNames[i]} is required and cannot be empty or 'N/A'.`, "error");
+        return;
+      }
+    }
     onSave(formData);
-    // Send the updated data to the server
 
-    fetch(`${BACKEND_URL}/member-info/edit-member-info/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify({
-        user_email: formData.email,
-        about: formData.about, // leave this empty ("") if not being changed
-        internship_experience: formData.internship, // leave this empty ("") if not being changed
-        first_name: formData.name, // leave this empty ("") if not being changed
-        last_name: "", // leave this empty ("") if not being changed
-        year: formData.graduationDate, // leave this empty ("") if not being changed
-        major: formData.major, // leave this empty ("") if not being changed
-        contact_me: formData.phone, // leave this empty ("") if not being changed
-        graduation_year: "",
-        member_status: formData.status, // leave this empty ("") if not being changed
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => console.error("Error editing:", error));
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/edit-member-info/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          user_email: formData.email,
+          about: formData.about,
+          name: formData.name,
+          graduating_year: formData.graduationDate,
+          major: formData.major,
+          phone: formData.phone,
+          member_status: formData.status,
+          member_rank: formData.rank,
+        }),
+      });
 
-    onClose();
+      const data = await response.json();
+      
+      // Debug: log the API response
+      console.log("API response:", data);
+      
+      if (!response.ok) {
+        if (data.error === "Validation failed" && (data.details || data.detail || data.message)) {
+          const errorMessage =
+            (Array.isArray(data.details) && data.details.join(", ")) ||
+            data.detail ||
+            data.message ||
+            "Validation failed";
+          showToast(errorMessage, "error");
+          return;
+        }
+        showToast(data.error || data.message || "Failed to update profile", "error");
+        return;
+      }
+
+      showToast("Profile updated successfully!", "success");
+      onSave(formData);
+      onClose();
+    } catch (error) {
+      console.error("Error editing:", error);
+      showToast(error instanceof Error ? error.message : "Failed to update profile", "error");
+    }
   };
 
   const formContent = (
-    <div className="flex flex-col lg:flex-row">
-      {/* Left Column - Edit Form */}
-      <div className="w-full lg:w-1/2 p-6">
+    <div className="flex flex-col overflow-y-auto max-h-[60vh] sm:max-h-[75vh] p-1">
+      <div className="w-full flex justify-center items-center p-6 pt-4 md:pt-6">
+        <div className="relative group">
+          {uploadingProfilePic && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+            </div>
+          )}
+          <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
+            {photoPreview ? (
+              <img
+                src={photoPreview}
+                alt="Profile Preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-center text-sm text-gray-500">
+                <div>No Photo</div>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 mt-2">
+            <label
+              className={`px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm ${
+                uploadingProfilePic ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+              title={uploadingProfilePic ? "Uploading..." : "Choose a profile photo"}
+            >
+              {uploadingProfilePic ? "Uploading..." : "Upload Profile Photo"}
+              <input
+                accept="image/*"
+                className="hidden"
+                aria-label="Upload profile photo"
+                type="file"
+                onChange={handlePhotoUpload}
+                disabled={uploadingProfilePic}
+              />
+            </label>
+            {photoPreview && !uploadingProfilePic && (
+              <button
+                onClick={confirmProfilePicDelete}
+                className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
+                disabled={uploadingProfilePic}
+              >
+                Delete Photo
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full p-6 pt-0 md:pt-2">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -201,56 +289,111 @@ export default function ProfileEditModal({
           }}
         >
           <div className="mb-6">
-            <h3 className="text-xl font-bold mb-4">Profile</h3>
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border border-[#d9d9d9] rounded-lg p-3 mb-4"
-              required
-            />
+            <h3 className="text-xl font-bold mb-4 text-center md:text-left">
+              Profile
+            </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="mb-4">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Name <span className="text-red-500">*</span>
+              </label>
               <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email}
+                type="text"
+                id="name"
+                name="name"
+                placeholder="Name"
+                value={formData.name}
                 onChange={handleChange}
-                className="border border-[#d9d9d9] rounded-lg p-3"
+                className="w-full border border-[#d9d9d9] rounded-lg p-3"
                 required
-              />
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={handleChange}
-                className="border border-[#d9d9d9] rounded-lg p-3"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <input
-                type="text"
-                name="major"
-                placeholder="Major(s)"
-                value={formData.major}
-                onChange={handleChange}
-                className="border border-[#d9d9d9] rounded-lg p-3 sm:col-span-1"
-              />
-              <input
-                type="text"
-                name="graduationDate"
-                placeholder="Graduation Date"
-                value={formData.graduationDate}
-                onChange={handleChange}
-                className="border border-[#d9d9d9] rounded-lg p-3"
-              />
-              <div className="relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="border border-[#d9d9d9] rounded-lg p-3 w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  placeholder="Phone Number"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="border border-[#d9d9d9] rounded-lg p-3 w-full"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-row gap-4 mb-4">
+              <div className="flex-1">
+                <label
+                  htmlFor="major"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Major(s) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="major"
+                  name="major"
+                  placeholder="Major(s)"
+                  value={formData.major}
+                  onChange={handleChange}
+                  className="border border-[#d9d9d9] rounded-lg p-3 w-full"
+                />
+              </div>
+              <div className="flex-1">
+                <label
+                  htmlFor="graduationDate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Graduation Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="graduationDate"
+                  name="graduationDate"
+                  placeholder="Graduation Date"
+                  value={formData.graduationDate}
+                  onChange={handleChange}
+                  className="border border-[#d9d9d9] rounded-lg p-3 w-full"
+                />
+              </div>
+              <div className="flex-1 relative">
+                <label
+                  htmlFor="status"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Status <span className="text-red-500">*</span>
+                </label>
                 <select
+                  id="status"
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
@@ -266,61 +409,70 @@ export default function ProfileEditModal({
                   <option value="Not Looking">Not Looking</option>
                 </select>
                 <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"
                   size={16}
                 />
               </div>
+              {showRank && (
+                <div className="flex-1 relative">
+                  <label
+                    htmlFor="rank"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Member Rank <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="rank"
+                    name="rank"
+                    value={formData.rank}
+                    onChange={handleChange}
+                    className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
+                  >
+                    <option value="">Select Rank</option>
+                    <option value="current">Current</option>
+                    <option value="pledge">Pledge</option>
+                    <option value="alumni">Alumni</option>
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"
+                    size={16}
+                  />
+                </div>
+              )}
             </div>
 
-            <textarea
-              name="about"
-              placeholder="Write about yourself..."
-              value={formData.about}
-              onChange={handleChange}
-              className="w-full border border-[#d9d9d9] rounded-lg p-3 min-h-[150px]"
-            />
+            <div className="mb-4">
+              <label
+                htmlFor="about"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                About <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="about"
+                name="about"
+                placeholder="Write about yourself..."
+                value={formData.about}
+                onChange={handleChange}
+                className="w-full border border-[#d9d9d9] rounded-lg p-3 min-h-[150px]"
+              />
+            </div>
           </div>
         </form>
       </div>
 
-      {/* Center - Photo Upload */}
-      <div className="w-full lg:w-auto flex justify-center items-start p-6">
-        <div className="relative">
-          <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
-            {photoPreview ? (
-              <img
-                src={photoPreview}
-                alt="Profile Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="text-center text-sm text-gray-500">
-                <div>No Photo</div>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 mt-2">
-            <label className="px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm">
-              Upload Profile Photo
-              <input
-                accept="image/*"
-                className="hidden"
-                aria-label="Upload profile photo"
-                type="file"
-                onChange={handlePhotoUpload}
-              />
-            </label>
-            {photoPreview && (
-              <button
-                onClick={handlePhotoDelete}
-                className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
-              >
-                Delete Photo
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {showPicConfirmation && (
+        <ConfirmDialog
+          isOpen={showPicConfirmation}
+          onClose={cancelProfilePicDelete}
+          onConfirm={handlePhotoDelete}
+          title="Confirm Deletion"
+          message="Are you sure you want to remove your profile picture?"
+          confirmText="Remove"
+          cancelText="Cancel"
+          preventOutsideClick={true}
+        />
+      )}
     </div>
   );
 

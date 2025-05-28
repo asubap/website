@@ -35,14 +35,15 @@ const staticNavLinks = [
   { name: "Our Sponsors", href: "/sponsors" },
   { name: "Events", href: "/events" },
   { name: "Membership", href: "/membership" },
+  { name: "Contact Us", href: "/contact-us" },
 ];
 
 const staticSocialLinks = [
   {
     name: "linkedin",
-    href: "https://www.linkedin.com/company/beta-alpha-psi-beta-tau",
+    href: "https://www.linkedin.com/company/bap-betatauchapter/",
   },
-  { name: "instagram", href: "https://www.instagram.com/asubap" },
+  { name: "instagram", href: "https://www.instagram.com/asubap/" },
 ];
 
 const Footer: React.FC<FooterProps> = ({ backgroundColor }) => {

@@ -4,23 +4,12 @@ import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 export const ProcessFlow = () => {
   const { session } = useAuth();
-
-  // Define navigation links
-  const navLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Our Sponsors", href: "/sponsors" },
-    { name: "Events", href: "/events" },
-    { name: "Membership", href: "/membership" },
-  ];
-
-  // Add login link only if user is not logged in
-  if (!session) {
-    navLinks.push({ name: "Log In", href: "/login" });
-  }
-
+  const navLinks = getNavLinks(!!session);
+  
   const steps = [
     {
       title: "W.P. Carey Student",

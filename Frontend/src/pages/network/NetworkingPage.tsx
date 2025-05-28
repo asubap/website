@@ -7,6 +7,7 @@ import NetworkingLayout from "../../components/network/NetworkingLayout";
 import { Member, Sponsor } from "../../types";
 import NetworkList from "../../components/network/NetworkList";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { getNavLinks } from "../../components/nav/NavLink";
 
 interface Filters {
   graduationYear: string;
@@ -57,6 +58,8 @@ interface BackendSponsor {
   links?: string | null;
   pfp_url?: string;
   resources?: SponsorResource[]; // Properly typed resources array
+  tier?: string;
+  emails?: string[];
 }
 
 // --- Transformation Functions ---
@@ -81,6 +84,10 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
     name: memberName,
     email: item.user_email || "Not Provided",
     hours: item.total_hours?.toString() ?? "0",
+    developmentHours: item.development_hours?.toString() ?? "0",
+    professionalHours: item.professional_hours?.toString() ?? "0",
+    serviceHours: item.service_hours?.toString() ?? "0",
+    socialHours: item.social_hours?.toString() ?? "0",
     links: memberLinks,
     major: item.major || "Not Provided",
     about: memberAbout,
@@ -129,10 +136,12 @@ const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
     id: item.id?.toString(),
     type: "sponsor",
     name: item.company_name || "Unknown Sponsor",
+    tier: item.tier,
     about: item.about || "No description available.",
     links: parsedLinks,
     photoUrl: item.pfp_url || "/placeholder-logo.png",
     resources: item.resources?.map((r) => r.url || "") || [],
+    emails: item.emails || [],
   };
 };
 
@@ -285,9 +294,7 @@ const NetworkingPage = () => {
     if (query.trim()) {
       try {
         const searchResults = fuse.search(query);
-        console.log("Raw Fuse Results:", searchResults);
         results = searchResults.map((result) => result.item);
-        console.log("Mapped Fuse Items:", results);
       } catch (error) {
         console.error("Error during fuse.search:", error);
         results = [];
@@ -318,7 +325,7 @@ const NetworkingPage = () => {
   };
 
   return (
-    <NetworkingLayout>
+    <NetworkingLayout navLinks={getNavLinks(!!session)}>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Network</h1>
 

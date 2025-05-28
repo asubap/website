@@ -1,49 +1,41 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { supabase } from "../../context/auth/supabaseClient";
+import EmailList from "../../components/admin/EmailList";
+import SponsorList from "../../components/admin/SponsorList";
 import { useToast } from "../../context/toast/ToastContext";
-import CreateEventModal from "../../components/admin/CreateEventModal";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
 import ResourceManagement from "../../components/admin/ResourceManagement";
-import EditEventModal from "../../components/admin/EditEventModal";
 import CreateAnnouncementModal from "../../components/admin/CreateAnnouncementModal";
 import EditAnnouncementModal from "../../components/admin/EditAnnouncementModal";
 import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
-import Sidebar from "../../components/admin/Sidebar";
-import AdminEventsSection from "../../components/admin/AdminEventsSection";
-import AdminAnnouncementsSection from "../../components/admin/AdminAnnouncementsSection";
-import AdminUsersSection from "../../components/admin/AdminUsersSection";
-import AdminSponsorsSection from "../../components/admin/AdminSponsorsSection";
-import AdminMembersSection from "../../components/admin/AdminMembersSection";
+import AddUserModal from "../../components/admin/AddUserModal";
+import { getNavLinks } from "../../components/nav/NavLink";
 
-import { Event, Announcement } from "../../types";
+import { Announcement } from "../../types";
+import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
 
 // Define interfaces for API responses
 interface UserInfo {
   email: string;
   role: string;
+  name?: string;
 }
 
 interface ApiSponsor {
   company_name: string;
   email_list: string[];
   passcode: string;
+  tier: string;
 }
 
 const Admin = () => {
   const { showToast } = useToast();
-  const adminFormRef = useRef<HTMLFormElement>(null);
   const sponsorFormRef = useRef<HTMLFormElement>(null);
-  const memberFormRef = useRef<HTMLFormElement>(null);
-
-  const [adminInputError, setAdminInputError] = useState(false);
-  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
-  const [showEditEventModal, setShowEditEventModal] = useState(false);
-  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   // New state for announcements
   const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] =
@@ -67,535 +59,209 @@ const Admin = () => {
   const [announcementToDelete, setAnnouncementToDelete] =
     useState<Announcement | null>(null);
 
-  const navLinks = [
-    { name: "Network", href: "/network" },
-    { name: "Events", href: "/events" },
-    { name: "Dashboard", href: "/admin" },
-  ];
-
-  const isPastDate = (dateString: string): boolean => {
-    // Parse the input date string into a Date object
-    const inputDate = new Date(dateString);
-
-    // Get the current date and reset its time to midnight
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Set time to 00:00:00 for accurate comparison
-
-    // Compare the input date with the current date
-    return inputDate < currentDate;
-  };
+  const { role, session } = useAuth();
 
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
-  const [members, setMembers] = useState<string[]>([]);
-
-  const [pastEvents, setPastEvents] = useState<Event[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [tiers, setTiers] = useState<string[]>([]);
+  const [members, setMembers] = useState<{ email: string; name?: string }[]>(
+    []
+  );
 
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
-  const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
-  const { role } = useAuth();
+  // Add new state for member editing
+  const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>(
+    {}
+  );
 
-  const sectionList = [
-    { key: "events", label: "Events" },
-    { key: "announcements", label: "Announcements" },
-    { key: "admins", label: "Admin Users" },
-    { key: "sponsors", label: "Sponsors" },
-    { key: "members", label: "General Members" },
-    { key: "resources", label: "Resources" },
-  ];
+  // Add new state for showAddMemberModal
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
-  const sectionRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {
-    events: useRef<HTMLDivElement>(null),
-    announcements: useRef<HTMLDivElement>(null),
-    admins: useRef<HTMLDivElement>(null),
-    sponsors: useRef<HTMLDivElement>(null),
-    members: useRef<HTMLDivElement>(null),
-    resources: useRef<HTMLDivElement>(null),
-  };
-
-  const [activeSection, setActiveSection] = useState("events");
-
-  // Intersection Observer for scrollspy
-  useEffect(() => {
-    const handleScroll = () => {
-      const offsets = Object.entries(sectionRefs).map(([key, ref]) => {
-        if (!ref.current) return { key, top: Infinity };
-        const rect = ref.current.getBoundingClientRect();
-        return { key, top: Math.abs(rect.top - 80) }; // 80px offset for navbar
-      });
-      const visible = offsets.reduce((a, b) => (a.top < b.top ? a : b));
-      setActiveSection(visible.key);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const handleSidebarItemClick = (key: string) => {
-    const ref = sectionRefs[key];
-    if (ref && ref.current) {
-      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  // Reset input error state when clicking away from input
-  const handleInputFocus = (inputType: "admin") => {
-    if (inputType === "admin") {
-      setAdminInputError(false);
-    }
-  };
-
-  // Validate email function to reuse code
-  const validateEmail = (email: string): boolean => {
-    if (!email) {
-      return false;
-    }
-
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-  };
+  // Add new state for showAddAdminModal
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
 
   useEffect(() => {
+    if (!session) return; // Don't fetch if no session
+
     const fetchAdmins = async () => {
       setLoadingAdmins(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        // Fetch user role
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      const token = session.access_token;
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Process e-board members
+          const admins = data
+            .filter((item: UserInfo) => item.role === "e-board")
+            .map((item: UserInfo) => item.email);
+          setAdminEmails(admins);
+          const members = data
+            .filter((item: UserInfo) => item.role === "general-member")
+            .map((item: UserInfo) => ({ email: item.email, name: item.name }));
+          setMembers(members);
+          setLoadingAdmins(false);
+          setLoadingMembers(false);
         })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("API response data:", data);
-            // Process e-board members
-            const admins = data
-              .filter((item: UserInfo) => item.role === "e-board")
-              .map((item: UserInfo) => item.email);
-            console.log(admins);
-            setAdminEmails(admins);
-            const members = data
-              .filter((item: UserInfo) => item.role === "general-member")
-              .map((item: UserInfo) => item.email);
-            console.log(members);
-            setMembers(members);
-            setLoadingAdmins(false);
-            setLoadingMembers(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching member info:", error);
-            setLoadingAdmins(false);
-            setLoadingMembers(false);
-          });
-      }
+        .catch((error) => {
+          console.error("Error fetching member info:", error);
+          setLoadingAdmins(false);
+          setLoadingMembers(false);
+        });
     };
-
-    fetchAdmins();
 
     const fetchSponsors = async () => {
       setLoadingSponsors(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      const token = session.access_token;
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          const sponsors = data.map(
+            (sponsor: ApiSponsor) => sponsor.company_name
+          );
+          const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+          setSponsors(sponsors);
+          setTiers(tiers);
+          setLoadingSponsors(false);
         })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Sponsors:", data);
-            const sponsors = data.map(
-              (sponsor: ApiSponsor) => sponsor.company_name
-            );
-            console.log("Sponsors:", sponsors);
-            setSponsors(sponsors);
-            setLoadingSponsors(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching sponsors:", error);
-            setLoadingSponsors(false);
-          });
-      }
+        .catch((error) => {
+          console.error("Error fetching sponsors:", error);
+          setLoadingSponsors(false);
+        });
     };
-
-    fetchSponsors();
-
-    const fetchEvents = async () => {
-      setLoadingEvents(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Events:", data);
-            setPastEvents(
-              data.filter((event: Event) => isPastDate(event.event_date))
-            );
-            setUpcomingEvents(
-              data.filter((event: Event) => !isPastDate(event.event_date))
-            );
-            setLoadingEvents(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching events:", error);
-            setLoadingEvents(false);
-          });
-      }
-    };
-
-    fetchEvents();
 
     // New function to fetch announcements
     const fetchAnnouncements = async () => {
       setLoadingAnnouncements(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/announcements`, {
+      const token = session.access_token;
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/announcements`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Sort announcements by date (newest first) and pinned status
+          const sortedAnnouncements = data.sort(
+            (a: Announcement, b: Announcement) => {
+              // First sort by pinned status (pinned items first)
+              if (a.is_pinned && !b.is_pinned) return -1;
+              if (!a.is_pinned && b.is_pinned) return 1;
+
+              // Then sort by created_at (newer first) - safely handle null values
+              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+              return dateB - dateA;
+            }
+          );
+          setAnnouncements(sortedAnnouncements);
+          setLoadingAnnouncements(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching announcements:", error);
+          setLoadingAnnouncements(false);
+        });
+    };
+
+    fetchAdmins();
+    fetchSponsors();
+    fetchAnnouncements();
+  }, [session]); // Add session as dependency
+
+  const handleDelete = async (email: string) => {
+    if (!session) return;
+
+    const token = session.access_token;
+    try {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/delete-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_email: email }),
+      });
+      // Update the state to remove the deleted email
+      setAdminEmails(adminEmails.filter((e) => e !== email));
+      setSponsors(sponsors.filter((e) => e !== email));
+      setMembers(members.filter((m) => m.email !== email));
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+    }
+  };
+
+  const handleDeleteSponsor = async (email: string) => {
+    if (!session) return;
+
+    const token = session.access_token;
+    try {
+      await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/delete-sponsor`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ sponsor_name: email }),
+        }
+      );
+      setSponsors(sponsors.filter((e) => e !== email));
+      showToast("Sponsor deleted successfully", "success");
+    } catch (error) {
+      console.error("Error deleting sponsor:", error);
+    }
+  };
+
+  const handleSponsorAdded = async (newSponsor: ApiSponsor) => {
+    // Re-fetch sponsors from server to ensure data consistency
+    try {
+      if (!session) return;
+
+      const token = session.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/`,
+        {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Announcements:", data);
-            // Sort announcements by date (newest first) and pinned status
-            const sortedAnnouncements = data.sort(
-              (a: Announcement, b: Announcement) => {
-                // First sort by pinned status (pinned items first)
-                if (a.is_pinned && !b.is_pinned) return -1;
-                if (!a.is_pinned && b.is_pinned) return 1;
+        }
+      );
 
-                // Then sort by created_at (newer first) - safely handle null values
-                const dateA = a.created_at
-                  ? new Date(a.created_at).getTime()
-                  : 0;
-                const dateB = b.created_at
-                  ? new Date(b.created_at).getTime()
-                  : 0;
-                return dateB - dateA;
-              }
-            );
-            setAnnouncements(sortedAnnouncements);
-            setLoadingAnnouncements(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching announcements:", error);
-            setLoadingAnnouncements(false);
-          });
-      }
-    };
-
-    fetchAnnouncements();
-  }, []);
-
-  const handleRoleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>,
-    role: string
-  ) => {
-    e.preventDefault();
-
-    // Get form and email value
-    const form = e.target as HTMLFormElement;
-    const emailInput = form.email as HTMLInputElement;
-    const email = emailInput.value.trim();
-
-    // Set the appropriate error state to update UI based on role type
-    const isRoleAdmin = role === "e-board";
-
-    // Validate email presence
-    if (!email) {
-      showToast("Please enter an email address", "error");
-      if (isRoleAdmin) {
-        setAdminInputError(true);
-      }
-      return;
-    }
-
-    // Validate email format using regex
-    if (!validateEmail(email)) {
-      showToast("Please enter a valid email address", "error");
-      if (isRoleAdmin) {
-        setAdminInputError(true);
-      }
-      return;
-    }
-
-    // If we got here, reset error state as email is valid
-    if (isRoleAdmin) {
-      setAdminInputError(false);
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      try {
-        // Fetch user role
-        const token = session.access_token;
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/users/add-user`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ user_email: email, role: role }),
-          }
+      if (response.ok) {
+        const data = await response.json();
+        const sponsors = data.map(
+          (sponsor: ApiSponsor) => sponsor.company_name
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to add user");
-        }
-
-        // Update local state based on role
-        if (role === "e-board") {
-          setAdminEmails([...adminEmails, email]);
-          showToast("Admin added successfully", "success");
-          if (adminFormRef.current) adminFormRef.current.reset();
-        } else if (role === "sponsor") {
-          setSponsors([...sponsors, email]);
-          showToast("Sponsor added successfully", "success");
-          if (sponsorFormRef.current) sponsorFormRef.current.reset();
-        }
-      } catch (error) {
-        console.error("Error adding user:", error);
-        showToast("Failed to add user. Please try again.", "error");
-      }
-    }
-  };
-
-  const handleMemberSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const emailInput = form.email as HTMLInputElement;
-    const email = emailInput.value.trim();
-
-    if (!email) {
-      showToast("Please enter an email address", "error");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      showToast("Please enter a valid email address", "error");
-      return;
-    }
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const token = session.access_token;
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/users/add-user`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ user_email: email, role: "general-member" }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to add member");
-        }
-
-        setMembers([...members, email]);
-        showToast("Member added successfully", "success");
-        if (memberFormRef.current) memberFormRef.current.reset();
+        const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+        setSponsors(sponsors);
+        setTiers(tiers);
       }
     } catch (error) {
-      console.error("Error adding member:", error);
-      showToast("Failed to add member. Please try again.", "error");
-    }
-  };
-
-  const handleDelete = async (email: string) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      const token = session.access_token;
-      try {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/delete-user`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ user_email: email }),
-        });
-        // Update the state to remove the deleted email
-        setAdminEmails(adminEmails.filter((e) => e !== email));
-        setSponsors(sponsors.filter((e) => e !== email));
-        setMembers(members.filter((e) => e !== email));
-      } catch (error) {
-        console.error("Error deleting admin:", error);
-      }
-    }
-  };
-
-  const handleDeleteSponsor = async (email: string) => {
-    console.log("Deleting sponsor:", email);
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      const token = session.access_token;
-      try {
-        await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/sponsors/delete-sponsor`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ sponsor_name: email }),
-          }
-        );
-        setSponsors(sponsors.filter((e) => e !== email));
-        showToast("Sponsor deleted successfully", "success");
-      } catch (error) {
-        console.error("Error deleting sponsor:", error);
-      }
-    }
-  };
-
-  // Handle a newly created event
-  const handleEventCreated = async (newEvent: Event) => {
-    // Determine if it's upcoming or past
-    const isNewEventPast = isPastDate(newEvent.event_date);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      const token = session.access_token;
-      try {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/add-event`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            event_name: newEvent.event_name,
-            event_description: newEvent.event_description,
-            event_location: newEvent.event_location,
-            event_lat: newEvent.event_lat,
-            event_long: newEvent.event_long,
-            event_date: newEvent.event_date,
-            event_time: newEvent.event_time,
-            event_hours: newEvent.event_hours,
-            event_hours_type: newEvent.event_hours_type,
-            sponsors_attending: newEvent.sponsors_attending,
-          }),
-        });
-
-        showToast("Event created successfully", "success");
-      } catch (error) {
-        console.error("Error creating Event:", error);
-      }
+      console.error("Error re-fetching sponsors:", error);
+      // Fallback to local state update if re-fetch fails
+      setSponsors([...sponsors, newSponsor.company_name]);
     }
 
-    // Update the correct list and sort it
-    if (!isNewEventPast) {
-      setUpcomingEvents((prevEvents) =>
-        [...prevEvents, newEvent].sort(
-          (a, b) =>
-            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
-        )
-      );
-    } else {
-      setPastEvents(
-        (prevEvents) =>
-          [...prevEvents, newEvent].sort(
-            (a, b) =>
-              new Date(b.event_date).getTime() -
-              new Date(a.event_date).getTime()
-          ) // Past events descending
-      );
-    }
-  };
-
-  const handleSponsorAdded = (newSponsor: ApiSponsor) => {
-    console.log("New sponsor data:", newSponsor);
-    setSponsors([...sponsors, newSponsor.company_name]);
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
-  };
-
-  const handleEventUpdated = (updatedEvent: Event) => {
-    const updateList = (list: Event[]) =>
-      list.map((e) => (e.id === updatedEvent.id ? updatedEvent : e));
-
-    // Determine if the event moved between past and upcoming
-    const isNowPast = isPastDate(updatedEvent.event_date);
-    const wasPast = pastEvents.some((e) => e.id === updatedEvent.id);
-
-    if (isNowPast && !wasPast) {
-      // Moved from upcoming to past
-      setUpcomingEvents((prev) => prev.filter((e) => e.id !== updatedEvent.id));
-      setPastEvents((prev) =>
-        [...prev, updatedEvent].sort(
-          (a, b) =>
-            new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
-        )
-      );
-    } else if (!isNowPast && wasPast) {
-      // Moved from past to upcoming
-      setPastEvents((prev) => prev.filter((e) => e.id !== updatedEvent.id));
-      setUpcomingEvents((prev) =>
-        [...prev, updatedEvent].sort(
-          (a, b) =>
-            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
-        )
-      );
-    } else {
-      // Updated within the same list
-      setUpcomingEvents((prev) => updateList(prev));
-      setPastEvents((prev) => updateList(prev));
-    }
-
-    setShowEditEventModal(false); // Close modal on success
-    setEventToEdit(null);
-  };
-
-  const handleEditEventClick = (event: Event) => {
-    setEventToEdit(event);
-    setShowEditEventModal(true);
   };
 
   // Handle a newly created announcement
@@ -665,42 +331,34 @@ const Admin = () => {
   };
 
   const handleConfirmDeleteAnnouncement = async () => {
-    if (!announcementToDelete) return;
+    if (!announcementToDelete || !session) return;
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session) {
-        const token = session.access_token;
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_BACKEND_URL
-          }/announcements/delete-announcement`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              announcement_id: announcementToDelete.id,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete announcement");
+      const token = session.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/announcements/delete-announcement`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            announcement_id: announcementToDelete.id,
+          }),
         }
+      );
 
-        // Remove the deleted announcement from state
-        setAnnouncements((prevAnnouncements) =>
-          prevAnnouncements.filter((a) => a.id !== announcementToDelete.id)
-        );
-
-        showToast("Announcement deleted successfully", "success");
+      if (!response.ok) {
+        throw new Error("Failed to delete announcement");
       }
+
+      // Remove the deleted announcement from state
+      setAnnouncements((prevAnnouncements) =>
+        prevAnnouncements.filter((a) => a.id !== announcementToDelete.id)
+      );
+
+      showToast("Announcement deleted successfully", "success");
     } catch (error) {
       console.error("Error deleting announcement:", error);
       showToast("Failed to delete announcement. Please try again.", "error");
@@ -710,127 +368,272 @@ const Admin = () => {
     }
   };
 
+  // Update handleMemberEdit to implement the recommended pattern
+  const handleMemberEdit = async (email: string) => {
+    try {
+      if (!session) {
+        showToast("Authentication error. Please log in again.", "error");
+        return;
+      }
+
+      const token = session.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_email: email }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch member details");
+      }
+
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const raw = data[0];
+        const freshData = {
+          email: raw.user_email || raw.email || "",
+          name: raw.name || "",
+          phone: raw.phone || "",
+          major: raw.major || "",
+          graduationDate: raw.graduating_year
+            ? String(raw.graduating_year)
+            : raw.graduationDate || "",
+          status: raw.member_status || raw.status || "",
+          about: raw.about || "",
+          internship: raw.internship || "",
+          photoUrl: raw.profile_photo_url || raw.photoUrl || "",
+          hours:
+            raw.total_hours !== undefined
+              ? String(raw.total_hours)
+              : raw.hours || "",
+          rank: raw.rank || "",
+          role: raw.role || "general-member",
+        };
+
+        // Update member details with fresh data
+        setMemberDetails((prev) => ({
+          ...prev,
+          [email.trim().toLowerCase()]: freshData,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching member details:", error);
+      showToast("Failed to fetch member details", "error");
+    }
+  };
+
+  // Add fetchMembers function
+  const fetchMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      if (!session) {
+        showToast("Authentication error. Please log in again.", "error");
+        return;
+      }
+      const token = session.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/users`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch members");
+      }
+      const data = await response.json();
+      const members = data
+        .filter((item: UserInfo) => item.role === "general-member")
+        .map((item: UserInfo) => ({ email: item.email, name: item.name }));
+      setMembers(members);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      showToast("Failed to fetch members", "error");
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  // Function to re-fetch sponsors data
+  const refetchSponsors = async () => {
+    if (!session) return;
+
+    setLoadingSponsors(true);
+    try {
+      const token = session.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const sponsors = data.map(
+          (sponsor: ApiSponsor) => sponsor.company_name
+        );
+        const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+        setSponsors(sponsors);
+        setTiers(tiers);
+      }
+    } catch (error) {
+      console.error("Error re-fetching sponsors:", error);
+      showToast("Failed to refresh sponsor data", "error");
+    } finally {
+      setLoadingSponsors(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen font-outfit">
       <Navbar
-        links={navLinks}
-        isLogged={true}
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
+        isLogged={!!session}
         role={role}
       />
-      {/* Fixed Sidebar for desktop */}
-      <Sidebar
-        sections={sectionList}
-        activeSection={activeSection}
-        onSidebarItemClick={handleSidebarItemClick}
-      />
-      <div className="flex flex-1 pt-24 bg-gray-50">
-        {/* Main content: all sections scrollable */}
-        <main className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 lg:px-16 py-8 min-h-[calc(100vh-5rem)] md:ml-56 transition-all">
-          <h1 className="text-4xl font-bold text-left w-full mb-8">
+
+      {/* Add padding-top to account for fixed navbar */}
+      <div className="flex flex-col flex-grow pt-24">
+        <main className="order-1 md:order-1">
+          <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 pt-8 mb-6">
             Admin Dashboard
           </h1>
-          <div className="w-full max-w-5xl space-y-16">
-            <div id="events" ref={sectionRefs.events} className="scroll-mt-28">
-              <AdminEventsSection
-                upcomingEvents={upcomingEvents}
-                pastEvents={pastEvents}
-                loadingEvents={loadingEvents}
-                onCreateEvent={() => setShowCreateEventModal(true)}
-                onEditEvent={handleEditEventClick}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-8 sm:px-16 lg:px-24">
+            {/* Announcements column - now order-3 on mobile to appear after Past Events */}
+            <div className="order-3 md:order-2">
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">Announcements</h2>
+                <button
+                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  onClick={() => setShowCreateAnnouncementModal(true)}
+                >
+                  + <span className="hidden md:inline">New </span>Announcement
+                </button>
+              </div>
+              {loadingAnnouncements ? (
+                <LoadingSpinner text="Loading announcements..." size="md" />
+              ) : announcements.length > 0 ? (
+                <AnnouncementListShort
+                  announcements={announcements}
+                  onEdit={handleEditAnnouncementClick}
+                  onView={handleViewAnnouncementClick}
+                  onDelete={handleDeleteAnnouncementClick}
+                />
+              ) : (
+                <p className="text-gray-500 text-m">
+                  No announcements available.
+                </p>
+              )}
             </div>
-            <div
-              id="announcements"
-              ref={sectionRefs.announcements}
-              className="scroll-mt-28"
-            >
-              <AdminAnnouncementsSection
-                announcements={announcements}
-                loadingAnnouncements={loadingAnnouncements}
-                onCreateAnnouncement={() =>
-                  setShowCreateAnnouncementModal(true)
-                }
-                onEditAnnouncement={handleEditAnnouncementClick}
-                onViewAnnouncement={handleViewAnnouncementClick}
-                onDeleteAnnouncement={handleDeleteAnnouncementClick}
-              />
+
+            {/* Admin Users */}
+            <div className="order-4 md:order-4">
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">Admin Users</h2>
+                <button
+                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  onClick={() => setShowAddAdminModal(true)}
+                >
+                  + <span className="hidden md:inline">Add </span>Admin
+                </button>
+              </div>
+              {loadingAdmins ? (
+                <LoadingSpinner text="Loading admins..." size="md" />
+              ) : (
+                <EmailList
+                  emails={adminEmails.map((email) => ({ email }))}
+                  onDelete={handleDelete}
+                  userType="admin"
+                  clickable={false}
+                />
+              )}
             </div>
-            <div id="admins" ref={sectionRefs.admins} className="scroll-mt-28">
-              <AdminUsersSection
-                adminEmails={adminEmails}
-                loadingAdmins={loadingAdmins}
-                adminInputError={adminInputError}
-                adminFormRef={adminFormRef}
-                handleAddAdmin={(e) => handleRoleSubmit(e, "e-board")}
-                handleInputFocus={() => handleInputFocus("admin")}
-                handleDeleteAdmin={handleDelete}
-              />
+
+            {/* Sponsors */}
+            <div className="order-5 md:order-5">
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">Sponsors</h2>
+                <button
+                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  onClick={() => setShowAddSponsorModal(true)}
+                >
+                  + <span className="hidden md:inline">New </span>Sponsor
+                </button>
+              </div>
+              {loadingSponsors ? (
+                <LoadingSpinner text="Loading sponsors..." size="md" />
+              ) : (
+                <SponsorList
+                  emails={sponsors}
+                  tiers={tiers}
+                  onDelete={handleDeleteSponsor}
+                  userType="sponsor"
+                  onTierChanged={refetchSponsors}
+                />
+              )}
             </div>
-            <div
-              id="sponsors"
-              ref={sectionRefs.sponsors}
-              className="scroll-mt-28"
-            >
-              <AdminSponsorsSection
-                sponsors={sponsors}
-                loadingSponsors={loadingSponsors}
-                handleAddSponsor={() => setShowAddSponsorModal(true)}
-                handleDeleteSponsor={handleDeleteSponsor}
-              />
+
+            {/* General Members */}
+            <div className="order-6 md:order-6">
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">General Members</h2>
+                <button
+                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  onClick={() => setShowAddMemberModal(true)}
+                >
+                  + <span className="hidden md:inline">Add </span>Member
+                </button>
+              </div>
+              {loadingMembers ? (
+                <LoadingSpinner text="Loading members..." size="md" />
+              ) : (
+                <EmailList
+                  emails={members}
+                  onDelete={handleDelete}
+                  userType="admin"
+                  onEdit={handleMemberEdit}
+                  onSave={async () => {
+                    await fetchMembers();
+                  }}
+                  memberDetails={memberDetails}
+                />
+              )}
             </div>
-            <div
-              id="members"
-              ref={sectionRefs.members}
-              className="scroll-mt-28"
-            >
-              <AdminMembersSection
-                members={members}
-                loadingMembers={loadingMembers}
-                memberInputError={adminInputError}
-                memberFormRef={memberFormRef}
-                handleAddMember={handleMemberSubmit}
-                handleInputFocus={() => handleInputFocus("admin")}
-                handleDeleteMember={handleDelete}
-              />
-            </div>
-            <div
-              id="resources"
-              ref={sectionRefs.resources}
-              className="scroll-mt-28"
-            >
+
+            {/* Resource Management */}
+            <div className="order-7 md:order-7 col-span-1 md:col-span-2 pb-8">
               <ResourceManagement />
             </div>
           </div>
         </main>
       </div>
       <Footer backgroundColor="#AF272F" />
-      {/* Modals remain unchanged */}
-      {showCreateEventModal && (
-        <CreateEventModal
-          onClose={() => setShowCreateEventModal(false)}
-          onEventCreated={handleEventCreated}
-        />
-      )}
+
       {showAddSponsorModal && (
         <AddSponsorModal
           onClose={() => setShowAddSponsorModal(false)}
           onSponsorAdded={handleSponsorAdded}
         />
       )}
-      {showEditEventModal && eventToEdit && (
-        <EditEventModal
-          isOpen={showEditEventModal}
-          onClose={() => {
-            setShowEditEventModal(false);
-            setEventToEdit(null);
-          }}
-          eventToEdit={eventToEdit}
-          onEventUpdated={handleEventUpdated}
-        />
-      )}
+
+      {/* Announcement Creation Modal */}
       {showCreateAnnouncementModal && (
         <CreateAnnouncementModal
           onClose={() => setShowCreateAnnouncementModal(false)}
@@ -867,6 +670,37 @@ const Admin = () => {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {/* Add Member Modal */}
+      {showAddMemberModal && (
+        <AddUserModal
+          role="general-member"
+          title="Add General Member"
+          label="Email Addresses"
+          buttonText="Add Member"
+          onClose={() => setShowAddMemberModal(false)}
+          onUserAdded={(newMembers: string[]) =>
+            setMembers((prev) => [
+              ...prev,
+              ...newMembers.map((email: string) => ({ email })),
+            ])
+          }
+        />
+      )}
+
+      {/* Add Admin Modal */}
+      {showAddAdminModal && (
+        <AddUserModal
+          role="e-board"
+          title="Add Admin"
+          label="Email Addresses"
+          buttonText="Add Admin"
+          onClose={() => setShowAddAdminModal(false)}
+          onUserAdded={(newAdmins: string[]) =>
+            setAdminEmails((prev) => [...prev, ...newAdmins])
+          }
+        />
+      )}
     </div>
   );
 };

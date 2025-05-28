@@ -12,6 +12,7 @@ export type Event = {
   event_hours: number;
   event_hours_type: string;
   sponsors_attending: string[];
+  check_in_window: number;
 };
 
 export interface Member {
@@ -27,6 +28,10 @@ export interface Member {
   internship: string;
   photoUrl: string;
   hours: string;
+  developmentHours: string;
+  professionalHours: string;
+  serviceHours: string;
+  socialHours: string;
   links: string[];
   role: string;
 }
@@ -39,6 +44,8 @@ export interface Sponsor {
   links: string[] | null; // Maps to API 'links' (can be null)
   photoUrl: string | null; // Maps to API 'pfp_url' (can be null)
   resources: string[] | null; // Maps to API 'resources' (can be null)
+  tier?: string;        // Add this line to include the tier property
+  emails: string[];     // Add emails array for sponsor emails
 }
 
 export interface Announcement {

@@ -6,14 +6,33 @@ import { EventCard } from "../../components/event/EventCard";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event } from "../../types";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { isEventInSession } from "../../components/event/EventCheckIn";
+import CreateEventModal from "../../components/admin/CreateEventModal";
+import EditEventModal from "../../components/admin/EditEventModal";
+import { useToast } from "../../context/toast/ToastContext";
+
+import ConfirmationModal from "../../components/common/ConfirmationModal";
+
+import { getNavLinks } from "../../components/nav/NavLink";
+
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
+  const { showToast } = useToast();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const location = useLocation();
+
+  // Add state for event editing
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [showEditEventModal, setShowEditEventModal] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+
+  // Add state for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
   // State for pagination/load more
   const PAST_EVENTS_INCREMENT = 3;
@@ -21,15 +40,119 @@ const EventsPage: React.FC = () => {
     PAST_EVENTS_INCREMENT
   );
 
-  function isEventInSession(event: Event) {
-    if (!event.event_date || !event.event_time || !event.event_hours) return false;
-    const [hour, minute] = event.event_time.split(":").map(Number);
-    const start = new Date(event.event_date);
-    start.setHours(hour, minute, 0, 0);
-    const end = new Date(start.getTime() + event.event_hours * 60 * 60 * 1000);
-    const now = new Date();
-    return now >= start && now <= end;
-  }
+  // Add search state
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Add event handling functions
+  const handleEventCreated = () => {
+    window.location.reload();
+  };
+
+  const handleEventUpdated = async () => {
+    try {
+      // Refresh events
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const data = await response.json();
+      setAllEvents(data);
+      showToast("Event updated successfully", "success");
+    } catch (error) {
+      console.error("Error updating event:", error);
+      showToast("Failed to update event", "error");
+    }
+    setShowEditEventModal(false);
+    setEventToEdit(null);
+  };
+
+  const handleEditEventClick = (event: Event) => {
+    setEventToEdit(event);
+    setShowEditEventModal(true);
+  };
+
+  const handleDeleteEventClick = (event: Event) => {
+    setEventToDelete(event);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!eventToDelete || !session?.access_token) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/delete-event`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          event_id: eventToDelete.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete event");
+      }
+
+      // Remove the deleted event from the local state
+      setAllEvents(allEvents.filter(event => event.id !== eventToDelete.id));
+
+      showToast("Event deleted successfully", "success");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      showToast("Failed to delete event", "error");
+    } finally {
+      setShowDeleteModal(false);
+      setEventToDelete(null);
+    }
+  };
+
+  // Update the announce event function to send the complete event object
+  const handleAnnounceEvent = async (event: Event) => {
+    try {
+      if (!session?.access_token && role !== "e-board") {
+        showToast("You must be logged in to announce events and be part of Eboard", "error");
+        return;
+      }
+
+      // Send the full event object as provided from the EventCard component
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/send-event`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          // Include all event fields explicitly to ensure nothing is missed
+          id: event.id,
+          event_name: event.event_name,
+          event_description: event.event_description,
+          event_location: event.event_location,
+          event_lat: event.event_lat,
+          event_long: event.event_long,
+          event_date: event.event_date,
+          event_time: event.event_time,
+          event_rsvped: event.event_rsvped,
+          event_attending: event.event_attending,
+          event_hours: event.event_hours,
+          event_hours_type: event.event_hours_type,
+          sponsors_attending: event.sponsors_attending,
+          check_in_window: event.check_in_window
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to announce event");
+      }
+
+      showToast("Event announcement sent successfully!", "success");
+    } catch (error) {
+      console.error("Error announcing event:", error);
+      showToast("Failed to announce event", "error");
+    }
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -83,50 +206,53 @@ const EventsPage: React.FC = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const inSessionEvents = allEvents.filter(isEventInSession);
-  const upcomingEvents = allEvents
-    .filter((event) => !isEventInSession(event) && new Date(event.event_date) >= today)
-    .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
-  const pastEvents = allEvents
-    .filter((event) => !isEventInSession(event) && new Date(event.event_date) < today)
-    .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+  const getEventDateTime = (event: Event) =>
+    new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
+
+  // Filter events based on search query
+  const filteredEvents = allEvents.filter(event => {
+    const query = searchQuery.toLowerCase();
+    return (
+      event.event_name.toLowerCase().includes(query) ||
+      (event.event_location && event.event_location.toLowerCase().includes(query)) ||
+      (event.event_description && event.event_description.toLowerCase().includes(query))
+    );
+  });
+
+  const inSessionEvents = filteredEvents.filter(event => isEventInSession(event.event_date, event.event_time, event.event_hours));
+  const upcomingEvents = filteredEvents
+    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) >= today)
+    .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
+  const pastEvents = filteredEvents
+    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) < today)
+    .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
 
   const handleLoadMorePastEvents = () => {
     setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);
   };
 
-  let navLinks;
-
-  if (session) {
-    // Links for logged-in users
-    navLinks = [
-      { name: "Network", href: "/network" },
-      { name: "Events", href: "/events" },
-      { name: "Dashboard", href: "/admin" },
-    ];
-  } else {
-    // Links for logged-out users
-    navLinks = [
-      { name: "About Us", href: "/about" },
-      { name: "Our Sponsors", href: "/sponsors" },
-      { name: "Events", href: "/events" },
-      { name: "Membership", href: "/membership" },
-      { name: "Log In", href: "/login" },
-    ];
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={navLinks} // Pass the conditionally defined links
+        links={getNavLinks(!!session)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={Boolean(session)} // Let Navbar know the auth state
+        isLogged={Boolean(session)}
         role={role}
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
+          {/* Search Bar */}
+          <div className="mb-8">
+            <input
+              type="text"
+              placeholder="Search events by name, location, or description..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
+            />
+          </div>
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
             <div className="space-y-4">
@@ -144,6 +270,7 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     hideRSVP={true}
+                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -153,7 +280,17 @@ const EventsPage: React.FC = () => {
           </section>
 
           <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Upcoming Events</h2>
+              {role === "e-board" && (
+                <button
+                  className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
+                  onClick={() => setShowCreateEventModal(true)}
+                >
+                  + <span className="hidden md:inline">New </span>Event
+                </button>
+              )}
+            </div>
             <div className="space-y-4">
               {loading ? (
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
@@ -168,6 +305,9 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
+                    onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
+                    onAnnounce={role === "e-board" ? () => handleAnnounceEvent(event) : undefined}
+                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -182,7 +322,6 @@ const EventsPage: React.FC = () => {
               {loading ? (
                 <LoadingSpinner text="Loading past events..." size="md" />
               ) : pastEvents.length > 0 ? (
-                // Slice the array based on visible count
                 pastEvents.slice(0, visiblePastEventsCount).map((event) => (
                   <EventCard
                     key={event.id}
@@ -193,6 +332,8 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
+                    onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
+                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
                   />
                 ))
               ) : (
@@ -214,6 +355,43 @@ const EventsPage: React.FC = () => {
         </div>
       </main>
       <Footer backgroundColor="#AF272F" />
+
+      {/* Event Creation Modal */}
+      {showCreateEventModal && (
+        <CreateEventModal
+          onClose={() => setShowCreateEventModal(false)}
+          onEventCreated={handleEventCreated}
+        />
+      )}
+
+      {/* Edit Event Modal */}
+      {showEditEventModal && eventToEdit && (
+        <EditEventModal
+          isOpen={showEditEventModal}
+          onClose={() => {
+            setShowEditEventModal(false);
+            setEventToEdit(null);
+          }}
+          eventToEdit={eventToEdit}
+          onEventUpdated={handleEventUpdated}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && eventToDelete && (
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setEventToDelete(null);
+          }}
+          onConfirm={handleDeleteEvent}
+          title="Delete Event"
+          message={`Are you sure you want to delete the event "${eventToDelete.event_name}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+      )}
     </div>
   );
 };
