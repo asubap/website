@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { supabase } from "../../context/auth/supabaseClient";
 import EmailList from "../../components/admin/EmailList";
 import SponsorList from "../../components/admin/SponsorList";
 import { useToast } from "../../context/toast/ToastContext";
