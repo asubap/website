@@ -14,7 +14,7 @@ import { useToast } from "../../context/toast/ToastContext";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 
 import { getNavLinks } from "../../components/nav/NavLink";
-
+import SearchInput from "../../components/common/SearchInput";
 
 const EventsPage: React.FC = () => {
   const { session, role } = useAuth();
@@ -51,11 +51,14 @@ const EventsPage: React.FC = () => {
   const handleEventUpdated = async () => {
     try {
       // Refresh events
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/events`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
       const data = await response.json();
       setAllEvents(data);
       showToast("Event updated successfully", "success");
@@ -81,23 +84,26 @@ const EventsPage: React.FC = () => {
     if (!eventToDelete || !session?.access_token) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/delete-event`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          event_id: eventToDelete.id,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/events/delete-event`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            event_id: eventToDelete.id,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete event");
       }
 
       // Remove the deleted event from the local state
-      setAllEvents(allEvents.filter(event => event.id !== eventToDelete.id));
+      setAllEvents(allEvents.filter((event) => event.id !== eventToDelete.id));
 
       showToast("Event deleted successfully", "success");
     } catch (error) {
@@ -113,35 +119,41 @@ const EventsPage: React.FC = () => {
   const handleAnnounceEvent = async (event: Event) => {
     try {
       if (!session?.access_token && role !== "e-board") {
-        showToast("You must be logged in to announce events and be part of Eboard", "error");
+        showToast(
+          "You must be logged in to announce events and be part of Eboard",
+          "error"
+        );
         return;
       }
 
       // Send the full event object as provided from the EventCard component
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/send-event`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
-          // Include all event fields explicitly to ensure nothing is missed
-          id: event.id,
-          event_name: event.event_name,
-          event_description: event.event_description,
-          event_location: event.event_location,
-          event_lat: event.event_lat,
-          event_long: event.event_long,
-          event_date: event.event_date,
-          event_time: event.event_time,
-          event_rsvped: event.event_rsvped,
-          event_attending: event.event_attending,
-          event_hours: event.event_hours,
-          event_hours_type: event.event_hours_type,
-          sponsors_attending: event.sponsors_attending,
-          check_in_window: event.check_in_window
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/events/send-event`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            // Include all event fields explicitly to ensure nothing is missed
+            id: event.id,
+            event_name: event.event_name,
+            event_description: event.event_description,
+            event_location: event.event_location,
+            event_lat: event.event_lat,
+            event_long: event.event_long,
+            event_date: event.event_date,
+            event_time: event.event_time,
+            event_rsvped: event.event_rsvped,
+            event_attending: event.event_attending,
+            event_hours: event.event_hours,
+            event_hours_type: event.event_hours_type,
+            sponsors_attending: event.sponsors_attending,
+            check_in_window: event.check_in_window,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to announce event");
@@ -207,25 +219,47 @@ const EventsPage: React.FC = () => {
   today.setHours(0, 0, 0, 0);
 
   const getEventDateTime = (event: Event) =>
-    new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
+    new Date(`${event.event_date}T${event.event_time || "00:00:00"}`);
 
   // Filter events based on search query
-  const filteredEvents = allEvents.filter(event => {
+  const filteredEvents = allEvents.filter((event) => {
     const query = searchQuery.toLowerCase();
     return (
       event.event_name.toLowerCase().includes(query) ||
-      (event.event_location && event.event_location.toLowerCase().includes(query)) ||
-      (event.event_description && event.event_description.toLowerCase().includes(query))
+      (event.event_location &&
+        event.event_location.toLowerCase().includes(query)) ||
+      (event.event_description &&
+        event.event_description.toLowerCase().includes(query))
     );
   });
 
-  const inSessionEvents = filteredEvents.filter(event => isEventInSession(event.event_date, event.event_time, event.event_hours));
+  const inSessionEvents = filteredEvents.filter((event) =>
+    isEventInSession(event.event_date, event.event_time, event.event_hours)
+  );
   const upcomingEvents = filteredEvents
-    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) >= today)
-    .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
+    .filter(
+      (event) =>
+        !isEventInSession(
+          event.event_date,
+          event.event_time,
+          event.event_hours
+        ) && getEventDateTime(event) >= today
+    )
+    .sort(
+      (a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime()
+    );
   const pastEvents = filteredEvents
-    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) < today)
-    .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
+    .filter(
+      (event) =>
+        !isEventInSession(
+          event.event_date,
+          event.event_time,
+          event.event_hours
+        ) && getEventDateTime(event) < today
+    )
+    .sort(
+      (a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime()
+    );
 
   const handleLoadMorePastEvents = () => {
     setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);
@@ -244,15 +278,12 @@ const EventsPage: React.FC = () => {
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
           {/* Search Bar */}
-          <div className="mb-8">
-            <input
-              type="text"
-              placeholder="Search events by name, location, or description..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
-            />
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search events by name, location, or description..."
+            containerClassName="mb-8"
+          />
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
             <div className="space-y-4">
@@ -270,7 +301,11 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     hideRSVP={true}
-                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
+                    onDelete={
+                      role === "e-board"
+                        ? () => handleDeleteEventClick(event)
+                        : undefined
+                    }
                   />
                 ))
               ) : (
@@ -305,9 +340,21 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
-                    onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
-                    onAnnounce={role === "e-board" ? () => handleAnnounceEvent(event) : undefined}
-                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
+                    onEdit={
+                      role === "e-board"
+                        ? () => handleEditEventClick(event)
+                        : undefined
+                    }
+                    onAnnounce={
+                      role === "e-board"
+                        ? () => handleAnnounceEvent(event)
+                        : undefined
+                    }
+                    onDelete={
+                      role === "e-board"
+                        ? () => handleDeleteEventClick(event)
+                        : undefined
+                    }
                   />
                 ))
               ) : (
@@ -332,8 +379,16 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
-                    onEdit={role === "e-board" ? () => handleEditEventClick(event) : undefined}
-                    onDelete={role === "e-board" ? () => handleDeleteEventClick(event) : undefined}
+                    onEdit={
+                      role === "e-board"
+                        ? () => handleEditEventClick(event)
+                        : undefined
+                    }
+                    onDelete={
+                      role === "e-board"
+                        ? () => handleDeleteEventClick(event)
+                        : undefined
+                    }
                   />
                 ))
               ) : (

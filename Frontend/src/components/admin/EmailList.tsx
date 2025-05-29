@@ -3,6 +3,8 @@ import DeleteConfirmation from "./DeleteConfirmation";
 import { useToast } from "../../context/toast/ToastContext";
 import AdminMemberEditModal from "./AdminMemberEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
+import SearchInput from "../common/SearchInput";
+import { Trash2 } from "lucide-react";
 
 // Temporary: Re-declaring MemberDetail to match Admin.tsx for now.
 // TODO: Move MemberDetail to a shared types file and import it.
@@ -91,15 +93,12 @@ const EmailList = ({
   return (
     <>
       {/* Search Bar */}
-      <div className="mb-2">
-        <input
-          type="text"
-          placeholder="Search members by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
-        />
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search members by name or email..."
+        containerClassName="mb-2"
+      />
       {isLoading && (
         <div className="fixed inset-0 z-50">
           <div className="flex min-h-screen items-center justify-center">
@@ -125,10 +124,10 @@ const EmailList = ({
             </span>
             <button
               onClick={(e) => handleDeleteClick(email, e)}
-              className="text-bapred hover:text-bapreddark font-bold"
+              className="text-bapred hover:text-bapreddark p-1"
               aria-label={`Delete ${email}`}
             >
-              ×
+              <Trash2 size={16} />
             </button>
           </div>
         ))}

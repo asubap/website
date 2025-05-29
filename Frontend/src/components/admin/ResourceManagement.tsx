@@ -20,6 +20,7 @@ import CategoryModal from "./CategoryModal";
 import ResourceModal from "./ResourceModal";
 import ResourcePreviewModal from "../ui/ResourcePreviewModal";
 import Fuse from "fuse.js";
+import SearchInput from "../common/SearchInput";
 
 interface Resource {
   id: string;
@@ -36,7 +37,7 @@ interface Category {
   id: string;
   name: string;
   description: string;
-  resourceType: "firm" | "chapter" | "Firm Resource" | "Chapter Resource";
+  resourceType: "firm" | "chapter";
   resources: Resource[];
 }
 
@@ -47,6 +48,20 @@ interface ResourceFormData {
   categoryId: string;
   existingResource?: boolean; // Flag to indicate an existing resource
   existingFileName?: string; // Store the name of the existing file
+}
+
+// Type for raw category data from API
+interface RawCategoryData {
+  id: string;
+  name: string;
+  description: string;
+  resource_type:
+    | "firm"
+    | "chapter"
+    | "Firm Resource"
+    | "Chapter Resource"
+    | null; // Allow null for resource_type
+  resources: Resource[];
 }
 
 // Utility function to format date
@@ -83,7 +98,7 @@ const ResourceManagement: React.FC = () => {
   const [categoryFormData, setCategoryFormData] = useState({
     name: "",
     description: "",
-    resourceType: "firm" as "firm" | "chapter"
+    resourceType: "firm" as "firm" | "chapter",
   });
   const [resourceFormData, setResourceFormData] = useState<ResourceFormData>({
     name: "",
@@ -91,10 +106,10 @@ const ResourceManagement: React.FC = () => {
     file: null,
     categoryId: "",
   });
-  const initialCategoryStateRef = useRef({ 
-    name: "", 
-    description: "", 
-    resourceType: "firm" as "firm" | "chapter" 
+  const initialCategoryStateRef = useRef({
+    name: "",
+    description: "",
+    resourceType: "firm" as "firm" | "chapter",
   });
   const initialResourceStateRef = useRef<ResourceFormData>({
     name: "",
@@ -136,14 +151,14 @@ const ResourceManagement: React.FC = () => {
         throw new Error("Failed to fetch resources");
       }
 
-      const data = await response.json();
+      const data: RawCategoryData[] = await response.json(); // Use defined type
       // Map resource_type to resourceType and default to 'firm' if null/undefined
-      const mapped = (data || []).map((cat: any) => ({
+      const mapped = (data || []).map((cat: RawCategoryData) => ({
         ...cat,
-        resourceType:
-          cat.resource_type === "chapter" || cat.resource_type === "firm"
-            ? cat.resource_type
-            : "firm",
+        resourceType: (cat.resource_type === "chapter" ||
+        cat.resource_type === "Chapter Resource"
+          ? "chapter"
+          : "firm") as "firm" | "chapter", // Explicit type assertion
         resources: cat.resources || [],
       }));
       setCategories(mapped);
@@ -211,10 +226,10 @@ const ResourceManagement: React.FC = () => {
 
   const handleOpenAddCategoryModal = () => {
     setSelectedCategory(null);
-    const initialState = { 
-      name: "", 
-      description: "", 
-      resourceType: "firm" as "firm" | "chapter" 
+    const initialState = {
+      name: "",
+      description: "",
+      resourceType: "firm" as "firm" | "chapter",
     };
     setCategoryFormData(initialState);
     initialCategoryStateRef.current = { ...initialState };
@@ -223,23 +238,12 @@ const ResourceManagement: React.FC = () => {
 
   const handleOpenEditCategoryModal = (category: Category) => {
     setSelectedCategory(category);
-    // Normalize resourceType
-    let resourceType: "firm" | "chapter" = "chapter";
-    if (
-      category.resourceType === "chapter" ||
-      category.resourceType === "Chapter Resource"
-    ) {
-      resourceType = "chapter";
-    } else if (
-      category.resourceType === "firm" ||
-      category.resourceType === "Firm Resource"
-    ) {
-      resourceType = "firm";
-    }
+    // Normalize resourceType - this logic can be simplified now
+    // since category.resourceType is already 'firm' | 'chapter'
     const initialState = {
       name: category.name,
       description: category.description,
-      resourceType
+      resourceType: category.resourceType, // Directly use the already normalized type
     };
     setCategoryFormData(initialState);
     initialCategoryStateRef.current = { ...initialState };
@@ -523,15 +527,15 @@ const ResourceManagement: React.FC = () => {
   const closeAndResetCategoryModal = () => {
     setShowCategoryModal(false);
     setSelectedCategory(null);
-    setCategoryFormData({ 
-      name: "", 
-      description: "", 
-      resourceType: "firm" as "firm" | "chapter" 
+    setCategoryFormData({
+      name: "",
+      description: "",
+      resourceType: "firm" as "firm" | "chapter",
     });
-    initialCategoryStateRef.current = { 
-      name: "", 
-      description: "", 
-      resourceType: "firm" as "firm" | "chapter" 
+    initialCategoryStateRef.current = {
+      name: "",
+      description: "",
+      resourceType: "firm" as "firm" | "chapter",
     };
   };
 
@@ -568,12 +572,12 @@ const ResourceManagement: React.FC = () => {
       <div className="mb-6 flex flex-col gap-4">
         <h2 className="text-2xl font-semibold">Resource Management</h2>
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Search categories or resources..."
+          <SearchInput
             value={searchQuery}
             onChange={handleSearchChange}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-bapred focus:border-bapred text-sm flex-grow sm:w-64"
+            placeholder="Search categories or resources..."
+            containerClassName="flex-grow sm:w-64"
+            inputClassName="px-3 py-2"
           />
           <button
             onClick={handleOpenAddCategoryModal}
@@ -595,36 +599,44 @@ const ResourceManagement: React.FC = () => {
               <div key={category.id} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div
-                    className="flex items-center cursor-pointer"
+                    className="flex items-center cursor-pointer mr-4"
                     onClick={() => toggleCategory(category.id)}
                   >
                     {expandedCategories.has(category.id) ? (
-                      <ChevronDown size={20} className="mr-2" />
+                      <ChevronDown size={20} className="mr-2 flex-shrink-0" />
                     ) : (
-                      <ChevronRight size={20} className="mr-2" />
+                      <ChevronRight size={20} className="mr-2 flex-shrink-0" />
                     )}
-                    <h2 className="text-xl font-semibold">{category.name}</h2>
+                    <h2 className="text-xl font-semibold mr-2">
+                      {category.name}
+                    </h2>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">
+                      {category.resourceType === "firm"
+                        ? "Firm Resource"
+                        : "Chapter Resource"}
+                    </span>
                   </div>
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleOpenEditCategoryModal(category)}
-                      className="bg-gray-200 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-300 text-sm"
-                      title="Edit Category"
-                    >
-                      Edit Category
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200 text-sm"
-                      title="Delete Category"
-                    >
-                      Delete Category
-                    </button>
+                  <div className="space-x-2 flex items-center flex-shrink-0">
                     <button
                       onClick={() => handleOpenAddResourceModal(category)}
                       className="bg-bapred text-white px-3 py-1 rounded-md hover:bg-opacity-90 text-sm"
+                      title="Add Resource"
                     >
-                      Add Resource
+                      +
+                    </button>
+                    <button
+                      onClick={() => handleOpenEditCategoryModal(category)}
+                      className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                      title="Edit Category"
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
+                      title="Delete Category"
+                    >
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -632,9 +644,6 @@ const ResourceManagement: React.FC = () => {
                   <div className="mt-4 pl-6">
                     <div className="flex items-center gap-2 mb-4">
                       <p className="text-gray-600">{category.description}</p>
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-                        {category.resourceType === "firm" ? "Firm Resource" : "Chapter Resource"}
-                      </span>
                     </div>
                     <div className="space-y-2">
                       {category.resources &&

@@ -4,6 +4,8 @@ import { useToast } from "../../context/toast/ToastContext";
 import { useAuth } from "../../context/auth/authProvider";
 import ProfileEditModal from "../sponsor/ProfileEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
+import SearchInput from "../common/SearchInput";
+import { Trash2 } from "lucide-react";
 
 interface SponsorListProps {
   emails: string[];
@@ -143,15 +145,12 @@ const SponsorList = ({
   return (
     <>
       {/* Search Bar */}
-      <div className="mb-2">
-        <input
-          type="text"
-          placeholder="Search sponsors by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
-        />
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search sponsors by name or email..."
+        containerClassName="mb-2"
+      />
       <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {loadingSponsor && (
           <div className="fixed inset-0 z-50">
@@ -185,10 +184,10 @@ const SponsorList = ({
                 e.stopPropagation();
                 handleDeleteClick(email);
               }}
-              className="text-bapred pl-3 hover:text-bapreddark font-bold"
+              className="text-bapred pl-3 hover:text-bapreddark p-1"
               aria-label={`Delete ${email}`}
             >
-              ×
+              <Trash2 size={16} />
             </button>
           </div>
         ))}
