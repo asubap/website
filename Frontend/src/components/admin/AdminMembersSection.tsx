@@ -1,15 +1,20 @@
 import React, { FormEvent, RefObject } from "react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import EmailList from "./EmailList";
+import { MemberDetail } from "../../types"; // Assuming MemberDetail is the correct type for member objects
 
 interface AdminMembersSectionProps {
-  members: string[];
+  members: Array<{ email: string; name?: string; role?: string }>; // Changed to array of objects
   loadingMembers: boolean;
-  memberInputError: boolean;
-  memberFormRef: RefObject<HTMLFormElement | null>;
-  handleAddMember: (e: FormEvent<HTMLFormElement>) => void;
-  handleInputFocus: () => void;
-  handleDeleteMember: (email: string) => void;
+  memberInputError?: boolean; // Made optional as it might not be used if add form is elsewhere
+  memberFormRef?: RefObject<HTMLFormElement | null>; // Made optional
+  handleAddMember?: (e: FormEvent<HTMLFormElement>) => void; // Made optional
+  handleInputFocus?: () => void; // Made optional
+  handleDeleteMember: (email: string) => void; // Keep this, EmailList uses it
+  // Add props needed by EmailList for editing, if this section handles it:
+  onEditMember?: (email: string) => void;
+  onSaveMember?: (updatedData: MemberDetail) => void;
+  memberDetails?: { [key: string]: MemberDetail };
 }
 
 const AdminMembersSection: React.FC<AdminMembersSectionProps> = ({
@@ -20,6 +25,9 @@ const AdminMembersSection: React.FC<AdminMembersSectionProps> = ({
   handleAddMember,
   handleInputFocus,
   handleDeleteMember,
+  onEditMember,
+  onSaveMember,
+  memberDetails,
 }) => (
   <div>
     <h2 className="text-2xl font-semibold mb-2">General Members</h2>
@@ -48,6 +56,9 @@ const AdminMembersSection: React.FC<AdminMembersSectionProps> = ({
         emails={members}
         onDelete={handleDeleteMember}
         userType="admin"
+        onEdit={onEditMember}
+        onSave={onSaveMember}
+        memberDetails={memberDetails}
       />
     )}
   </div>

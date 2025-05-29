@@ -5,23 +5,11 @@ import AdminMemberEditModal from "./AdminMemberEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
 import { Trash2, MoreHorizontal } from "lucide-react";
+import { MemberDetail } from "../../types";
 
 // Temporary: Re-declaring MemberDetail to match Admin.tsx for now.
 // TODO: Move MemberDetail to a shared types file and import it.
-interface MemberDetail {
-  email: string;
-  name: string;
-  phone: string;
-  major: string;
-  graduationDate: string;
-  status: string;
-  about: string;
-  internship: string;
-  photoUrl: string;
-  hours: string;
-  rank: string;
-  role?: string;
-}
+// interface MemberDetail { ... } // Removed local definition
 
 interface EmailListProps {
   emails: { email: string; name?: string; role?: string }[];

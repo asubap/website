@@ -7,6 +7,13 @@ import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
 import { Trash2, MoreHorizontal } from "lucide-react";
 
+// Define SponsorUpdateData locally to match Admin.tsx or import if moved to shared types
+interface SponsorUpdateData {
+  companyName: string;
+  description: string;
+  links: string[];
+}
+
 interface SponsorListProps {
   emails: string[];
   tiers: string[];
@@ -18,6 +25,7 @@ interface SponsorListProps {
     newTier: string,
     successCallback: () => void
   ) => void;
+  onProfileUpdateConfirm: (updatedData: SponsorUpdateData) => void; // New prop
 }
 
 interface SponsorProfileData {
@@ -33,6 +41,7 @@ const SponsorList = ({
   onDelete,
   userType,
   onTierChangeConfirm,
+  onProfileUpdateConfirm, // Destructure new prop
 }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,29 +96,19 @@ const SponsorList = ({
     links: string[];
   }) => {
     if (!sponsorToEdit || !session?.access_token) return;
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorToEdit}/details`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            about: updatedProfile.description,
-            links: updatedProfile.links,
-          }),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to update sponsor details");
-      showToast("Sponsor updated successfully", "success");
-      setSponsorToEdit(null);
-      setSponsorProfile(null);
-    } catch (error) {
-      console.error("Failed to update sponsor details:", error);
-      showToast("Failed to update sponsor details", "error");
-    }
+
+    // Instead of making API call here, pass data up to Admin.tsx via the new prop
+    const updatePayload: SponsorUpdateData = {
+      companyName: sponsorToEdit, // sponsorToEdit holds the company name (email/identifier)
+      description: updatedProfile.description,
+      links: updatedProfile.links,
+    };
+    onProfileUpdateConfirm(updatePayload);
+
+    // Close modal and reset state, API success/failure handled by Admin.tsx
+    setSponsorToEdit(null);
+    setSponsorProfile(null);
+    // showToast is now handled by Admin.tsx after confirmation and API call
   };
 
   const handleConfirmDelete = () => {

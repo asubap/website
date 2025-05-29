@@ -37,18 +37,17 @@ export default function SponsorsPage() {
         const data = await response.json();
 
         // Transform the fetched data into the desired format
-        const formattedSponsors = data.map((sponsor: any) => ({
+        const formattedSponsors = data.map((sponsor: Sponsor) => ({
           id: sponsor.id,
-          name: sponsor.company_name,
+          name: sponsor.name,
           tier: sponsor.tier,
-          imageUrl: sponsor.pfp_url,
+          imageUrl: sponsor.imageUrl,
         }));
 
         // Set the sponsors state ONCE with the complete list
         setSponsors(formattedSponsors);
       } catch (error) {
         console.error("Error fetching sponsors:", error);
-      } finally {
       }
     };
 

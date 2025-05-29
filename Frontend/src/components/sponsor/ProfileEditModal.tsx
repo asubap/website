@@ -143,7 +143,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleRemoveLink = (e?: React.MouseEvent) => {
-
     // Only stop propagation but not preventDefault
     if (e) {
       e.stopPropagation();
@@ -227,7 +226,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     }, 100);
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0] || null;
     if (!file) return;
 
@@ -240,7 +241,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     const newPreviewUrl = URL.createObjectURL(file);
     setPreviewImageUrl(newPreviewUrl);
     setProfilePicFile(file);
-    
+
     // Start upload process immediately
     await handleProfilePicUpload(file);
   };
@@ -248,7 +249,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   const handleProfilePicUpload = async (fileToUpload: File | null = null) => {
     // Use the passed file or fall back to the state
     const fileToUse = fileToUpload || profilePicFile;
-    
+
     if (!fileToUse || !token) return;
 
     setUploadingProfilePic(true);
@@ -277,10 +278,10 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       // Add cache busting parameter when setting the new URL
       const imageUrl = data.photoUrl || data.url;
       setCurrentProfileUrl(`${imageUrl}?t=${Date.now()}`);
-      
+
       // Clear the file state since upload is complete
       setProfilePicFile(null);
-      
+
       // Clear preview URL after successful upload
       if (previewImageUrl) {
         URL.revokeObjectURL(previewImageUrl);
@@ -319,7 +320,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
       // Get response text regardless of success/failure
       const responseText = await response.text();
-
 
       if (!response.ok) {
         throw new Error(
@@ -384,7 +384,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             <div className="absolute -bottom-2 -right-2">
               <label
                 htmlFor="profile-pic-upload"
-                className={`bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors ${uploadingProfilePic ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors ${
+                  uploadingProfilePic ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 title={uploadingProfilePic ? "Uploading..." : "Change picture"}
               >
                 <svg

@@ -14,31 +14,17 @@ import AddUserModal from "../../components/admin/AddUserModal";
 import { getNavLinks } from "../../components/nav/NavLink";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 
-import { Announcement } from "../../types";
+import { Announcement } from "../../types/index";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
+import { MemberDetail } from "../../types/index";
 
 // Define interfaces for API responses
 interface UserInfo {
   email: string;
   role: string;
   name?: string;
-}
-
-interface MemberDetail {
-  email: string;
-  name: string;
-  phone: string;
-  major: string;
-  graduationDate: string;
-  status: string;
-  about: string;
-  internship: string;
-  photoUrl: string;
-  hours: string;
-  rank: string;
-  role: string;
 }
 
 interface ApiSponsor {
@@ -480,7 +466,8 @@ const Admin = () => {
       const data = await response.json();
       if (data && data.length > 0) {
         const raw = data[0];
-        const freshData = {
+        const freshData: MemberDetail = {
+          id: raw.id?.toString() || raw.user_id || raw.user_email,
           email: raw.user_email || raw.email || "",
           name: raw.name || "",
           phone: raw.phone || "",
@@ -488,15 +475,15 @@ const Admin = () => {
           graduationDate: raw.graduating_year
             ? String(raw.graduating_year)
             : raw.graduationDate || "",
-          status: raw.member_status || raw.status || "",
+          status: raw.member_status || raw.status || "Not Specified",
           about: raw.about || "",
-          internship: raw.internship || "",
+          internship: raw.internship || "Not Specified",
           photoUrl: raw.profile_photo_url || raw.photoUrl || "",
           hours:
             raw.total_hours !== undefined
               ? String(raw.total_hours)
-              : raw.hours || "",
-          rank: raw.rank || "",
+              : raw.hours || "0",
+          rank: raw.rank || raw.role || "Not Provided",
           role: raw.role || "general-member",
         };
 
@@ -535,10 +522,38 @@ const Admin = () => {
         throw new Error("Failed to fetch members");
       }
       const data = await response.json();
-      const members = data
+      const fetchedMembers = data
         .filter((item: UserInfo) => item.role === "general-member")
-        .map((item: UserInfo) => ({ email: item.email, name: item.name }));
-      setMembers(members);
+        .map((item: UserInfo) => ({ email: item.email, name: item.name })); // Keep name as is (could be undefined/null)
+
+      fetchedMembers.sort(
+        (
+          a: { email: string; name?: string | null },
+          b: { email: string; name?: string | null }
+        ) => {
+          const nameA = a.name?.trim().toLowerCase();
+          const nameB = b.name?.trim().toLowerCase();
+
+          // Members with no name go to the bottom
+          if (!nameA && nameB) return 1;
+          if (nameA && !nameB) return -1;
+          if (!nameA && !nameB) {
+            // Both names missing, sort by email
+            return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
+          }
+
+          // Both have names, sort by name
+          if (nameA && nameB) {
+            const nameComparison = nameA.localeCompare(nameB);
+            if (nameComparison !== 0) return nameComparison;
+          }
+
+          // Names are equivalent (or one/both were missing and handled), sort by email as tie-breaker
+          return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
+        }
+      );
+
+      setMembers(fetchedMembers);
     } catch (error) {
       console.error("Error fetching members:", error);
       showToast("Failed to fetch members", "error");
@@ -648,10 +663,12 @@ const Admin = () => {
       }
       showToast("Sponsor tier updated successfully", "success");
       refetchSponsors(); // Refresh sponsor list to show new tier
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating sponsor tier:", error);
       showToast(
-        error.message || "Failed to update sponsor tier. Please try again.",
+        error instanceof Error
+          ? error.message
+          : "Failed to update sponsor tier. Please try again.",
         "error"
       );
     }
@@ -666,69 +683,97 @@ const Admin = () => {
     );
   };
 
-  // --- Member Update Logic ---
-  const actuallyUpdateMember = async (updatedData: MemberDetail) => {
+  // --- Sponsor Profile Update Logic ---
+  interface SponsorUpdateData {
+    companyName: string; // To identify the sponsor
+    description: string;
+    links: string[];
+    // photoUrl?: string; // If photo updates are handled here too
+  }
+
+  const actuallyUpdateSponsorProfile = async (
+    updatedData: SponsorUpdateData
+  ) => {
     if (!session) {
       showToast("Authentication error. Please log in again.", "error");
       return;
     }
     const token = session.access_token;
     try {
-      // API call to update member details
-      // Assuming an endpoint like /users/update-member or similar
-      // This is a placeholder, replace with your actual API endpoint and payload structure
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/users/update-member`,
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
+          updatedData.companyName
+        }/details`,
         {
-          method: "POST", // Or PUT
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(updatedData), // Send all updatedData
+          body: JSON.stringify({
+            about: updatedData.description,
+            links: updatedData.links,
+            // pfp_url: updatedData.photoUrl, // If handling photo updates
+          }),
         }
       );
-
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update member details");
+        throw new Error(
+          errorData.message || "Failed to update sponsor details"
+        );
       }
-
-      // Update local state if API call is successful
-      setMembers((prevMembers) =>
-        prevMembers.map((member) =>
-          member.email === updatedData.email
-            ? { ...member, name: updatedData.name }
-            : member
-        )
+      showToast("Sponsor details updated successfully", "success");
+      refetchSponsors(); // Refresh sponsor list, might need more specific update if only details changed
+    } catch (error: unknown) {
+      console.error("Error updating sponsor details:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Failed to update sponsor details. Please try again.",
+        "error"
       );
+    }
+  };
+
+  const promptSponsorProfileUpdate = (updatedData: SponsorUpdateData) => {
+    showConfirmationDialog(
+      "Confirm Sponsor Update",
+      `Are you sure you want to save changes for ${updatedData.companyName}?`,
+      () => actuallyUpdateSponsorProfile(updatedData),
+      "Confirm Save"
+    );
+  };
+
+  // --- Member Update Logic ---
+  const actuallyUpdateMember = async (updatedData: MemberDetail) => {
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      return;
+    }
+    try {
+      // Update local memberDetails state immediately for responsiveness of the modal if it relies on it.
       setMemberDetails((prevDetails) => ({
         ...prevDetails,
         [updatedData.email.trim().toLowerCase()]: updatedData,
       }));
 
       showToast("Member details updated successfully", "success");
-      await fetchMembers(); // Re-fetch to ensure full consistency, or rely on local update
-    } catch (error: any) {
-      console.error("Error updating member details:", error);
+      await fetchMembers(); // Crucial: Re-fetch the entire members list from the server to update the list view.
+    } catch (error: unknown) {
+      console.error("Error during member update finalization:", error);
       showToast(
-        error.message || "Failed to update member details. Please try again.",
+        error instanceof Error
+          ? error.message
+          : "Failed to update member details. Please try again.",
         "error"
       );
     }
   };
 
   const handleMemberUpdateSave = (updatedData: MemberDetail) => {
-    // This function is called from EmailList's internal modal save.
-    // It receives the already edited data.
-    showConfirmationDialog(
-      "Confirm Member Update",
-      `Are you sure you want to save changes for ${
-        updatedData.name || updatedData.email
-      }?`,
-      () => actuallyUpdateMember(updatedData),
-      "Confirm Save"
-    );
+    // Directly call actuallyUpdateMember
+    actuallyUpdateMember(updatedData);
   };
 
   return (
@@ -820,6 +865,7 @@ const Admin = () => {
                   userType="sponsor"
                   onTierChanged={refetchSponsors}
                   onTierChangeConfirm={handleSponsorTierChangeConfirm}
+                  onProfileUpdateConfirm={promptSponsorProfileUpdate}
                 />
               )}
             </div>
