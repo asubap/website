@@ -25,7 +25,14 @@ interface SponsorListProps {
     newTier: string,
     successCallback: () => void
   ) => void;
-  onProfileUpdateConfirm: (updatedData: SponsorUpdateData) => void; // New prop
+  onProfileUpdateConfirm: (updatedData: SponsorUpdateData) => void;
+  showConfirmationDialog: (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    confirmText?: string,
+    cancelText?: string
+  ) => void;
 }
 
 interface SponsorProfileData {
@@ -41,7 +48,8 @@ const SponsorList = ({
   onDelete,
   userType,
   onTierChangeConfirm,
-  onProfileUpdateConfirm, // Destructure new prop
+  onProfileUpdateConfirm,
+  showConfirmationDialog,
 }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,6 +59,8 @@ const SponsorList = ({
   const { showToast } = useToast();
   const { session } = useAuth();
   const [loadingSponsor, setLoadingSponsor] = useState(false);
+
+  console.log("SponsorList rendering. sponsorToEdit:", sponsorToEdit);
 
   const handleDeleteClick = (email: string) => {
     setEmailToDelete(email);
@@ -97,18 +107,18 @@ const SponsorList = ({
   }) => {
     if (!sponsorToEdit || !session?.access_token) return;
 
-    // Instead of making API call here, pass data up to Admin.tsx via the new prop
     const updatePayload: SponsorUpdateData = {
-      companyName: sponsorToEdit, // sponsorToEdit holds the company name (email/identifier)
+      companyName: sponsorToEdit,
       description: updatedProfile.description,
       links: updatedProfile.links,
     };
     onProfileUpdateConfirm(updatePayload);
 
-    // Close modal and reset state, API success/failure handled by Admin.tsx
+    console.log(
+      "SponsorList: handleSponsorUpdate called. Setting sponsorToEdit to null."
+    );
     setSponsorToEdit(null);
     setSponsorProfile(null);
-    // showToast is now handled by Admin.tsx after confirmation and API call
   };
 
   const handleConfirmDelete = () => {
@@ -216,8 +226,20 @@ const SponsorList = ({
           <ProfileEditModal
             isOpen={true}
             onClose={() => {
+              console.log(
+                "SponsorList: ProfileEditModal onClose called. Setting sponsorToEdit to null."
+              );
               setSponsorToEdit(null);
               setSponsorProfile(null);
+            }}
+            showDiscardConfirmation={(title, message, onConfirmDiscard) => {
+              showConfirmationDialog(
+                title,
+                message,
+                onConfirmDiscard,
+                "Discard",
+                "Keep Editing"
+              );
             }}
             sponsorName={sponsorProfile.sponsorName}
             sponsorDescription={sponsorProfile.sponsorDescription}

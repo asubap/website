@@ -71,7 +71,6 @@ const Admin = () => {
   );
 
   const [loadingAdmins, setLoadingAdmins] = useState(true);
-  const [loadingSponsors, setLoadingSponsors] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
   // Add new state for member editing - corrected type
@@ -125,7 +124,8 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (!session) return; // Don't fetch if no session
+    console.log("Admin.tsx: Main useEffect triggered. Session:", session);
+    if (!session) return;
 
     const fetchAdmins = async () => {
       setLoadingAdmins(true);
@@ -159,7 +159,7 @@ const Admin = () => {
     };
 
     const fetchSponsors = async () => {
-      setLoadingSponsors(true);
+      console.log("Admin.tsx: fetchSponsors called");
       const token = session.access_token;
       fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
         method: "GET",
@@ -176,11 +176,9 @@ const Admin = () => {
           const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
           setSponsors(sponsors);
           setTiers(tiers);
-          setLoadingSponsors(false);
         })
         .catch((error) => {
           console.error("Error fetching sponsors:", error);
-          setLoadingSponsors(false);
         });
     };
 
@@ -313,14 +311,7 @@ const Admin = () => {
 
   // Modified to show confirmation dialog
   const handleSponsorAdded = (newSponsor: ApiSponsor) => {
-    showConfirmationDialog(
-      "Confirm Add Sponsor",
-      `Are you sure you want to add ${
-        newSponsor.company_name || "this sponsor"
-      }?`,
-      () => actuallyAddSponsor(newSponsor),
-      "Confirm Add"
-    );
+    actuallyAddSponsor(newSponsor); // Call directly
   };
 
   // Actual function to create announcement after confirmation
@@ -566,7 +557,6 @@ const Admin = () => {
   const refetchSponsors = async () => {
     if (!session) return;
 
-    setLoadingSponsors(true);
     try {
       const token = session.access_token;
       const response = await fetch(
@@ -592,8 +582,6 @@ const Admin = () => {
     } catch (error) {
       console.error("Error re-fetching sponsors:", error);
       showToast("Failed to refresh sponsor data", "error");
-    } finally {
-      setLoadingSponsors(false);
     }
   };
 
@@ -737,12 +725,7 @@ const Admin = () => {
   };
 
   const promptSponsorProfileUpdate = (updatedData: SponsorUpdateData) => {
-    showConfirmationDialog(
-      "Confirm Sponsor Update",
-      `Are you sure you want to save changes for ${updatedData.companyName}?`,
-      () => actuallyUpdateSponsorProfile(updatedData),
-      "Confirm Save"
-    );
+    actuallyUpdateSponsorProfile(updatedData);
   };
 
   // --- Member Update Logic ---
@@ -855,19 +838,15 @@ const Admin = () => {
                   + <span className="hidden md:inline">New </span>Sponsor
                 </button>
               </div>
-              {loadingSponsors ? (
-                <LoadingSpinner text="Loading sponsors..." size="md" />
-              ) : (
-                <SponsorList
-                  emails={sponsors}
-                  tiers={tiers}
-                  onDelete={handleDeleteSponsor}
-                  userType="sponsor"
-                  onTierChanged={refetchSponsors}
-                  onTierChangeConfirm={handleSponsorTierChangeConfirm}
-                  onProfileUpdateConfirm={promptSponsorProfileUpdate}
-                />
-              )}
+              <SponsorList
+                emails={sponsors}
+                tiers={tiers}
+                onDelete={handleDeleteSponsor}
+                userType="sponsor"
+                onTierChangeConfirm={handleSponsorTierChangeConfirm}
+                onProfileUpdateConfirm={promptSponsorProfileUpdate}
+                showConfirmationDialog={showConfirmationDialog}
+              />
             </div>
 
             {/* General Members */}
