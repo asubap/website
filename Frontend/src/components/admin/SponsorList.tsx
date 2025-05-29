@@ -60,8 +60,6 @@ const SponsorList = ({
   const { session } = useAuth();
   const [loadingSponsor, setLoadingSponsor] = useState(false);
 
-  console.log("SponsorList rendering. sponsorToEdit:", sponsorToEdit);
-
   const handleDeleteClick = (email: string) => {
     setEmailToDelete(email);
   };
@@ -83,9 +81,21 @@ const SponsorList = ({
       );
       if (!response.ok) throw new Error("Failed to fetch sponsor details");
       const data = await response.json();
-      const fetchedLinks = (data.links || []).map(
-        (link: { type: string; url: string }) => link.url
+      const fetchedLinks: string[] = Array.isArray(data.links)
+        ? data.links.filter(
+            (link: unknown): link is string => typeof link === "string"
+          )
+        : [];
+
+      console.log(
+        "[SponsorList] handleEditClick: Fetched data from backend:",
+        data
       );
+      console.log(
+        "[SponsorList] handleEditClick: Parsed fetchedLinks:",
+        fetchedLinks
+      );
+
       setSponsorProfile({
         sponsorName: data.company_name || email,
         sponsorDescription: data.about || data.description || "",

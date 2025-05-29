@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MoreHorizontal, X } from "lucide-react";
 import Modal from "../ui/Modal"; // Adjust path as needed
 import ConfirmDialog from "../common/ConfirmDialog"; // Adjust path as needed
@@ -28,7 +28,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   onClose,
   showDiscardConfirmation,
   sponsorName,
-  sponsorDescription,
+  sponsorDescription = "",
   onUpdate,
   token,
   profileUrl,
@@ -53,7 +53,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
   // Memoize hasUnsavedChanges as it's used in a useEffect dependency array
   // and its own dependencies are clear.
-  const hasUnsavedChanges = React.useCallback(() => {
+  const hasUnsavedChanges = useCallback(() => {
     const aboutChanged = about !== initialAbout;
     const linksChanged =
       JSON.stringify(linksList) !== JSON.stringify(initialLinks);
@@ -112,19 +112,20 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleAddLink = () => {
-    if (!newLink.trim()) {
-      setLinkError("Please enter a valid URL");
+    const trimmedNewLink = newLink.trim();
+    if (!trimmedNewLink) {
+      setLinkError("Link URL cannot be empty.");
       return;
     }
 
-    if (!isValidUrl(newLink)) {
+    if (!isValidUrl(trimmedNewLink)) {
       setLinkError(
         "Please enter a valid URL starting with http:// or https://"
       );
       return;
     }
 
-    setLinksList((prevLinks) => [...prevLinks, newLink]);
+    setLinksList((prevLinks) => [...prevLinks, trimmedNewLink]);
     setNewLink("");
     setLinkError("");
   };
@@ -180,7 +181,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const proceedWithClose = () => {
-    console.log("ProfileEditModal: proceedWithClose called");
     onClose();
 
     if (previewImageUrl) {
@@ -189,10 +189,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleCloseAttempt = () => {
-    console.log(
-      "ProfileEditModal: handleCloseAttempt called. Has unsaved changes:",
-      hasUnsavedChanges()
-    );
     if (hasUnsavedChanges()) {
       showDiscardConfirmation(
         "Discard Unsaved Changes?",
@@ -205,7 +201,14 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleSave = async () => {
-    if (newLink.trim()) {
+    const currentNewLinkTrimmed = newLink.trim();
+    if (currentNewLinkTrimmed) {
+      if (!isValidUrl(currentNewLinkTrimmed)) {
+        setLinkError(
+          "Please enter a valid URL starting with http:// or https://"
+        );
+        return;
+      }
       setShowLinkWarning(true);
       return;
     }
@@ -221,27 +224,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     if (profilePicFile) {
       setProfilePicFile(null);
     }
-
     proceedWithClose();
-  };
-
-  const handleAddAndSave = () => {
-    handleAddLink();
-    setTimeout(() => {
-      onUpdate({
-        description: about,
-        links: [...linksList, newLink],
-        newProfilePic: profilePicFile,
-      });
-
-      setInitialAbout(about);
-      setInitialLinks([...linksList, newLink]);
-      if (profilePicFile) {
-        setProfilePicFile(null);
-      }
-
-      proceedWithClose();
-    }, 100);
   };
 
   const handleFileSelect = async (
@@ -563,20 +546,68 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
           isOpen={showLinkWarning}
           onClose={() => {
             setShowLinkWarning(false);
+            setNewLink("");
+            setLinkError("");
             onUpdate({
               description: about,
               links: linksList,
-              newProfilePic: null,
+              newProfilePic: profilePicFile,
             });
-            handleCloseAttempt();
+            setInitialAbout(about);
+            setInitialLinks([...linksList]);
+            if (profilePicFile) {
+              setProfilePicFile(null);
+            }
+            proceedWithClose();
           }}
           onConfirm={() => {
-            handleAddAndSave();
+            setShowLinkWarning(false);
+            const linkValueFromState = newLink;
+            const linkToBeAdded = linkValueFromState.trim();
+
+            if (!linkToBeAdded) {
+              console.warn(
+                "[ProfileEditModal] Link to be added was empty after trim. Discarding it and saving other changes."
+              );
+              setNewLink("");
+              setLinkError("");
+              onUpdate({
+                description: about,
+                links: linksList,
+                newProfilePic: profilePicFile,
+              });
+              setInitialAbout(about);
+              setInitialLinks([...linksList]);
+              if (profilePicFile) {
+                setProfilePicFile(null);
+              }
+              proceedWithClose();
+              return;
+            }
+
+            setNewLink("");
+            setLinkError("");
+            setLinksList((prevLinksList) => [...prevLinksList, linkToBeAdded]);
+
+            const finalLinksForSave = [...linksList, linkToBeAdded];
+
+            onUpdate({
+              description: about,
+              links: finalLinksForSave,
+              newProfilePic: profilePicFile,
+            });
+
+            setInitialAbout(about);
+            setInitialLinks(finalLinksForSave);
+            if (profilePicFile) {
+              setProfilePicFile(null);
+            }
+            proceedWithClose();
           }}
-          title="Unsaved Link"
-          message={`You have text in the link field that hasn't been added: "${newLink}". Would you like to add it before saving?`}
-          confirmText="Add & Save"
-          cancelText="Discard Link"
+          title="Unadded Link"
+          message={`You have a link "${newLink}" in the input field that hasn't been added to the list. What would you like to do?`}
+          confirmText="Add Link and Save All"
+          cancelText="Discard Link and Save All"
           preventOutsideClick={true}
         />
       )}
