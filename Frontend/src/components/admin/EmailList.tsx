@@ -4,7 +4,7 @@ import { useToast } from "../../context/toast/ToastContext";
 import AdminMemberEditModal from "./AdminMemberEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
-import { Trash2 } from "lucide-react";
+import { Trash2, MoreHorizontal } from "lucide-react";
 
 // Temporary: Re-declaring MemberDetail to match Admin.tsx for now.
 // TODO: Move MemberDetail to a shared types file and import it.
@@ -122,13 +122,27 @@ const EmailList = ({
             <span className="text-gray-800 text-m pr-2">
               {name ? name : email}
             </span>
-            <button
-              onClick={(e) => handleDeleteClick(email, e)}
-              className="text-bapred hover:text-bapreddark p-1"
-              aria-label={`Delete ${email}`}
-            >
-              <Trash2 size={16} />
-            </button>
+            <div className="flex items-center space-x-1">
+              {onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditClick(email);
+                  }}
+                  className="text-gray-600 hover:text-bapred p-1"
+                  aria-label={`Edit ${name || email}`}
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+              )}
+              <button
+                onClick={(e) => handleDeleteClick(email, e)}
+                className="text-bapred hover:text-bapreddark p-1"
+                aria-label={`Delete ${email}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
 

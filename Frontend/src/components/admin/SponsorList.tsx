@@ -5,7 +5,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import ProfileEditModal from "../sponsor/ProfileEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
-import { Trash2 } from "lucide-react";
+import { Trash2, MoreHorizontal } from "lucide-react";
 
 interface SponsorListProps {
   emails: string[];
@@ -168,27 +168,39 @@ const SponsorList = ({
             onClick={() => handleEditClick(email)}
           >
             <span className="text-gray-800 text-m pr-2">{email}</span>
-            <select
-              value={tier}
-              onChange={(e) => handleChangeTier(email, e.target.value)}
-              className="ml-auto pr-1 rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <option value="platinum">Platinum</option>
-              <option value="gold">Gold</option>
-              <option value="silver">Silver</option>
-              <option value="bronze">Bronze</option>
-            </select>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteClick(email);
-              }}
-              className="text-bapred pl-3 hover:text-bapreddark p-1"
-              aria-label={`Delete ${email}`}
-            >
-              <Trash2 size={16} />
-            </button>
+            <div className="flex items-center space-x-2 ml-auto">
+              <select
+                value={tier}
+                onChange={(e) => handleChangeTier(email, e.target.value)}
+                className="rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none px-2 py-1 text-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="platinum">Platinum</option>
+                <option value="gold">Gold</option>
+                <option value="silver">Silver</option>
+                <option value="bronze">Bronze</option>
+              </select>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick(email);
+                }}
+                className="text-gray-600 hover:text-bapred p-1"
+                aria-label={`Edit ${email}`}
+              >
+                <MoreHorizontal size={16} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick(email);
+                }}
+                className="text-bapred hover:text-bapreddark p-1"
+                aria-label={`Delete ${email}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
 
