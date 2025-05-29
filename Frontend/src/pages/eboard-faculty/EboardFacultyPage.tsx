@@ -17,8 +17,6 @@ import DirectorOfMarketing from "../../assets/eboard-faculty/director_marketing.
 import PledgeClassDirector from "../../assets/eboard-faculty/pledge_class_director.jpg";
 import FacultyAdvisor from "../../assets/eboard-faculty/faculty_advisor.jpg";
 
-
-
 type EboardFacultyEntry = {
   image: string;
   name: string;
@@ -27,7 +25,6 @@ type EboardFacultyEntry = {
   major: string; // Assuming 'major' can also store 'Accountancy & Business Law '25' or 'Faculty Advisor' details
   location: string;
 };
-
 
 const EboardFacultyPage: React.FC = () => {
   const { session, role } = useAuth();
@@ -142,7 +139,10 @@ const EboardFacultyPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {eboardFacultyEntries.map((entry, index) => (
-              <div key={index} className="bg-white shadow-xl rounded-lg p-6 flex flex-col items-center text-center">
+              <div
+                key={index}
+                className="bg-white shadow-xl rounded-lg p-6 flex flex-col items-center text-center"
+              >
                 <img
                   src={entry.image} // Placeholder image path
                   alt={`Photo of ${entry.name}`}

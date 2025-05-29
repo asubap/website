@@ -49,8 +49,14 @@ const ContactUsPage: React.FC = () => {
     { role: "Treasurer", email: "treasurer.asubap@gmail.com" },
     { role: "Internal Communications", email: "cmc.asubap@gmail.com" },
     { role: "Director of Recruiting", email: "info.asubap@gmail.com" },
-    { role: "Director of External Reporting", email: "natl.ro.asubap@gmail.com" },
-    { role: "Director of the Pledge Class", email: "pledgeclass.asubap@gmail.com" },
+    {
+      role: "Director of External Reporting",
+      email: "natl.ro.asubap@gmail.com",
+    },
+    {
+      role: "Director of the Pledge Class",
+      email: "pledgeclass.asubap@gmail.com",
+    },
     { role: "Director of Social Events", email: "socials.asubap@gmail.com" },
     { role: "Director of Community Service", email: "dcs.asubap@gmail.com" },
   ];
@@ -67,16 +73,21 @@ const ContactUsPage: React.FC = () => {
       />
       <main className="flex-grow p-8 pt-32">
         <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-left w-full mb-6">
-          Contact Us
-        </h1>
+          <h1 className="text-4xl font-bold text-left w-full mb-6">
+            Contact Us
+          </h1>
 
           <div className="bg-white shadow-xl rounded-lg p-8 md:p-10 grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Contact Info Section */}
             <div className="md:col-span-2 space-y-5">
               {contactDetails.map((contact, index) => (
-                <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 border-b border-gray-200 lg:last:border-b-0">
-                  <p className="text-lg font-semibold min-w-[250px]">{contact.role}:</p>
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 border-b border-gray-200 lg:last:border-b-0"
+                >
+                  <p className="text-lg font-semibold min-w-[250px]">
+                    {contact.role}:
+                  </p>
                   <button
                     type="button"
                     className="truncate text-bapred font-medium hover:underline focus:outline-none"

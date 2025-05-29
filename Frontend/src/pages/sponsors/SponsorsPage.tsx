@@ -28,7 +28,9 @@ export default function SponsorsPage() {
   useEffect(() => {
     const fetchSponsorsData = async () => {
       try {
-        const response = await fetch("https://asubap-backend.vercel.app/sponsors/");
+        const response = await fetch(
+          "https://asubap-backend.vercel.app/sponsors/"
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -57,10 +59,16 @@ export default function SponsorsPage() {
   useEffect(() => {
     // Only sort if there are sponsors to avoid unnecessary operations
     if (sponsors.length > 0) {
-      setPlatinumSponsors(sponsors.filter((sponsor) => sponsor.tier === "platinum"));
+      setPlatinumSponsors(
+        sponsors.filter((sponsor) => sponsor.tier === "platinum")
+      );
       setGoldSponsors(sponsors.filter((sponsor) => sponsor.tier === "gold"));
-      setSilverSponsors(sponsors.filter((sponsor) => sponsor.tier === "silver"));
-      setBronzeSponsors(sponsors.filter((sponsor) => sponsor.tier === "bronze"));
+      setSilverSponsors(
+        sponsors.filter((sponsor) => sponsor.tier === "silver")
+      );
+      setBronzeSponsors(
+        sponsors.filter((sponsor) => sponsor.tier === "bronze")
+      );
     } else {
       // Optionally, clear the sorted arrays if the main sponsors list is empty
       setPlatinumSponsors([]);

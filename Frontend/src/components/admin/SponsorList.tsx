@@ -11,13 +11,32 @@ interface SponsorListProps {
   onDelete: (email: string) => void;
   userType: "admin" | "sponsor";
   onTierChanged?: () => void;
+  onTierChangeConfirm: (
+    email: string,
+    newTier: string,
+    successCallback: () => void
+  ) => void;
 }
 
-const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: SponsorListProps) => {
+interface SponsorProfileData {
+  sponsorName: string;
+  sponsorDescription: string;
+  links: string[];
+  profileUrl: string;
+}
+
+const SponsorList = ({
+  emails,
+  tiers,
+  onDelete,
+  userType,
+  onTierChangeConfirm,
+}: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sponsorToEdit, setSponsorToEdit] = useState<string | null>(null);
-  const [sponsorProfile, setSponsorProfile] = useState<any>(null);
+  const [sponsorProfile, setSponsorProfile] =
+    useState<SponsorProfileData | null>(null);
   const { showToast } = useToast();
   const { session } = useAuth();
   const [loadingSponsor, setLoadingSponsor] = useState(false);
@@ -26,7 +45,6 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
     setEmailToDelete(email);
   };
 
-  // Fetch sponsor profile info (mocked for now, replace with real fetch if needed)
   const handleEditClick = async (email: string) => {
     if (!session?.access_token) return;
     setLoadingSponsor(true);
@@ -44,21 +62,28 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
       );
       if (!response.ok) throw new Error("Failed to fetch sponsor details");
       const data = await response.json();
+      const fetchedLinks = (data.links || []).map(
+        (link: { type: string; url: string }) => link.url
+      );
       setSponsorProfile({
         sponsorName: data.company_name || email,
         sponsorDescription: data.about || data.description || "",
-        links: data.links || [],
+        links: fetchedLinks,
         profileUrl: data.pfp_url || data.profileUrl || "",
       });
       setSponsorToEdit(email);
     } catch (error) {
+      console.error("Failed to fetch sponsor details:", error);
       showToast("Failed to fetch sponsor details", "error");
     } finally {
       setLoadingSponsor(false);
     }
   };
 
-  const handleSponsorUpdate = async (updatedProfile: any) => {
+  const handleSponsorUpdate = async (updatedProfile: {
+    description: string;
+    links: string[];
+  }) => {
     if (!sponsorToEdit || !session?.access_token) return;
     try {
       const response = await fetch(
@@ -80,6 +105,7 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
       setSponsorToEdit(null);
       setSponsorProfile(null);
     } catch (error) {
+      console.error("Failed to update sponsor details:", error);
       showToast("Failed to update sponsor details", "error");
     }
   };
@@ -100,41 +126,19 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
   };
 
   const handleChangeTier = async (email: string, newTier: string) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/change-sponsor-tier`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ sponsor_name: email, tier: newTier }),
-        }
-      );
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        showToast(errorData.message || "Failed to change tier", "error");
-        return;
-      }
-
-      showToast("Tier changed successfully", "success");
-      
-      // Call the callback to refresh sponsor data instead of reloading the page
-      if (onTierChanged) {
-        onTierChanged();
-      }
-    } catch (error) {
-      console.error("Error changing tier:", error);
-      showToast("Failed to change tier. Please try again.", "error");
-    }
+    onTierChangeConfirm(email, newTier, () => {
+      // This successCallback will be invoked by Admin.tsx after API success
+      // The onTierChanged prop (e.g., refetchSponsors) is managed by Admin.tsx
+      // after successful update.
+    });
   };
 
   // Filter sponsors based on search query
   const filteredSponsors = emails
     .map((email, index) => ({ email, tier: tiers[index] }))
-    .filter(({ email }) => email.toLowerCase().includes(searchQuery.toLowerCase()));
+    .filter(({ email }) =>
+      email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <>
@@ -144,7 +148,7 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
           type="text"
           placeholder="Search sponsors by name or email..."
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
         />
       </div>
@@ -169,7 +173,7 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
               value={tier}
               onChange={(e) => handleChangeTier(email, e.target.value)}
               className="ml-auto pr-1 rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none"
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <option value="platinum">Platinum</option>
               <option value="gold">Gold</option>
@@ -177,7 +181,10 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
               <option value="bronze">Bronze</option>
             </select>
             <button
-              onClick={e => { e.stopPropagation(); handleDeleteClick(email); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(email);
+              }}
               className="text-bapred pl-3 hover:text-bapreddark font-bold"
               aria-label={`Delete ${email}`}
             >
@@ -198,7 +205,10 @@ const SponsorList = ({ emails, tiers, onDelete, userType, onTierChanged }: Spons
         {sponsorToEdit && sponsorProfile && (
           <ProfileEditModal
             isOpen={true}
-            onClose={() => { setSponsorToEdit(null); setSponsorProfile(null); }}
+            onClose={() => {
+              setSponsorToEdit(null);
+              setSponsorProfile(null);
+            }}
             sponsorName={sponsorProfile.sponsorName}
             sponsorDescription={sponsorProfile.sponsorDescription}
             onUpdate={handleSponsorUpdate}

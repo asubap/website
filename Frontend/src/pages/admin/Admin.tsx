@@ -12,6 +12,7 @@ import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal"
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import AddUserModal from "../../components/admin/AddUserModal";
 import { getNavLinks } from "../../components/nav/NavLink";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 
 import { Announcement } from "../../types";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
@@ -23,6 +24,21 @@ interface UserInfo {
   email: string;
   role: string;
   name?: string;
+}
+
+interface MemberDetail {
+  email: string;
+  name: string;
+  phone: string;
+  major: string;
+  graduationDate: string;
+  status: string;
+  about: string;
+  internship: string;
+  photoUrl: string;
+  hours: string;
+  rank: string;
+  role: string;
 }
 
 interface ApiSponsor {
@@ -72,16 +88,55 @@ const Admin = () => {
   const [loadingSponsors, setLoadingSponsors] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
-  // Add new state for member editing
-  const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>(
-    {}
-  );
+  // Add new state for member editing - corrected type
+  const [memberDetails, setMemberDetails] = useState<{
+    [key: string]: MemberDetail;
+  }>({});
 
   // Add new state for showAddMemberModal
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
   // Add new state for showAddAdminModal
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+
+  // State for ConfirmDialog
+  interface ConfirmDialogInfo {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    cancelText?: string;
+  }
+
+  const [confirmDialogInfo, setConfirmDialogInfo] = useState<ConfirmDialogInfo>(
+    {
+      isOpen: false,
+      title: "",
+      message: "",
+      onConfirm: () => {},
+    }
+  );
+
+  const showConfirmationDialog = (
+    title: string,
+    message: string,
+    onConfirmAction: () => void,
+    confirmText?: string,
+    cancelText?: string
+  ) => {
+    setConfirmDialogInfo({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirmAction();
+        setConfirmDialogInfo((prev) => ({ ...prev, isOpen: false }));
+      },
+      confirmText,
+      cancelText,
+    });
+  };
 
   useEffect(() => {
     if (!session) return; // Don't fetch if no session
@@ -228,12 +283,12 @@ const Admin = () => {
     }
   };
 
-  const handleSponsorAdded = async (newSponsor: ApiSponsor) => {
-    // Re-fetch sponsors from server to ensure data consistency
+  // Actual function to add sponsor after confirmation
+  const actuallyAddSponsor = async (newSponsor: ApiSponsor) => {
     try {
       if (!session) return;
-
       const token = session.access_token;
+      // Re-fetch sponsors from server to ensure data consistency (original logic)
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/`,
         {
@@ -247,70 +302,99 @@ const Admin = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const sponsors = data.map(
+        const updatedSponsors = data.map(
           (sponsor: ApiSponsor) => sponsor.company_name
         );
-        const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
-        setSponsors(sponsors);
-        setTiers(tiers);
+        const updatedTiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+        setSponsors(updatedSponsors);
+        setTiers(updatedTiers);
+      } else {
+        // Fallback to local state update if re-fetch fails
+        setSponsors([...sponsors, newSponsor.company_name]);
+        setTiers([...tiers, newSponsor.tier]);
       }
     } catch (error) {
       console.error("Error re-fetching sponsors:", error);
       // Fallback to local state update if re-fetch fails
       setSponsors([...sponsors, newSponsor.company_name]);
+      setTiers([...tiers, newSponsor.tier]);
     }
 
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
+    setShowAddSponsorModal(false); // Close the modal after successful addition
   };
 
-  // Handle a newly created announcement
-  const handleAnnouncementCreated = (newAnnouncement: Announcement) => {
-    // Add the new announcement to the list and sort
+  // Modified to show confirmation dialog
+  const handleSponsorAdded = (newSponsor: ApiSponsor) => {
+    showConfirmationDialog(
+      "Confirm Add Sponsor",
+      `Are you sure you want to add ${
+        newSponsor.company_name || "this sponsor"
+      }?`,
+      () => actuallyAddSponsor(newSponsor),
+      "Confirm Add"
+    );
+  };
+
+  // Actual function to create announcement after confirmation
+  const actuallyCreateAnnouncement = (newAnnouncement: Announcement) => {
+    // Add the new announcement to the list and sort (original logic)
     setAnnouncements((prevAnnouncements) => {
       const updatedAnnouncements = [...prevAnnouncements, newAnnouncement];
       return updatedAnnouncements.sort((a, b) => {
-        // First sort by pinned status (pinned items first)
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-
-        // Then sort by created_at (newer first) - safely handle null values
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     });
-
-    // Show success toast before refresh
     showToast("Announcement created successfully", "success");
-
+    setShowCreateAnnouncementModal(false); // Close the modal
     // Refresh the page after a short delay
     setTimeout(() => {
-      window.location.reload();
-    }, 1000); // 1 second delay to let the user see the toast
+      window.location.reload(); // Or fetchAnnouncements() if preferred over reload
+    }, 1000);
   };
 
-  // Handle editing an announcement
-  const handleAnnouncementUpdated = (updatedAnnouncement: Announcement) => {
+  // Modified to show confirmation
+  const handleAnnouncementCreated = (newAnnouncement: Announcement) => {
+    showConfirmationDialog(
+      "Confirm Create Announcement",
+      `Are you sure you want to create the announcement titled "${newAnnouncement.title}"?`,
+      () => actuallyCreateAnnouncement(newAnnouncement),
+      "Confirm Create"
+    );
+  };
+
+  // Actual function to update announcement after confirmation
+  const actuallyUpdateAnnouncement = (updatedAnnouncement: Announcement) => {
     setAnnouncements((prevAnnouncements) => {
       const updated = prevAnnouncements.map((a) =>
         a.id === updatedAnnouncement.id ? updatedAnnouncement : a
       );
-
-      // Re-sort after update
       return updated.sort((a, b) => {
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-
-        // Sort by created_at (newer first) - safely handle null values
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     });
-
+    showToast("Announcement updated successfully", "success");
     setShowEditAnnouncementModal(false);
     setAnnouncementToEdit(null);
+  };
+
+  // Modified to show confirmation
+  const handleAnnouncementUpdated = (updatedAnnouncement: Announcement) => {
+    showConfirmationDialog(
+      "Confirm Update Announcement",
+      `Are you sure you want to save changes to "${updatedAnnouncement.title}"?`,
+      () => actuallyUpdateAnnouncement(updatedAnnouncement),
+      "Confirm Update"
+    );
   };
 
   const handleEditAnnouncementClick = (announcement: Announcement) => {
@@ -498,6 +582,155 @@ const Admin = () => {
     }
   };
 
+  // Function to actually add members after confirmation
+  const actuallyAddMembers = (newMembers: string[]) => {
+    setMembers((prev) => [
+      ...prev,
+      ...newMembers.map((email: string) => ({ email, name: undefined })), // Ensure name is explicitly undefined or fetched if available
+    ]);
+    showToast(`${newMembers.length} member(s) added successfully`, "success");
+    setShowAddMemberModal(false); // Close the modal
+    fetchMembers(); // Refresh member list
+  };
+
+  // Modified onUserAdded for members to show confirmation
+  const onAddMemberSubmit = (newMembers: string[]) => {
+    showConfirmationDialog(
+      "Confirm Add Members",
+      `Are you sure you want to add ${newMembers.length} new member(s)?`,
+      () => actuallyAddMembers(newMembers),
+      "Confirm Add"
+    );
+  };
+
+  // Function to actually add admins after confirmation
+  const actuallyAddAdmins = (newAdmins: string[]) => {
+    setAdminEmails((prev) => [...prev, ...newAdmins]);
+    showToast(`${newAdmins.length} admin(s) added successfully`, "success");
+    setShowAddAdminModal(false); // Close the modal
+    // Re-fetch admins or update state as needed. Assuming fetchAdmins() exists and is appropriate
+    // For simplicity, directly updating state was done. If fetchAdmins is better:
+    // fetchAdmins();
+  };
+
+  // Modified onUserAdded for admins to show confirmation
+  const onAddAdminSubmit = (newAdmins: string[]) => {
+    showConfirmationDialog(
+      "Confirm Add Admins",
+      `Are you sure you want to add ${newAdmins.length} new admin(s)?`,
+      () => actuallyAddAdmins(newAdmins),
+      "Confirm Add"
+    );
+  };
+
+  // --- Sponsor Tier Update Logic ---
+  const actuallyUpdateSponsorTier = async (email: string, newTier: string) => {
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      return;
+    }
+    const token = session.access_token;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/change-sponsor-tier`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ sponsor_name: email, tier: newTier }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to change tier");
+      }
+      showToast("Sponsor tier updated successfully", "success");
+      refetchSponsors(); // Refresh sponsor list to show new tier
+    } catch (error: any) {
+      console.error("Error updating sponsor tier:", error);
+      showToast(
+        error.message || "Failed to update sponsor tier. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleSponsorTierChangeConfirm = (email: string, newTier: string) => {
+    showConfirmationDialog(
+      "Confirm Tier Change",
+      `Are you sure you want to change ${email}'s tier to ${newTier}?`,
+      () => actuallyUpdateSponsorTier(email, newTier),
+      "Confirm Change"
+    );
+  };
+
+  // --- Member Update Logic ---
+  const actuallyUpdateMember = async (updatedData: MemberDetail) => {
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      return;
+    }
+    const token = session.access_token;
+    try {
+      // API call to update member details
+      // Assuming an endpoint like /users/update-member or similar
+      // This is a placeholder, replace with your actual API endpoint and payload structure
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/users/update-member`,
+        {
+          method: "POST", // Or PUT
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedData), // Send all updatedData
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update member details");
+      }
+
+      // Update local state if API call is successful
+      setMembers((prevMembers) =>
+        prevMembers.map((member) =>
+          member.email === updatedData.email
+            ? { ...member, name: updatedData.name }
+            : member
+        )
+      );
+      setMemberDetails((prevDetails) => ({
+        ...prevDetails,
+        [updatedData.email.trim().toLowerCase()]: updatedData,
+      }));
+
+      showToast("Member details updated successfully", "success");
+      await fetchMembers(); // Re-fetch to ensure full consistency, or rely on local update
+    } catch (error: any) {
+      console.error("Error updating member details:", error);
+      showToast(
+        error.message || "Failed to update member details. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleMemberUpdateSave = (updatedData: MemberDetail) => {
+    // This function is called from EmailList's internal modal save.
+    // It receives the already edited data.
+    showConfirmationDialog(
+      "Confirm Member Update",
+      `Are you sure you want to save changes for ${
+        updatedData.name || updatedData.email
+      }?`,
+      () => actuallyUpdateMember(updatedData),
+      "Confirm Save"
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen font-outfit">
       <Navbar
@@ -586,6 +819,7 @@ const Admin = () => {
                   onDelete={handleDeleteSponsor}
                   userType="sponsor"
                   onTierChanged={refetchSponsors}
+                  onTierChangeConfirm={handleSponsorTierChangeConfirm}
                 />
               )}
             </div>
@@ -609,9 +843,7 @@ const Admin = () => {
                   onDelete={handleDelete}
                   userType="admin"
                   onEdit={handleMemberEdit}
-                  onSave={async () => {
-                    await fetchMembers();
-                  }}
+                  onSave={handleMemberUpdateSave}
                   memberDetails={memberDetails}
                 />
               )}
@@ -671,7 +903,6 @@ const Admin = () => {
         cancelText="Cancel"
       />
 
-      {/* Add Member Modal */}
       {showAddMemberModal && (
         <AddUserModal
           role="general-member"
@@ -679,12 +910,7 @@ const Admin = () => {
           label="Email Addresses"
           buttonText="Add Member"
           onClose={() => setShowAddMemberModal(false)}
-          onUserAdded={(newMembers: string[]) =>
-            setMembers((prev) => [
-              ...prev,
-              ...newMembers.map((email: string) => ({ email })),
-            ])
-          }
+          onUserAdded={onAddMemberSubmit}
         />
       )}
 
@@ -696,11 +922,22 @@ const Admin = () => {
           label="Email Addresses"
           buttonText="Add Admin"
           onClose={() => setShowAddAdminModal(false)}
-          onUserAdded={(newAdmins: string[]) =>
-            setAdminEmails((prev) => [...prev, ...newAdmins])
-          }
+          onUserAdded={onAddAdminSubmit}
         />
       )}
+
+      {/* Confirmation Dialog for all actions */}
+      <ConfirmDialog
+        isOpen={confirmDialogInfo.isOpen}
+        onClose={() =>
+          setConfirmDialogInfo((prev) => ({ ...prev, isOpen: false }))
+        }
+        onConfirm={confirmDialogInfo.onConfirm}
+        title={confirmDialogInfo.title}
+        message={confirmDialogInfo.message}
+        confirmText={confirmDialogInfo.confirmText ?? "Confirm"}
+        cancelText={confirmDialogInfo.cancelText ?? "Cancel"}
+      />
     </div>
   );
 };
