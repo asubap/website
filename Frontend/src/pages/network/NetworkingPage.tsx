@@ -4,7 +4,7 @@ import NetworkSearch from "../../components/network/NetworkSearch";
 import Fuse from "fuse.js";
 
 import NetworkingLayout from "../../components/network/NetworkingLayout";
-import { Member, Sponsor } from "../../types";
+import { MemberDetail as Member, Sponsor } from "../../types";
 import NetworkList from "../../components/network/NetworkList";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { getNavLinks } from "../../components/nav/NavLink";
@@ -83,20 +83,21 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
     type: "member",
     name: memberName,
     email: item.user_email || "Not Provided",
+    phone: item.phone || "Not Provided",
+    major: item.major || "Not Provided",
+    graduationDate: item.graduating_year || item.year || "Not Provided",
+    status: "Not Specified",
+    about: memberAbout,
+    internship: item.internship || "Not Specified",
+    photoUrl: memberPhotoUrl,
     hours: item.total_hours?.toString() ?? "0",
     developmentHours: item.development_hours?.toString() ?? "0",
     professionalHours: item.professional_hours?.toString() ?? "0",
     serviceHours: item.service_hours?.toString() ?? "0",
     socialHours: item.social_hours?.toString() ?? "0",
     links: memberLinks,
-    major: item.major || "Not Provided",
-    about: memberAbout,
-    graduationDate: item.graduating_year || item.year || "Not Provided",
-    role: item.role || "Not Provided",
-    photoUrl: memberPhotoUrl,
-    phone: item.phone || "",
-    status: item.role || "Not Provided",
-    internship: item.internship || "",
+    rank: item.role || "Not Provided",
+    role: item.role || "general-member",
   };
 };
 
@@ -288,7 +289,6 @@ const NetworkingPage = () => {
   }, [isMembersLoading, isSponsorsLoading, networkEntities]);
 
   const handleSearch = (query: string, filters: Filters) => {
-
     let results = networkEntities; // Start with combined list
 
     // 1. Apply Fuzzy Search (if query exists)

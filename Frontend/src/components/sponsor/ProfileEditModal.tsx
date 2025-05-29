@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MoreHorizontal, X } from "lucide-react";
 import Modal from "../ui/Modal"; // Adjust path as needed
 import ConfirmDialog from "../common/ConfirmDialog"; // Adjust path as needed
@@ -6,6 +6,11 @@ import ConfirmDialog from "../common/ConfirmDialog"; // Adjust path as needed
 interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
+  showDiscardConfirmation: (
+    title: string,
+    message: string,
+    onConfirmDiscard: () => void
+  ) => void;
   sponsorName: string;
   sponsorDescription: string;
   onUpdate: (updatedProfile: {
@@ -21,8 +26,9 @@ interface ProfileEditModalProps {
 const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   isOpen,
   onClose,
+  showDiscardConfirmation,
   sponsorName,
-  sponsorDescription,
+  sponsorDescription = "",
   onUpdate,
   token,
   profileUrl,
@@ -34,6 +40,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   const [newLink, setNewLink] = useState("");
   const [editingLink, setEditingLink] = useState({ index: -1, value: "" });
   const [initialAbout, setInitialAbout] = useState(sponsorDescription);
+  const [initialLinks, setInitialLinks] = useState<string[]>([...links]);
   const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [currentProfileUrl, setCurrentProfileUrl] = useState(profileUrl);
@@ -44,33 +51,55 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   const [showPicConfirmation, setShowPicConfirmation] = useState(false);
   const [showLinkWarning, setShowLinkWarning] = useState(false);
 
-  // Use refs to reliably track changes
-  const hasChangesRef = useRef({
-    about: false,
-    links: false,
-  });
+  // Memoize hasUnsavedChanges as it's used in a useEffect dependency array
+  // and its own dependencies are clear.
+  const hasUnsavedChanges = useCallback(() => {
+    const aboutChanged = about !== initialAbout;
+    const linksChanged =
+      JSON.stringify(linksList) !== JSON.stringify(initialLinks);
+    const picChanged = !!profilePicFile;
+    const newLinkNotEmpty = newLink.trim() !== "";
+    return aboutChanged || linksChanged || picChanged || newLinkNotEmpty;
+  }, [about, initialAbout, linksList, initialLinks, profilePicFile, newLink]);
 
   useEffect(() => {
     setAbout(sponsorDescription);
-    setLinksList(links);
+    setLinksList([...links]);
+    setInitialAbout(sponsorDescription);
+    setInitialLinks([...links]);
 
     // Add a cache-busting parameter to ensure fresh image loads when modal opens
     setCurrentProfileUrl(`${profileUrl}?t=${Date.now()}`);
-
-    setInitialAbout(sponsorDescription);
-    // Reset file selection state when modal opens/closes
     setProfilePicFile(null);
-    setPreviewImageUrl(null); // Also reset preview URL
-    // Reset change tracking when modal opens/closes
-    hasChangesRef.current = {
-      about: false,
-      links: false,
-    };
+    setPreviewImageUrl(null);
     // Revoke previous object URL if it exists on modal open/re-render
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
     }
-  }, [isOpen, links, profileUrl, sponsorDescription]); // Added isOpen dependency
+  }, [isOpen, links, profileUrl, sponsorDescription]);
+
+  // Effect for handling 'beforeunload' confirmation
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // No need to check isOpen here as the effect runs conditionally based on isOpen
+      event.preventDefault();
+      event.returnValue = ""; // For Chrome/Edge
+      return ""; // For Firefox/legacy
+    };
+
+    if (isOpen && hasUnsavedChanges()) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }
+    // No explicit else needed to remove, as a new effect run without the condition
+    // will execute the cleanup from the previous run that added the listener.
+    // However, explicitly removing if the condition is false is clearer.
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload); // Ensure cleanup in all paths
+    };
+  }, [isOpen, hasUnsavedChanges]); // hasUnsavedChanges is now a stable useCallback-wrapped function
 
   const isValidUrl = (urlString: string) => {
     try {
@@ -83,31 +112,26 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleAddLink = () => {
-    if (!newLink.trim()) {
-      setLinkError("Please enter a valid URL");
+    const trimmedNewLink = newLink.trim();
+    if (!trimmedNewLink) {
+      setLinkError("Link URL cannot be empty.");
       return;
     }
 
-    if (!isValidUrl(newLink)) {
+    if (!isValidUrl(trimmedNewLink)) {
       setLinkError(
         "Please enter a valid URL starting with http:// or https://"
       );
       return;
     }
 
-    // Add link and set change state
-    const newLinksList = [...linksList, newLink];
-    setLinksList(newLinksList);
-    hasChangesRef.current.links = true;
-
+    setLinksList((prevLinks) => [...prevLinks, trimmedNewLink]);
     setNewLink("");
     setLinkError("");
   };
 
   const startEditLink = (index: number) => {
     setEditingLink({ index, value: linksList[index] });
-    // Just starting to edit is enough to mark as having unsaved changes
-    hasChangesRef.current.links = true;
   };
 
   const saveEditLink = () => {
@@ -118,11 +142,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       return;
     }
 
-    // Edit link and set change state
     const newLinks = [...linksList];
     newLinks[editingLink.index] = editingLink.value;
     setLinksList(newLinks);
-    hasChangesRef.current.links = true;
 
     setEditingLink({ index: -1, value: "" });
     setLinkError("");
@@ -134,7 +156,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const confirmRemoveLink = (linkToRemove: string, e?: React.MouseEvent) => {
-    // Only stop propagation but not preventDefault
     if (e) {
       e.stopPropagation();
     }
@@ -143,18 +164,13 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const handleRemoveLink = (e?: React.MouseEvent) => {
-
-    // Only stop propagation but not preventDefault
     if (e) {
       e.stopPropagation();
     }
+    setLinksList((prevLinks) =>
+      prevLinks.filter((link) => link !== linkToRemove)
+    );
 
-    // Remove the link immediately and set change state
-    const newLinksList = linksList.filter((link) => link !== linkToRemove);
-    setLinksList(newLinksList);
-    hasChangesRef.current.links = true;
-
-    // Close the confirmation dialog
     setShowConfirmation(false);
     setLinkToRemove("");
   };
@@ -164,29 +180,35 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     setLinkToRemove("");
   };
 
-  // Reset state when modal closes
-  const handleModalClose = () => {
-    // Reset ref before closing
-    hasChangesRef.current = {
-      about: false,
-      links: false,
-    };
-
+  const proceedWithClose = () => {
     onClose();
 
-    // Reset the state 100ms after the modal closes
-    // No need for setTimeout if useEffect handles reset based on isOpen
-    // Ensure preview URL is revoked on close
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
     }
-    // Resetting state now handled by useEffect based on isOpen
+  };
+
+  const handleCloseAttempt = () => {
+    if (hasUnsavedChanges()) {
+      showDiscardConfirmation(
+        "Discard Unsaved Changes?",
+        "You have unsaved changes. Are you sure you want to discard them and close the editor?",
+        proceedWithClose
+      );
+    } else {
+      proceedWithClose();
+    }
   };
 
   const handleSave = async () => {
-    // Check if there's text in the newLink input that hasn't been added
-    if (newLink.trim()) {
-      // Show warning instead of saving
+    const currentNewLinkTrimmed = newLink.trim();
+    if (currentNewLinkTrimmed) {
+      if (!isValidUrl(currentNewLinkTrimmed)) {
+        setLinkError(
+          "Please enter a valid URL starting with http:// or https://"
+        );
+        return;
+      }
       setShowLinkWarning(true);
       return;
     }
@@ -197,58 +219,34 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       newProfilePic: profilePicFile,
     });
 
-    // Reset change tracking after initiating save
-    hasChangesRef.current = {
-      about: false,
-      links: false,
-    };
-
-    handleModalClose();
+    setInitialAbout(about);
+    setInitialLinks([...linksList]);
+    if (profilePicFile) {
+      setProfilePicFile(null);
+    }
+    proceedWithClose();
   };
 
-  const handleAddAndSave = () => {
-    // Add the link first
-    handleAddLink();
-    // Then save after a small delay to ensure state is updated
-    setTimeout(() => {
-      onUpdate({
-        description: about,
-        links: [...linksList, newLink],
-        newProfilePic: profilePicFile,
-      });
-
-      // Reset change tracking
-      hasChangesRef.current = {
-        about: false,
-        links: false,
-      };
-
-      handleModalClose();
-    }, 100);
-  };
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0] || null;
     if (!file) return;
 
-    // Revoke *previous* preview URL if it exists before creating a new one
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
     }
 
-    // Create and set preview immediately
     const newPreviewUrl = URL.createObjectURL(file);
     setPreviewImageUrl(newPreviewUrl);
     setProfilePicFile(file);
-    
-    // Start upload process immediately
+
     await handleProfilePicUpload(file);
   };
 
   const handleProfilePicUpload = async (fileToUpload: File | null = null) => {
-    // Use the passed file or fall back to the state
     const fileToUse = fileToUpload || profilePicFile;
-    
+
     if (!fileToUse || !token) return;
 
     setUploadingProfilePic(true);
@@ -274,20 +272,15 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         throw new Error(data.error);
       }
 
-      // Add cache busting parameter when setting the new URL
       const imageUrl = data.photoUrl || data.url;
       setCurrentProfileUrl(`${imageUrl}?t=${Date.now()}`);
-      
-      // Clear the file state since upload is complete
+
       setProfilePicFile(null);
-      
-      // Clear preview URL after successful upload
+
       if (previewImageUrl) {
         URL.revokeObjectURL(previewImageUrl);
         setPreviewImageUrl(null);
       }
-      // Mark changes after successful upload
-      hasChangesRef.current.about = true;
     } catch (error) {
       console.error("Error uploading profile picture:", error);
       alert(error instanceof Error ? error.message : "Upload failed");
@@ -306,7 +299,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     setPreviewImageUrl(null);
 
     try {
-      // Use the API endpoint provided
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/pfp`,
         {
@@ -317,9 +309,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         }
       );
 
-      // Get response text regardless of success/failure
       const responseText = await response.text();
-
 
       if (!response.ok) {
         throw new Error(
@@ -327,109 +317,83 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         );
       }
 
-      // Set default image or placeholder
-      const placeholderUrl = "/placeholder-logo.png"; // Ensure this path is correct
+      const placeholderUrl = "/placeholder-logo.png";
       setCurrentProfileUrl(placeholderUrl);
-      // Mark changes after successful deletion
-      hasChangesRef.current.about = true;
     } catch (error) {
       console.error("Error deleting profile picture:", error);
-      // Add user feedback here if desired (toast notification, etc.)
       alert(
         "Failed to delete profile picture. Please try again or contact support."
       );
     } finally {
-      setShowPicConfirmation(false); // Close confirmation dialog regardless of outcome
+      setShowPicConfirmation(false);
     }
-  };
-
-  const confirmProfilePicDelete = () => {
-    setShowPicConfirmation(true);
   };
 
   const cancelProfilePicDelete = () => {
     setShowPicConfirmation(false);
   };
 
-  // Cleanup effect for object URL
   useEffect(() => {
-    // Return cleanup function to revoke URL on unmount OR when previewImageUrl changes
     return () => {
       if (previewImageUrl) {
         URL.revokeObjectURL(previewImageUrl);
       }
     };
-  }, [previewImageUrl]); // Rerun only if previewImageUrl changes
+  }, [previewImageUrl]);
 
   const modalContent = (
     <div className="max-h-[70vh] overflow-y-auto px-2">
-      {/* Profile Picture Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
         <div className="flex items-start gap-6">
-          <div className="relative group">
-            {/* Add a loading overlay when uploading */}
-            {uploadingProfilePic && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-md flex items-center justify-center z-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-              </div>
-            )}
-            <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden shadow-sm">
-              <img
-                src={previewImageUrl || currentProfileUrl}
-                alt={`${sponsorName} Logo Preview`}
-                className="max-w-full max-h-full object-contain p-1"
-              />
+          {uploadingProfilePic && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-md flex items-center justify-center z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
             </div>
-            <div className="absolute -bottom-2 -right-2">
-              <label
-                htmlFor="profile-pic-upload"
-                className={`bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors ${uploadingProfilePic ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title={uploadingProfilePic ? "Uploading..." : "Change picture"}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-3 h-3"
-                >
-                  <path d="M12 5v14M5 12h14"></path>
-                </svg>
-              </label>
-            </div>
-            {/* Remove the cancel button since we auto-upload */}
-            <input
-              id="profile-pic-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-              disabled={uploadingProfilePic}
+          )}
+          <div className="w-24 h-24 rounded-md border flex items-center justify-center bg-white overflow-hidden shadow-sm">
+            <img
+              src={previewImageUrl || currentProfileUrl}
+              alt={`${sponsorName} Logo Preview`}
+              className="max-w-full max-h-full object-contain p-1"
             />
           </div>
-          <div className="flex flex-col">
-            <h4 className="text-xl font-bold">{sponsorName}</h4>
-            {!uploadingProfilePic && (
-              <button
-                onClick={confirmProfilePicDelete}
-                className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm mt-2 w-fit hover:bg-gray-700 transition-colors"
-                disabled={uploadingProfilePic}
+          <div className="absolute -bottom-2 -right-2">
+            <label
+              htmlFor="profile-pic-upload"
+              className={`bg-bapred text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-opacity-80 transition-colors ${
+                uploadingProfilePic ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              title={uploadingProfilePic ? "Uploading..." : "Change picture"}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-3 h-3"
               >
-                Remove Picture
-              </button>
-            )}
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </label>
           </div>
+          <input
+            id="profile-pic-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+            disabled={uploadingProfilePic}
+          />
         </div>
         <p className="text-xs text-gray-500 mt-3 ml-1">
           Recommended size: 250x250px square image
         </p>
       </div>
 
-      {/* Links Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-4">Links</h3>
         <div className="flex gap-2 mb-4">
@@ -438,9 +402,11 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             value={newLink}
             onChange={(e) => {
               setNewLink(e.target.value);
-              // Mark that we're making changes to links
-              if (e.target.value.trim()) {
-                hasChangesRef.current.links = true;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault(); // Prevent form submission or other default behavior
+                handleAddLink();
               }
             }}
             placeholder="https://example.com"
@@ -465,8 +431,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                 value={editingLink.value}
                 onChange={(e) => {
                   setEditingLink({ ...editingLink, value: e.target.value });
-                  // Force change tracking for link edits
-                  hasChangesRef.current.links = true;
                 }}
                 className="flex-grow px-3 py-2 border rounded-md"
               />
@@ -500,8 +464,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                   <button
                     onClick={() => {
                       startEditLink(index);
-                      // Mark as changed when editing a link
-                      hasChangesRef.current.links = true;
                     }}
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
                     title="Edit"
@@ -511,8 +473,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                   <button
                     onClick={(e) => {
                       confirmRemoveLink(link, e);
-                      // Mark as changed when removing a link
-                      hasChangesRef.current.links = true;
                     }}
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200"
                     title="Remove"
@@ -526,7 +486,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         )}
       </div>
 
-      {/* About Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-4">About</h3>
         <textarea
@@ -534,13 +493,10 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
           onChange={(e) => {
             const newValue = e.target.value;
             setAbout(newValue);
-
-            // Update ref directly - much more reliable than state
-            hasChangesRef.current.about = newValue !== initialAbout;
           }}
           onBlur={() => {
-            // Use ref directly on blur too
-            hasChangesRef.current.about = about !== initialAbout;
+            // DO NOT setInitialAbout(about) here.
+            // Changes are detected by comparing `about` with `initialAbout` (set on modal open).
           }}
           className="w-full px-3 py-2 border rounded-md min-h-[150px] focus:ring-bapred focus:border-bapred"
           maxLength={500}
@@ -551,7 +507,6 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         </div>
       </div>
 
-      {/* Confirmation modals */}
       {showConfirmation && (
         <ConfirmDialog
           isOpen={showConfirmation}
@@ -586,27 +541,73 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         />
       )}
 
-      {/* Link warning dialog */}
       {showLinkWarning && (
         <ConfirmDialog
           isOpen={showLinkWarning}
           onClose={() => {
             setShowLinkWarning(false);
-            // Just save without the link
+            setNewLink("");
+            setLinkError("");
             onUpdate({
               description: about,
               links: linksList,
-              newProfilePic: null, // Assuming discard means no new pic either
+              newProfilePic: profilePicFile,
             });
-            handleModalClose();
+            setInitialAbout(about);
+            setInitialLinks([...linksList]);
+            if (profilePicFile) {
+              setProfilePicFile(null);
+            }
+            proceedWithClose();
           }}
           onConfirm={() => {
-            handleAddAndSave();
+            setShowLinkWarning(false);
+            const linkValueFromState = newLink;
+            const linkToBeAdded = linkValueFromState.trim();
+
+            if (!linkToBeAdded) {
+              console.warn(
+                "[ProfileEditModal] Link to be added was empty after trim. Discarding it and saving other changes."
+              );
+              setNewLink("");
+              setLinkError("");
+              onUpdate({
+                description: about,
+                links: linksList,
+                newProfilePic: profilePicFile,
+              });
+              setInitialAbout(about);
+              setInitialLinks([...linksList]);
+              if (profilePicFile) {
+                setProfilePicFile(null);
+              }
+              proceedWithClose();
+              return;
+            }
+
+            setNewLink("");
+            setLinkError("");
+            setLinksList((prevLinksList) => [...prevLinksList, linkToBeAdded]);
+
+            const finalLinksForSave = [...linksList, linkToBeAdded];
+
+            onUpdate({
+              description: about,
+              links: finalLinksForSave,
+              newProfilePic: profilePicFile,
+            });
+
+            setInitialAbout(about);
+            setInitialLinks(finalLinksForSave);
+            if (profilePicFile) {
+              setProfilePicFile(null);
+            }
+            proceedWithClose();
           }}
-          title="Unsaved Link"
-          message={`You have text in the link field that hasn't been added: "${newLink}". Would you like to add it before saving?`}
-          confirmText="Add & Save"
-          cancelText="Discard Link"
+          title="Unadded Link"
+          message={`You have a link "${newLink}" in the input field that hasn't been added to the list. What would you like to do?`}
+          confirmText="Add Link and Save All"
+          cancelText="Discard Link and Save All"
           preventOutsideClick={true}
         />
       )}
@@ -616,13 +617,26 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleModalClose}
-      title="Edit Profile"
-      onConfirm={handleSave}
-      confirmText="Save Changes"
-      cancelText="Cancel"
-      showFooter={true}
-      size="lg"
+      onClose={handleCloseAttempt}
+      title={`Edit ${sponsorName} Profile`}
+      footer={
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={handleCloseAttempt}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="px-4 py-2 text-sm font-medium text-white bg-bapred border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+          >
+            Save Changes
+          </button>
+        </div>
+      }
     >
       {modalContent}
     </Modal>

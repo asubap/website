@@ -1,7 +1,6 @@
 import Modal from "../ui/Modal";
 import React from "react";
 import { createPortal } from "react-dom";
-import { useScrollLock } from "../../hooks/useScrollLock";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -22,10 +21,8 @@ const ConfirmDialog = ({
   message,
   confirmText = "Confirm",
   cancelText = "Cancel",
-  preventOutsideClick = false
+  preventOutsideClick = false,
 }: ConfirmDialogProps) => {
-  useScrollLock(isOpen);
-
   // Wrap the onClose and onConfirm handlers with simpler versions
   const handleClose = (e?: React.MouseEvent) => {
     // Still stop propagation but don't prevent default
@@ -44,7 +41,7 @@ const ConfirmDialog = ({
   };
 
   const content = (
-    <div onClick={e => e.stopPropagation()} className="confirm-dialog">
+    <div onClick={(e) => e.stopPropagation()} className="confirm-dialog">
       <Modal
         isOpen={isOpen}
         onClose={handleClose}
@@ -65,4 +62,4 @@ const ConfirmDialog = ({
   return createPortal(content, document.body);
 };
 
-export default ConfirmDialog; 
+export default ConfirmDialog;

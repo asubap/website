@@ -19,6 +19,7 @@ interface ModalProps {
   confirmText?: string;
   cancelText?: string;
   showFooter?: boolean;
+  footer?: React.ReactNode;
   size?: "sm" | "md" | "lg";
   preventOutsideClick?: boolean;
   zIndex?: string;
@@ -33,6 +34,7 @@ const Modal: React.FC<ModalProps> = ({
   confirmText = "Confirm",
   cancelText = "Cancel",
   showFooter = true,
+  footer,
   size = "md",
   preventOutsideClick = false,
   zIndex = "z-[9999]",
@@ -57,23 +59,27 @@ const Modal: React.FC<ModalProps> = ({
 
   // Effect to control body scrolling
   useEffect(() => {
-    // Use a counter to track open modals
-    if (!window.__modalOpenCount) window.__modalOpenCount = 0;
     if (isOpen) {
+      if (window.__modalOpenCount === undefined) {
+        window.__modalOpenCount = 0;
+      }
       window.__modalOpenCount++;
-      document.body.style.overflow = "hidden";
-    } else if (window.__modalOpenCount && window.__modalOpenCount > 0) {
-      window.__modalOpenCount = Math.max(0, window.__modalOpenCount - 1);
-      if (window.__modalOpenCount === 0) {
-        document.body.style.overflow = "auto";
+      if (window.__modalOpenCount === 1) {
+        // Only hide scroll if it's the first modal
+        document.body.style.overflow = "hidden";
       }
     }
-    // Cleanup function to decrement counter and restore scrolling if needed
+
     return () => {
-      if (isOpen && window.__modalOpenCount && window.__modalOpenCount > 0) {
-        window.__modalOpenCount = Math.max(0, window.__modalOpenCount - 1);
-        if (window.__modalOpenCount === 0) {
-          document.body.style.overflow = "auto";
+      if (isOpen) {
+        // This cleanup runs when this modal instance is about to "close" (isOpen becomes false or unmount)
+        if (window.__modalOpenCount !== undefined) {
+          window.__modalOpenCount = Math.max(0, window.__modalOpenCount - 1);
+          if (window.__modalOpenCount === 0) {
+            document.body.style.overflow = "auto";
+            // Safety clear, in case it wasn't reset properly
+            delete window.__modalOpenCount;
+          }
         }
       }
     };
@@ -124,25 +130,31 @@ const Modal: React.FC<ModalProps> = ({
               </div>
             </div>
           </div>
-          {showFooter && (
+          {(footer || (showFooter && (onConfirm || cancelText))) && (
             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-              {onConfirm && (
-                <button
-                  type="button"
-                  onClick={onConfirm}
-                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-bapred px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {confirmText}
-                </button>
-              )}
-              {cancelText && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {cancelText}
-                </button>
+              {footer ? (
+                footer
+              ) : (
+                <>
+                  {onConfirm && (
+                    <button
+                      type="button"
+                      onClick={onConfirm}
+                      className="inline-flex w-full justify-center rounded-md border border-transparent bg-bapred px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                      {confirmText}
+                    </button>
+                  )}
+                  {cancelText && (
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bapred focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                      {cancelText}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}

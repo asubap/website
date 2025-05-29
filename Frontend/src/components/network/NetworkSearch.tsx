@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import SearchInput from "../common/SearchInput";
 
 interface Filters {
   graduationYear: string;
@@ -57,29 +58,12 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch }) => {
     <div className="bg-white rounded-lg shadow mb-6 p-4">
       <div className="mb-4">
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5 text-gray-400"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search by name, major, or email..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          <div className="flex-1">
+            <SearchInput
               value={query}
               onChange={handleInputChange}
+              onIconClick={() => onSearch(query, filters)}
+              placeholder="Search by name, major, or email..."
             />
           </div>
           <div className="flex gap-2">

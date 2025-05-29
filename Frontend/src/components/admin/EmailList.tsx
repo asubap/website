@@ -3,18 +3,33 @@ import DeleteConfirmation from "./DeleteConfirmation";
 import { useToast } from "../../context/toast/ToastContext";
 import AdminMemberEditModal from "./AdminMemberEditModal";
 import LoadingSpinner from "../common/LoadingSpinner";
+import SearchInput from "../common/SearchInput";
+import { Trash2, MoreHorizontal } from "lucide-react";
+import { MemberDetail } from "../../types";
+
+// Temporary: Re-declaring MemberDetail to match Admin.tsx for now.
+// TODO: Move MemberDetail to a shared types file and import it.
+// interface MemberDetail { ... } // Removed local definition
 
 interface EmailListProps {
   emails: { email: string; name?: string; role?: string }[];
   onDelete: (email: string) => void;
   userType: "admin" | "sponsor";
   onEdit?: (email: string) => void;
-  memberDetails?: { [key: string]: any };
-  onSave?: (email: string) => Promise<void> | void;
+  memberDetails?: { [key: string]: MemberDetail };
+  onSave?: (updatedData: MemberDetail) => Promise<void> | void;
   clickable?: boolean;
 }
 
-const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onSave, clickable = true }: EmailListProps) => {
+const EmailList = ({
+  emails,
+  onDelete,
+  userType,
+  onEdit,
+  memberDetails = {},
+  onSave,
+  clickable = true,
+}: EmailListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [emailToEdit, setEmailToEdit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +43,7 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
 
   const handleEditClick = async (email: string) => {
     // Find the member in the emails array
-    const member = emails.find(m => m.email === email);
+    const member = emails.find((m) => m.email === email);
 
     // If the member is e-board, do nothing
     if (member?.role === "e-board") return;
@@ -50,8 +65,11 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
     setEmailToDelete(null);
   };
 
-  const handleEditSave = async (updatedData: any) => {
-    await onSave?.(updatedData.email);
+  const handleEditSave = async (updatedData: MemberDetail) => {
+    // Using the shared/imported MemberDetail type
+    if (onSave) {
+      await onSave(updatedData);
+    }
     setEmailToEdit(null);
   };
 
@@ -63,15 +81,12 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
   return (
     <>
       {/* Search Bar */}
-      <div className="mb-2">
-        <input
-          type="text"
-          placeholder="Search members by name or email..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors border-gray-300"
-        />
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search members by name or email..."
+        containerClassName="mb-2"
+      />
       {isLoading && (
         <div className="fixed inset-0 z-50">
           <div className="flex min-h-screen items-center justify-center">
@@ -87,17 +102,35 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
             key={email}
             onClick={clickable ? () => handleEditClick(email) : undefined}
             className={`w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center ${
-              clickable && userType === "admin" ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""
+              clickable && userType === "admin"
+                ? "cursor-pointer hover:bg-gray-50 transition-colors"
+                : ""
             }`}
           >
-            <span className="text-gray-800 text-m pr-2">{name ? name : email}</span>
-            <button
-              onClick={(e) => handleDeleteClick(email, e)}
-              className="text-bapred hover:text-bapreddark font-bold"
-              aria-label={`Delete ${email}`}
-            >
-              ×
-            </button>
+            <span className="text-gray-800 text-m pr-2">
+              {name ? name : email}
+            </span>
+            <div className="flex items-center space-x-1">
+              {onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditClick(email);
+                  }}
+                  className="text-gray-600 hover:text-bapred p-1"
+                  aria-label={`Edit ${name || email}`}
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+              )}
+              <button
+                onClick={(e) => handleDeleteClick(email, e)}
+                className="text-bapred hover:text-bapreddark p-1"
+                aria-label={`Delete ${email}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
 
@@ -110,15 +143,23 @@ const EmailList = ({ emails, onDelete, userType, onEdit, memberDetails = {}, onS
           />
         )}
 
-        {emailToEdit && emails.find(m => m.email === emailToEdit)?.role !== "e-board" && (
-          <AdminMemberEditModal
-            isOpen={true}
-            onClose={() => setEmailToEdit(null)}
-            profileData={memberDetails[emailToEdit] || null}
-            isLoading={!memberDetails[emailToEdit]}
-            onSave={handleEditSave}
-          />
-        )}
+        {emailToEdit &&
+          emails.find((m) => m.email === emailToEdit)?.role !== "e-board" && (
+            <AdminMemberEditModal
+              isOpen={true}
+              onClose={() => setEmailToEdit(null)}
+              // Assuming profileData in AdminMemberEditModal expects MemberDetail or a compatible type
+              profileData={
+                memberDetails && emailToEdit ? memberDetails[emailToEdit] : null
+              }
+              isLoading={
+                memberDetails && emailToEdit
+                  ? !memberDetails[emailToEdit]
+                  : true
+              }
+              onSave={handleEditSave}
+            />
+          )}
       </div>
     </>
   );

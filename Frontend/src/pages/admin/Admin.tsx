@@ -12,11 +12,13 @@ import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal"
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import AddUserModal from "../../components/admin/AddUserModal";
 import { getNavLinks } from "../../components/nav/NavLink";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 
-import { Announcement } from "../../types";
+import { Announcement } from "../../types/index";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
+import { MemberDetail } from "../../types/index";
 
 // Define interfaces for API responses
 interface UserInfo {
@@ -38,33 +40,43 @@ const Admin = () => {
   const [showAddSponsorModal, setShowAddSponsorModal] = useState(false);
 
   // New state for announcements
-  const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
-  const [showEditAnnouncementModal, setShowEditAnnouncementModal] = useState(false);
-  const [announcementToEdit, setAnnouncementToEdit] = useState<Announcement | null>(null);
+  const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] =
+    useState(false);
+  const [showEditAnnouncementModal, setShowEditAnnouncementModal] =
+    useState(false);
+  const [announcementToEdit, setAnnouncementToEdit] =
+    useState<Announcement | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
 
   // Add new state for viewing announcements
-  const [showViewAnnouncementModal, setShowViewAnnouncementModal] = useState(false);
-  const [announcementToView, setAnnouncementToView] = useState<Announcement | null>(null);
+  const [showViewAnnouncementModal, setShowViewAnnouncementModal] =
+    useState(false);
+  const [announcementToView, setAnnouncementToView] =
+    useState<Announcement | null>(null);
 
   // Add new state for delete confirmation
-  const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] = useState(false);
-  const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
+  const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] =
+    useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] =
+    useState<Announcement | null>(null);
 
   const { role, session } = useAuth();
 
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
   const [tiers, setTiers] = useState<string[]>([]);
-  const [members, setMembers] = useState<{ email: string, name?: string }[]>([]);
+  const [members, setMembers] = useState<{ email: string; name?: string }[]>(
+    []
+  );
 
   const [loadingAdmins, setLoadingAdmins] = useState(true);
-  const [loadingSponsors, setLoadingSponsors] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
-  // Add new state for member editing
-  const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>({});
+  // Add new state for member editing - corrected type
+  const [memberDetails, setMemberDetails] = useState<{
+    [key: string]: MemberDetail;
+  }>({});
 
   // Add new state for showAddMemberModal
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
@@ -72,9 +84,48 @@ const Admin = () => {
   // Add new state for showAddAdminModal
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
 
+  // State for ConfirmDialog
+  interface ConfirmDialogInfo {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    cancelText?: string;
+  }
+
+  const [confirmDialogInfo, setConfirmDialogInfo] = useState<ConfirmDialogInfo>(
+    {
+      isOpen: false,
+      title: "",
+      message: "",
+      onConfirm: () => {},
+    }
+  );
+
+  const showConfirmationDialog = (
+    title: string,
+    message: string,
+    onConfirmAction: () => void,
+    confirmText?: string,
+    cancelText?: string
+  ) => {
+    setConfirmDialogInfo({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirmAction();
+        setConfirmDialogInfo((prev) => ({ ...prev, isOpen: false }));
+      },
+      confirmText,
+      cancelText,
+    });
+  };
 
   useEffect(() => {
-    if (!session) return; // Don't fetch if no session
+    console.log("Admin.tsx: Main useEffect triggered. Session:", session);
+    if (!session) return;
 
     const fetchAdmins = async () => {
       setLoadingAdmins(true);
@@ -108,7 +159,7 @@ const Admin = () => {
     };
 
     const fetchSponsors = async () => {
-      setLoadingSponsors(true);
+      console.log("Admin.tsx: fetchSponsors called");
       const token = session.access_token;
       fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
         method: "GET",
@@ -122,16 +173,12 @@ const Admin = () => {
           const sponsors = data.map(
             (sponsor: ApiSponsor) => sponsor.company_name
           );
-          const tiers = data.map(
-            (sponsor: ApiSponsor) => sponsor.tier
-          );
+          const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
           setSponsors(sponsors);
           setTiers(tiers);
-          setLoadingSponsors(false);
         })
         .catch((error) => {
           console.error("Error fetching sponsors:", error);
-          setLoadingSponsors(false);
         });
     };
 
@@ -149,16 +196,18 @@ const Admin = () => {
         .then((response) => response.json())
         .then((data) => {
           // Sort announcements by date (newest first) and pinned status
-          const sortedAnnouncements = data.sort((a: Announcement, b: Announcement) => {
-            // First sort by pinned status (pinned items first)
-            if (a.is_pinned && !b.is_pinned) return -1;
-            if (!a.is_pinned && b.is_pinned) return 1;
-            
-            // Then sort by created_at (newer first) - safely handle null values
-            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return dateB - dateA;
-          });
+          const sortedAnnouncements = data.sort(
+            (a: Announcement, b: Announcement) => {
+              // First sort by pinned status (pinned items first)
+              if (a.is_pinned && !b.is_pinned) return -1;
+              if (!a.is_pinned && b.is_pinned) return 1;
+
+              // Then sort by created_at (newer first) - safely handle null values
+              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+              return dateB - dateA;
+            }
+          );
           setAnnouncements(sortedAnnouncements);
           setLoadingAnnouncements(false);
         })
@@ -175,7 +224,7 @@ const Admin = () => {
 
   const handleDelete = async (email: string) => {
     if (!session) return;
-    
+
     const token = session.access_token;
     try {
       await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/delete-user`, {
@@ -197,7 +246,7 @@ const Admin = () => {
 
   const handleDeleteSponsor = async (email: string) => {
     if (!session) return;
-    
+
     const token = session.access_token;
     try {
       await fetch(
@@ -218,84 +267,111 @@ const Admin = () => {
     }
   };
 
-  const handleSponsorAdded = async (newSponsor: ApiSponsor) => {
-    // Re-fetch sponsors from server to ensure data consistency
+  // Actual function to add sponsor after confirmation
+  const actuallyAddSponsor = async (newSponsor: ApiSponsor) => {
     try {
       if (!session) return;
-      
       const token = session.access_token;
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
+      // Re-fetch sponsors from server to ensure data consistency (original logic)
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (response.ok) {
         const data = await response.json();
-        const sponsors = data.map((sponsor: ApiSponsor) => sponsor.company_name);
-        const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
-        setSponsors(sponsors);
-        setTiers(tiers);
+        const updatedSponsors = data.map(
+          (sponsor: ApiSponsor) => sponsor.company_name
+        );
+        const updatedTiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
+        setSponsors(updatedSponsors);
+        setTiers(updatedTiers);
+      } else {
+        // Fallback to local state update if re-fetch fails
+        setSponsors([...sponsors, newSponsor.company_name]);
+        setTiers([...tiers, newSponsor.tier]);
       }
     } catch (error) {
       console.error("Error re-fetching sponsors:", error);
       // Fallback to local state update if re-fetch fails
       setSponsors([...sponsors, newSponsor.company_name]);
+      setTiers([...tiers, newSponsor.tier]);
     }
-    
+
     showToast("Sponsor added successfully", "success");
     if (sponsorFormRef.current) sponsorFormRef.current.reset();
+    setShowAddSponsorModal(false); // Close the modal after successful addition
   };
 
-  // Handle a newly created announcement
-  const handleAnnouncementCreated = (newAnnouncement: Announcement) => {
-    // Add the new announcement to the list and sort
-    setAnnouncements(prevAnnouncements => {
+  // Modified to show confirmation dialog
+  const handleSponsorAdded = (newSponsor: ApiSponsor) => {
+    actuallyAddSponsor(newSponsor); // Call directly
+  };
+
+  // Actual function to create announcement after confirmation
+  const actuallyCreateAnnouncement = (newAnnouncement: Announcement) => {
+    // Add the new announcement to the list and sort (original logic)
+    setAnnouncements((prevAnnouncements) => {
       const updatedAnnouncements = [...prevAnnouncements, newAnnouncement];
       return updatedAnnouncements.sort((a, b) => {
-        // First sort by pinned status (pinned items first)
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-        
-        // Then sort by created_at (newer first) - safely handle null values
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     });
-    
-    // Show success toast before refresh
     showToast("Announcement created successfully", "success");
-    
+    setShowCreateAnnouncementModal(false); // Close the modal
     // Refresh the page after a short delay
     setTimeout(() => {
-      window.location.reload();
-    }, 1000); // 1 second delay to let the user see the toast
+      window.location.reload(); // Or fetchAnnouncements() if preferred over reload
+    }, 1000);
   };
 
-  // Handle editing an announcement
-  const handleAnnouncementUpdated = (updatedAnnouncement: Announcement) => {
-    setAnnouncements(prevAnnouncements => {
-      const updated = prevAnnouncements.map(a => 
+  // Modified to show confirmation
+  const handleAnnouncementCreated = (newAnnouncement: Announcement) => {
+    showConfirmationDialog(
+      "Confirm Create Announcement",
+      `Are you sure you want to create the announcement titled "${newAnnouncement.title}"?`,
+      () => actuallyCreateAnnouncement(newAnnouncement),
+      "Confirm Create"
+    );
+  };
+
+  // Actual function to update announcement after confirmation
+  const actuallyUpdateAnnouncement = (updatedAnnouncement: Announcement) => {
+    setAnnouncements((prevAnnouncements) => {
+      const updated = prevAnnouncements.map((a) =>
         a.id === updatedAnnouncement.id ? updatedAnnouncement : a
       );
-      
-      // Re-sort after update
       return updated.sort((a, b) => {
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-        
-        // Sort by created_at (newer first) - safely handle null values
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     });
-    
+    showToast("Announcement updated successfully", "success");
     setShowEditAnnouncementModal(false);
     setAnnouncementToEdit(null);
+  };
+
+  // Modified to show confirmation
+  const handleAnnouncementUpdated = (updatedAnnouncement: Announcement) => {
+    showConfirmationDialog(
+      "Confirm Update Announcement",
+      `Are you sure you want to save changes to "${updatedAnnouncement.title}"?`,
+      () => actuallyUpdateAnnouncement(updatedAnnouncement),
+      "Confirm Update"
+    );
   };
 
   const handleEditAnnouncementClick = (announcement: Announcement) => {
@@ -317,7 +393,7 @@ const Admin = () => {
 
   const handleConfirmDeleteAnnouncement = async () => {
     if (!announcementToDelete || !session) return;
-    
+
     try {
       const token = session.access_token;
       const response = await fetch(
@@ -328,8 +404,8 @@ const Admin = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ 
-            announcement_id: announcementToDelete.id 
+          body: JSON.stringify({
+            announcement_id: announcementToDelete.id,
           }),
         }
       );
@@ -339,10 +415,10 @@ const Admin = () => {
       }
 
       // Remove the deleted announcement from state
-      setAnnouncements(prevAnnouncements => 
-        prevAnnouncements.filter(a => a.id !== announcementToDelete.id)
+      setAnnouncements((prevAnnouncements) =>
+        prevAnnouncements.filter((a) => a.id !== announcementToDelete.id)
       );
-      
+
       showToast("Announcement deleted successfully", "success");
     } catch (error) {
       console.error("Error deleting announcement:", error);
@@ -362,14 +438,17 @@ const Admin = () => {
       }
 
       const token = session.access_token;
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ user_email: email }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_email: email }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch member details");
@@ -378,25 +457,31 @@ const Admin = () => {
       const data = await response.json();
       if (data && data.length > 0) {
         const raw = data[0];
-        const freshData = {
+        const freshData: MemberDetail = {
+          id: raw.id?.toString() || raw.user_id || raw.user_email,
           email: raw.user_email || raw.email || "",
           name: raw.name || "",
           phone: raw.phone || "",
           major: raw.major || "",
-          graduationDate: raw.graduating_year ? String(raw.graduating_year) : (raw.graduationDate || ""),
-          status: raw.member_status || raw.status || "",
+          graduationDate: raw.graduating_year
+            ? String(raw.graduating_year)
+            : raw.graduationDate || "",
+          status: raw.member_status || raw.status || "Not Specified",
           about: raw.about || "",
-          internship: raw.internship || "",
+          internship: raw.internship || "Not Specified",
           photoUrl: raw.profile_photo_url || raw.photoUrl || "",
-          hours: raw.total_hours !== undefined ? String(raw.total_hours) : (raw.hours || ""),
-          rank: raw.rank || "",
-          role: raw.role || "general-member"
+          hours:
+            raw.total_hours !== undefined
+              ? String(raw.total_hours)
+              : raw.hours || "0",
+          rank: raw.rank || raw.role || "Not Provided",
+          role: raw.role || "general-member",
         };
-        
+
         // Update member details with fresh data
-        setMemberDetails(prev => ({
+        setMemberDetails((prev) => ({
           ...prev,
-          [email.trim().toLowerCase()]: freshData
+          [email.trim().toLowerCase()]: freshData,
         }));
       }
     } catch (error) {
@@ -414,21 +499,52 @@ const Admin = () => {
         return;
       }
       const token = session.access_token;
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/users`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch members");
       }
       const data = await response.json();
-      const members = data
+      const fetchedMembers = data
         .filter((item: UserInfo) => item.role === "general-member")
-        .map((item: UserInfo) => ({ email: item.email, name: item.name }));
-      setMembers(members);
+        .map((item: UserInfo) => ({ email: item.email, name: item.name })); // Keep name as is (could be undefined/null)
+
+      fetchedMembers.sort(
+        (
+          a: { email: string; name?: string | null },
+          b: { email: string; name?: string | null }
+        ) => {
+          const nameA = a.name?.trim().toLowerCase();
+          const nameB = b.name?.trim().toLowerCase();
+
+          // Members with no name go to the bottom
+          if (!nameA && nameB) return 1;
+          if (nameA && !nameB) return -1;
+          if (!nameA && !nameB) {
+            // Both names missing, sort by email
+            return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
+          }
+
+          // Both have names, sort by name
+          if (nameA && nameB) {
+            const nameComparison = nameA.localeCompare(nameB);
+            if (nameComparison !== 0) return nameComparison;
+          }
+
+          // Names are equivalent (or one/both were missing and handled), sort by email as tie-breaker
+          return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
+        }
+      );
+
+      setMembers(fetchedMembers);
     } catch (error) {
       console.error("Error fetching members:", error);
       showToast("Failed to fetch members", "error");
@@ -440,21 +556,25 @@ const Admin = () => {
   // Function to re-fetch sponsors data
   const refetchSponsors = async () => {
     if (!session) return;
-    
-    setLoadingSponsors(true);
+
     try {
       const token = session.access_token;
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (response.ok) {
         const data = await response.json();
-        const sponsors = data.map((sponsor: ApiSponsor) => sponsor.company_name);
+        const sponsors = data.map(
+          (sponsor: ApiSponsor) => sponsor.company_name
+        );
         const tiers = data.map((sponsor: ApiSponsor) => sponsor.tier);
         setSponsors(sponsors);
         setTiers(tiers);
@@ -462,9 +582,181 @@ const Admin = () => {
     } catch (error) {
       console.error("Error re-fetching sponsors:", error);
       showToast("Failed to refresh sponsor data", "error");
-    } finally {
-      setLoadingSponsors(false);
     }
+  };
+
+  // Function to actually add members after confirmation
+  const actuallyAddMembers = (newMembers: string[]) => {
+    setMembers((prev) => [
+      ...prev,
+      ...newMembers.map((email: string) => ({ email, name: undefined })), // Ensure name is explicitly undefined or fetched if available
+    ]);
+    showToast(`${newMembers.length} member(s) added successfully`, "success");
+    setShowAddMemberModal(false); // Close the modal
+    fetchMembers(); // Refresh member list
+  };
+
+  // Modified onUserAdded for members to show confirmation
+  const onAddMemberSubmit = (newMembers: string[]) => {
+    showConfirmationDialog(
+      "Confirm Add Members",
+      `Are you sure you want to add ${newMembers.length} new member(s)?`,
+      () => actuallyAddMembers(newMembers),
+      "Confirm Add"
+    );
+  };
+
+  // Function to actually add admins after confirmation
+  const actuallyAddAdmins = (newAdmins: string[]) => {
+    setAdminEmails((prev) => [...prev, ...newAdmins]);
+    showToast(`${newAdmins.length} admin(s) added successfully`, "success");
+    setShowAddAdminModal(false); // Close the modal
+    // Re-fetch admins or update state as needed. Assuming fetchAdmins() exists and is appropriate
+    // For simplicity, directly updating state was done. If fetchAdmins is better:
+    // fetchAdmins();
+  };
+
+  // Modified onUserAdded for admins to show confirmation
+  const onAddAdminSubmit = (newAdmins: string[]) => {
+    showConfirmationDialog(
+      "Confirm Add Admins",
+      `Are you sure you want to add ${newAdmins.length} new admin(s)?`,
+      () => actuallyAddAdmins(newAdmins),
+      "Confirm Add"
+    );
+  };
+
+  // --- Sponsor Tier Update Logic ---
+  const actuallyUpdateSponsorTier = async (email: string, newTier: string) => {
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      return;
+    }
+    const token = session.access_token;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/change-sponsor-tier`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ sponsor_name: email, tier: newTier }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to change tier");
+      }
+      showToast("Sponsor tier updated successfully", "success");
+      refetchSponsors(); // Refresh sponsor list to show new tier
+    } catch (error: unknown) {
+      console.error("Error updating sponsor tier:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Failed to update sponsor tier. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleSponsorTierChangeConfirm = (email: string, newTier: string) => {
+    showConfirmationDialog(
+      "Confirm Tier Change",
+      `Are you sure you want to change ${email}'s tier to ${newTier}?`,
+      () => actuallyUpdateSponsorTier(email, newTier),
+      "Confirm Change"
+    );
+  };
+
+  // --- Sponsor Profile Update Logic ---
+  interface SponsorUpdateData {
+    companyName: string; // To identify the sponsor
+    description: string;
+    links: string[];
+    // photoUrl?: string; // If photo updates are handled here too
+  }
+
+  const actuallyUpdateSponsorProfile = async (
+    updatedData: SponsorUpdateData
+  ) => {
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      return;
+    }
+    const token = session.access_token;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
+          updatedData.companyName
+        }/details`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            about: updatedData.description,
+            links: updatedData.links,
+            // pfp_url: updatedData.photoUrl, // If handling photo updates
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Failed to update sponsor details"
+        );
+      }
+      showToast("Sponsor details updated successfully", "success");
+      refetchSponsors(); // Refresh sponsor list, might need more specific update if only details changed
+    } catch (error: unknown) {
+      console.error("Error updating sponsor details:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Failed to update sponsor details. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const promptSponsorProfileUpdate = (updatedData: SponsorUpdateData) => {
+    actuallyUpdateSponsorProfile(updatedData);
+  };
+
+  // --- Member Update Logic ---
+  const actuallyUpdateMember = async (updatedData: MemberDetail) => {
+    if (!session) {
+      showToast("Authentication error. Please log in again.", "error");
+      return;
+    }
+    try {
+      // Update local memberDetails state immediately for responsiveness of the modal if it relies on it.
+      setMemberDetails((prevDetails) => ({
+        ...prevDetails,
+        [updatedData.email.trim().toLowerCase()]: updatedData,
+      }));
+
+      showToast("Member details updated successfully", "success");
+      await fetchMembers(); // Crucial: Re-fetch the entire members list from the server to update the list view.
+    } catch (error: unknown) {
+      console.error("Error during member update finalization:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Failed to update member details. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleMemberUpdateSave = (updatedData: MemberDetail) => {
+    // Directly call actuallyUpdateMember
+    actuallyUpdateMember(updatedData);
   };
 
   return (
@@ -485,7 +777,6 @@ const Admin = () => {
             Admin Dashboard
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-8 sm:px-16 lg:px-24">
-
             {/* Announcements column - now order-3 on mobile to appear after Past Events */}
             <div className="order-3 md:order-2">
               <div className="flex items-center mb-2">
@@ -497,20 +788,20 @@ const Admin = () => {
                   + <span className="hidden md:inline">New </span>Announcement
                 </button>
               </div>
-                {loadingAnnouncements ? (
-                  <LoadingSpinner text="Loading announcements..." size="md" />
-                ) : announcements.length > 0 ? (
-                  <AnnouncementListShort 
-                    announcements={announcements} 
-                    onEdit={handleEditAnnouncementClick}
-                    onView={handleViewAnnouncementClick}
-                    onDelete={handleDeleteAnnouncementClick}
-                  />
-                ) : (
-                  <p className="text-gray-500 text-m">
-                    No announcements available.
-                  </p>
-                )}
+              {loadingAnnouncements ? (
+                <LoadingSpinner text="Loading announcements..." size="md" />
+              ) : announcements.length > 0 ? (
+                <AnnouncementListShort
+                  announcements={announcements}
+                  onEdit={handleEditAnnouncementClick}
+                  onView={handleViewAnnouncementClick}
+                  onDelete={handleDeleteAnnouncementClick}
+                />
+              ) : (
+                <p className="text-gray-500 text-m">
+                  No announcements available.
+                </p>
+              )}
             </div>
 
             {/* Admin Users */}
@@ -528,7 +819,7 @@ const Admin = () => {
                 <LoadingSpinner text="Loading admins..." size="md" />
               ) : (
                 <EmailList
-                  emails={adminEmails.map(email => ({ email }))}
+                  emails={adminEmails.map((email) => ({ email }))}
                   onDelete={handleDelete}
                   userType="admin"
                   clickable={false}
@@ -547,17 +838,15 @@ const Admin = () => {
                   + <span className="hidden md:inline">New </span>Sponsor
                 </button>
               </div>
-              {loadingSponsors ? (
-                <LoadingSpinner text="Loading sponsors..." size="md" />
-              ) : (
-                <SponsorList
-                  emails={sponsors}
-                  tiers={tiers}
-                  onDelete={handleDeleteSponsor}
-                  userType="sponsor"
-                  onTierChanged={refetchSponsors}
-                />
-              )}
+              <SponsorList
+                emails={sponsors}
+                tiers={tiers}
+                onDelete={handleDeleteSponsor}
+                userType="sponsor"
+                onTierChangeConfirm={handleSponsorTierChangeConfirm}
+                onProfileUpdateConfirm={promptSponsorProfileUpdate}
+                showConfirmationDialog={showConfirmationDialog}
+              />
             </div>
 
             {/* General Members */}
@@ -579,9 +868,7 @@ const Admin = () => {
                   onDelete={handleDelete}
                   userType="admin"
                   onEdit={handleMemberEdit}
-                  onSave={async () => {
-                    await fetchMembers();
-                  }}
+                  onSave={handleMemberUpdateSave}
                   memberDetails={memberDetails}
                 />
               )}
@@ -594,7 +881,6 @@ const Admin = () => {
           </div>
         </main>
       </div>
-
       <Footer backgroundColor="#AF272F" />
 
       {showAddSponsorModal && (
@@ -611,8 +897,6 @@ const Admin = () => {
           onAnnouncementCreated={handleAnnouncementCreated}
         />
       )}
-
-      {/* Edit Announcement Modal */}
       {showEditAnnouncementModal && announcementToEdit && (
         <EditAnnouncementModal
           isOpen={showEditAnnouncementModal}
@@ -624,8 +908,6 @@ const Admin = () => {
           onAnnouncementUpdated={handleAnnouncementUpdated}
         />
       )}
-
-      {/* View Announcement Modal */}
       {showViewAnnouncementModal && announcementToView && (
         <ViewAnnouncementModal
           isOpen={showViewAnnouncementModal}
@@ -636,8 +918,6 @@ const Admin = () => {
           announcement={announcementToView}
         />
       )}
-
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteAnnouncementModal}
         onClose={() => setShowDeleteAnnouncementModal(false)}
@@ -648,7 +928,6 @@ const Admin = () => {
         cancelText="Cancel"
       />
 
-      {/* Add Member Modal */}
       {showAddMemberModal && (
         <AddUserModal
           role="general-member"
@@ -656,7 +935,7 @@ const Admin = () => {
           label="Email Addresses"
           buttonText="Add Member"
           onClose={() => setShowAddMemberModal(false)}
-          onUserAdded={(newMembers: string[]) => setMembers((prev) => [...prev, ...newMembers.map((email: string) => ({ email }))])}
+          onUserAdded={onAddMemberSubmit}
         />
       )}
 
@@ -668,9 +947,22 @@ const Admin = () => {
           label="Email Addresses"
           buttonText="Add Admin"
           onClose={() => setShowAddAdminModal(false)}
-          onUserAdded={(newAdmins: string[]) => setAdminEmails((prev) => [...prev, ...newAdmins])}
+          onUserAdded={onAddAdminSubmit}
         />
       )}
+
+      {/* Confirmation Dialog for all actions */}
+      <ConfirmDialog
+        isOpen={confirmDialogInfo.isOpen}
+        onClose={() =>
+          setConfirmDialogInfo((prev) => ({ ...prev, isOpen: false }))
+        }
+        onConfirm={confirmDialogInfo.onConfirm}
+        title={confirmDialogInfo.title}
+        message={confirmDialogInfo.message}
+        confirmText={confirmDialogInfo.confirmText ?? "Confirm"}
+        cancelText={confirmDialogInfo.cancelText ?? "Cancel"}
+      />
     </div>
   );
 };

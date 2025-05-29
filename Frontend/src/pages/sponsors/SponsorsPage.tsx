@@ -28,25 +28,26 @@ export default function SponsorsPage() {
   useEffect(() => {
     const fetchSponsorsData = async () => {
       try {
-        const response = await fetch("https://asubap-backend.vercel.app/sponsors/");
+        const response = await fetch(
+          "https://asubap-backend.vercel.app/sponsors/"
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
 
         // Transform the fetched data into the desired format
-        const formattedSponsors = data.map((sponsor: any) => ({
+        const formattedSponsors = data.map((sponsor: Sponsor) => ({
           id: sponsor.id,
-          name: sponsor.company_name,
+          name: sponsor.name,
           tier: sponsor.tier,
-          imageUrl: sponsor.pfp_url,
+          imageUrl: sponsor.imageUrl,
         }));
 
         // Set the sponsors state ONCE with the complete list
         setSponsors(formattedSponsors);
       } catch (error) {
         console.error("Error fetching sponsors:", error);
-      } finally {
       }
     };
 
@@ -57,10 +58,16 @@ export default function SponsorsPage() {
   useEffect(() => {
     // Only sort if there are sponsors to avoid unnecessary operations
     if (sponsors.length > 0) {
-      setPlatinumSponsors(sponsors.filter((sponsor) => sponsor.tier === "platinum"));
+      setPlatinumSponsors(
+        sponsors.filter((sponsor) => sponsor.tier === "platinum")
+      );
       setGoldSponsors(sponsors.filter((sponsor) => sponsor.tier === "gold"));
-      setSilverSponsors(sponsors.filter((sponsor) => sponsor.tier === "silver"));
-      setBronzeSponsors(sponsors.filter((sponsor) => sponsor.tier === "bronze"));
+      setSilverSponsors(
+        sponsors.filter((sponsor) => sponsor.tier === "silver")
+      );
+      setBronzeSponsors(
+        sponsors.filter((sponsor) => sponsor.tier === "bronze")
+      );
     } else {
       // Optionally, clear the sorted arrays if the main sponsors list is empty
       setPlatinumSponsors([]);
