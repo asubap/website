@@ -51,7 +51,7 @@ export const AnnouncementListShort = ({
         placeholder="Search announcements by title or description..."
         containerClassName="mb-2"
       />
-      <div className="h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
+      <div className="h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {filteredAnnouncements.map((announcement) => (
           <div
             key={announcement.id}

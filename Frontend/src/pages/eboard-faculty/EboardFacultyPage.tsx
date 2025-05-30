@@ -131,9 +131,9 @@ const EboardFacultyPage: React.FC = () => {
         isLogged={Boolean(session)}
         role={role}
       />
-      <main className="flex-grow p-8 pt-32">
+      <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold text-left w-full mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
             Spring 2025 Executive Board & Faculty
           </h1>
 

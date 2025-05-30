@@ -7,12 +7,21 @@ import SponsorTier from "../../components/ui/SponsorTier";
 import { getNavLinks } from "../../components/nav/NavLink";
 import { useAuth } from "../../context/auth/authProvider";
 
-// Interface for sponsor data
+// Interface for sponsor data - This will be used for the *processed* data
 interface Sponsor {
   id: number;
-  name: string;
+  name: string; // Keep as 'name' for consistency within this component and for SponsorCard
   tier: "platinum" | "gold" | "silver" | "bronze";
-  imageUrl: string;
+  imageUrl: string; // Keep as 'imageUrl' for consistency
+}
+
+// Define a type for the raw data coming from the API
+interface ApiSponsorData {
+  id: number;
+  company_name: string;
+  tier: "platinum" | "gold" | "silver" | "bronze";
+  pfp_url: string;
+  // include other fields from API if needed, like about, links, emails, uuid, resources
 }
 
 export default function SponsorsPage() {
@@ -34,14 +43,14 @@ export default function SponsorsPage() {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+        const data: ApiSponsorData[] = await response.json(); // Use the new ApiSponsorData type
 
         // Transform the fetched data into the desired format
-        const formattedSponsors = data.map((sponsor: Sponsor) => ({
-          id: sponsor.id,
-          name: sponsor.name,
-          tier: sponsor.tier,
-          imageUrl: sponsor.imageUrl,
+        const formattedSponsors = data.map((apiSponsor: ApiSponsorData) => ({
+          id: apiSponsor.id,
+          name: apiSponsor.company_name, // Map from company_name
+          tier: apiSponsor.tier,
+          imageUrl: apiSponsor.pfp_url, // Map from pfp_url
         }));
 
         // Set the sponsors state ONCE with the complete list
@@ -87,8 +96,8 @@ export default function SponsorsPage() {
         outlineColor="#AF272F"
       />
 
-      <main className="flex-grow container mx-auto px-4 mt-24 flex flex-col items-center">
-        <h1 className="text-5xl font-outfit font-bold text-bapred text-center pt-4 sm:pt-8">
+      <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24 flex flex-col items-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
           Our Sponsors
         </h1>
         <p className="text-center text-bapgray text-xl pt-4 pb-4 px-8 sm:px-16 lg:px-24">

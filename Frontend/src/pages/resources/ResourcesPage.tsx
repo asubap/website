@@ -6,7 +6,6 @@ import ResourceCategory from "../../components/resource/ResourceCategory";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import Fuse from "fuse.js";
-import { Info } from "lucide-react";
 import { getNavLinks } from "../../components/nav/NavLink";
 import SearchInput from "../../components/common/SearchInput";
 
@@ -172,15 +171,14 @@ const ResourcesPage: React.FC = () => {
       />
 
       <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">
-        <div className="mb-8 flex items-center justify-center">
-          <h1 className="text-3xl font-bold text-center">Resources</h1>
-          <div className="relative group flex items-center ml-2">
-            <Info className="w-5 h-5 text-bapred cursor-pointer" />
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-10 hidden group-hover:block bg-white border border-gray-200 text-gray-700 text-sm rounded shadow-lg px-4 py-2 whitespace-nowrap min-w-max">
-              This page contains helpful resources and materials for members to
-              reference.
-            </div>
-          </div>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
+            Resources
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            This page contains helpful resources and materials for members to
+            reference.
+          </p>
         </div>
         {/* Search Bar */}
         <SearchInput

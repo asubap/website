@@ -20,7 +20,9 @@ const NetworkingLayout = ({ children, navLinks }: NetworkingLayoutProps) => {
         role={role}
       />
 
-      <main className="flex-1 bg-gray-50 mt-20">{children}</main>
+      <main className="flex-1 bg-gray-50 p-8 pt-32 px-8 sm:px-16 lg:px-24">
+        {children}
+      </main>
 
       <Footer backgroundColor="#FFFFFF" />
     </div>

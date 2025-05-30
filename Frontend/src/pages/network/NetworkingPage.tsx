@@ -327,8 +327,10 @@ const NetworkingPage = () => {
 
   return (
     <NetworkingLayout navLinks={getNavLinks(!!session)}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Network</h1>
+      <div className="max-w-7xl mx-auto px-4">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
+          Network
+        </h1>
 
         <NetworkSearch onSearch={handleSearch} />
 

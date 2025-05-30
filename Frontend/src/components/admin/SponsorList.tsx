@@ -86,16 +86,6 @@ const SponsorList = ({
             (link: unknown): link is string => typeof link === "string"
           )
         : [];
-
-      console.log(
-        "[SponsorList] handleEditClick: Fetched data from backend:",
-        data
-      );
-      console.log(
-        "[SponsorList] handleEditClick: Parsed fetchedLinks:",
-        fetchedLinks
-      );
-
       setSponsorProfile({
         sponsorName: data.company_name || email,
         sponsorDescription: data.about || data.description || "",
@@ -124,9 +114,6 @@ const SponsorList = ({
     };
     onProfileUpdateConfirm(updatePayload);
 
-    console.log(
-      "SponsorList: handleSponsorUpdate called. Setting sponsorToEdit to null."
-    );
     setSponsorToEdit(null);
     setSponsorProfile(null);
   };
@@ -170,7 +157,7 @@ const SponsorList = ({
         placeholder="Search sponsors by name or email..."
         containerClassName="mb-2"
       />
-      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
+      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {loadingSponsor && (
           <div className="fixed inset-0 z-50">
             <div className="flex min-h-screen items-center justify-center">
@@ -236,9 +223,6 @@ const SponsorList = ({
           <ProfileEditModal
             isOpen={true}
             onClose={() => {
-              console.log(
-                "SponsorList: ProfileEditModal onClose called. Setting sponsorToEdit to null."
-              );
               setSponsorToEdit(null);
               setSponsorProfile(null);
             }}
