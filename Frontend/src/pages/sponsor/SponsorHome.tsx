@@ -55,6 +55,15 @@ const SponsorHome = () => {
 
   const [reloadTimestamp, setReloadTimestamp] = useState<number>(Date.now());
 
+  // State for ProfileEditModal discard confirmation
+  const [showProfileDiscardConfirm, setShowProfileDiscardConfirm] =
+    useState(false);
+  const [profileDiscardConfirmArgs, setProfileDiscardConfirmArgs] = useState<{
+    title: string;
+    message: string;
+    onConfirmDiscard: () => void;
+  } | null>(null);
+
   // Helper function to format dates properly
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "Unknown date";
@@ -207,6 +216,15 @@ const SponsorHome = () => {
       alert(error instanceof Error ? error.message : "Upload failed");
       return null;
     }
+  };
+
+  const handleShowDiscardProfileConfirmation = (
+    title: string,
+    message: string,
+    onConfirmDiscard: () => void
+  ) => {
+    setProfileDiscardConfirmArgs({ title, message, onConfirmDiscard });
+    setShowProfileDiscardConfirm(true);
   };
 
   const handleProfileUpdate = async (updatedProfile: {
@@ -438,6 +456,7 @@ const SponsorHome = () => {
         token={session?.access_token || ""}
         profileUrl={sponsorData.profileUrl}
         links={sponsorData.links}
+        showDiscardConfirmation={handleShowDiscardProfileConfirmation}
       />
 
       {/* Resource Preview Modal */}
@@ -466,6 +485,22 @@ const SponsorHome = () => {
           confirmText="Delete"
           cancelText="Cancel"
           preventOutsideClick={true}
+        />
+      )}
+
+      {/* Profile Edit Discard Confirmation Dialog */}
+      {showProfileDiscardConfirm && profileDiscardConfirmArgs && (
+        <ConfirmDialog
+          isOpen={showProfileDiscardConfirm}
+          onClose={() => setShowProfileDiscardConfirm(false)}
+          onConfirm={() => {
+            profileDiscardConfirmArgs.onConfirmDiscard();
+            setShowProfileDiscardConfirm(false);
+          }}
+          title={profileDiscardConfirmArgs.title}
+          message={profileDiscardConfirmArgs.message}
+          confirmText="Discard"
+          cancelText="Cancel"
         />
       )}
     </div>

@@ -45,7 +45,7 @@ const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       <LoadingSpinner text="Loading admins..." size="md" />
     ) : (
       <EmailList
-        emails={adminEmails}
+        emails={adminEmails.map((email) => ({ email }))}
         onDelete={handleDeleteAdmin}
         userType="admin"
       />

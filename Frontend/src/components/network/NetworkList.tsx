@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Member, Sponsor } from "../../types";
+import React, { useState } from "react";
+import { MemberDetail, Sponsor } from "../../types";
 import NetworkProfileModal from "./NetworkProfileModal";
 import SponsorProfileModal from "./SponsorProfileModal";
 import {
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 interface NetworkListProps {
-  entities: (Member | Sponsor)[];
+  entities: (MemberDetail | Sponsor)[];
 }
 
 // Format role names to be more readable
@@ -25,10 +25,10 @@ const formatRoleName = (role: string | null | undefined): string => {
 
 const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
   const [selectedNetworkEntity, setSelectedNetworkEntity] = useState<
-    Member | Sponsor | null
+    MemberDetail | Sponsor | null
   >(null);
 
-  const openNetworkProfile = (entity: Member | Sponsor) => {
+  const openNetworkProfile = (entity: MemberDetail | Sponsor) => {
     setSelectedNetworkEntity(entity);
   };
 
@@ -47,11 +47,13 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
           <div
             key={entity.id || entity.name}
             className="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200"
-            onClick={() =>
-              entity.type === "member"
-                ? openNetworkProfile(entity)
-                : handleSponsorClick(entity)
-            }
+            onClick={() => {
+              if (entity.type === "member") {
+                openNetworkProfile(entity);
+              } else if (entity.type === "sponsor") {
+                handleSponsorClick(entity);
+              }
+            }}
           >
             <div className="p-5 flex flex-col h-full">
               <div className="flex items-center">
@@ -77,7 +79,8 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                   )}
                   {entity.type === "sponsor" && entity.tier && (
                     <p className="text-sm text-blue-600 font-medium">
-                      {entity.tier[0].toUpperCase() + entity.tier.slice(1)} Sponsor
+                      {entity.tier[0].toUpperCase() + entity.tier.slice(1)}{" "}
+                      Sponsor
                     </p>
                   )}
                 </div>
@@ -163,7 +166,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                           <LinkIcon className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
                           <span className="font-medium">Links:</span>
                         </div>
-                        {entity.links.map((link, index) => (
+                        {entity.links.map((link: string, index: number) => (
                           <div key={index} className="ml-6 text-sm">
                             <a
                               href={
@@ -201,7 +204,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     e.stopPropagation();
                     if (entity.type === "member") {
                       openNetworkProfile(entity);
-                    } else {
+                    } else if (entity.type === "sponsor") {
                       handleSponsorClick(entity);
                     }
                   }}
@@ -218,7 +221,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
         <NetworkProfileModal
           isOpen={true}
           onClose={closeNetworkProfile}
-          member={selectedNetworkEntity as Member}
+          member={selectedNetworkEntity as MemberDetail}
         />
       )}
 
