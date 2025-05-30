@@ -277,7 +277,7 @@ export default function ProfileEditModal({
 
   const formContent = (
     <div className="flex flex-col overflow-y-auto max-h-[60vh] sm:max-h-[75vh] p-1">
-      <div className="w-full flex p-6 pt-4 md:pt-6">
+      <div className="w-full flex pl-6 pr-6 pb-4 pt-4">
         <ProfilePictureUpload
           currentProfileUrl={currentPfpUrl}
           onFileSelect={handlePfpFileSelect}
