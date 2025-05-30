@@ -29,7 +29,11 @@ const AdminSponsorsSection: React.FC<AdminSponsorsSectionProps> = ({
       <LoadingSpinner text="Loading sponsors..." size="md" />
     ) : (
       <EmailList
-        emails={sponsors}
+        emails={sponsors.map((email) => ({
+          email,
+          name: email,
+          role: "sponsor",
+        }))}
         onDelete={handleDeleteSponsor}
         userType="sponsor"
       />
