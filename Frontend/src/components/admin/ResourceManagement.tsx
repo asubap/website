@@ -599,7 +599,7 @@ const ResourceManagement: React.FC = () => {
               <div key={category.id} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div
-                    className="flex items-center cursor-pointer mr-4"
+                    className="flex items-center cursor-pointer mr-4 flex-grow min-w-0"
                     onClick={() => toggleCategory(category.id)}
                   >
                     {expandedCategories.has(category.id) ? (
@@ -607,13 +607,13 @@ const ResourceManagement: React.FC = () => {
                     ) : (
                       <ChevronRight size={20} className="mr-2 flex-shrink-0" />
                     )}
-                    <h2 className="text-xl font-semibold mr-2">
-                      {category.name}
-                    </h2>
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">
-                      {category.resourceType === "firm"
-                        ? "Firm Resource"
-                        : "Chapter Resource"}
+                    <div className="flex-auto min-w-0 mr-2">
+                      <h2 className="text-xl font-semibold whitespace-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-slate-400 scrollbar-track-slate-200 dark:scrollbar-thumb-slate-600 dark:scrollbar-track-slate-800">
+                        {category.name}
+                      </h2>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 whitespace-nowrap flex-shrink-0">
+                      {category.resourceType === "firm" ? "Firm" : "Chapter"}
                     </span>
                   </div>
                   <div className="space-x-2 flex items-center flex-shrink-0">

@@ -170,7 +170,7 @@ const SponsorList = ({
         placeholder="Search sponsors by name or email..."
         containerClassName="mb-2"
       />
-      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
+      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {loadingSponsor && (
           <div className="fixed inset-0 z-50">
             <div className="flex min-h-screen items-center justify-center">

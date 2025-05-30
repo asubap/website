@@ -96,7 +96,7 @@ const EmailList = ({
           </div>
         </div>
       )}
-      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
+      <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {filteredEmails.map(({ email, name }) => (
           <div
             key={email}
