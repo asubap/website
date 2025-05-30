@@ -32,9 +32,9 @@ export default function AboutPage() {
         outlineColor="#AF272F"
       />
 
-      <main className="flex-grow mt-16 sm:mt-20 md:mt-24 mb-8 sm:mb-12 px-8 sm:px-16 lg:px-24">
+      <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">
         <section>
-          <h1 className="text-5xl font-outfit font-bold text-bapred pt-4 sm:pt-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center sm:text-left">
             About Us
           </h1>
 

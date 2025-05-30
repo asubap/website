@@ -9,7 +9,7 @@ import { getNavLinks } from "../../components/nav/NavLink";
 export const ProcessFlow = () => {
   const { session } = useAuth();
   const navLinks = getNavLinks(!!session);
-  
+
   const steps = [
     {
       title: "W.P. Carey Student",
@@ -50,8 +50,8 @@ export const ProcessFlow = () => {
         outlineColor="#AF272F"
       />
 
-      <main className="flex-grow container mx-auto px-4 mt-24 flex flex-col items-center">
-        <h1 className="text-5xl font-outfit font-bold text-bapred text-center pb-4 pt-4 sm:pt-8">
+      <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24 flex flex-col items-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
           Membership Process
         </h1>
 
@@ -90,7 +90,10 @@ export const ProcessFlow = () => {
         <div className="text-center mt-8">
           <button
             className="text-white text-xl md:text-2xl font-bold px-8 py-4 bg-[#AF272F] hover:bg-[#8f1f25] transition-colors rounded-md shadow-md"
-            onClick={() => (window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSciA9BqK7uwVXsjTAId5EJIw-kIvseIxHPeoCo7oGNWy6t3Wg/closedform")}
+            onClick={() =>
+              (window.location.href =
+                "https://docs.google.com/forms/d/e/1FAIpQLSciA9BqK7uwVXsjTAId5EJIw-kIvseIxHPeoCo7oGNWy6t3Wg/closedform")
+            }
           >
             Click Here To Apply!
           </button>

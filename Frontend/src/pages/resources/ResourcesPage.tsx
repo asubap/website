@@ -172,7 +172,9 @@ const ResourcesPage: React.FC = () => {
 
       <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold">Resources</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
+            Resources
+          </h1>
           <p className="text-sm text-gray-600 mt-1">
             This page contains helpful resources and materials for members to
             reference.
