@@ -223,7 +223,8 @@ import React, {
 
     const handleEboardCloseAttempt = () => {
         if (hasEboardChanges()) {
-        setShowConfirmEboardClose(true);
+            console.log(showConfirmEboardClose)
+            setShowConfirmEboardClose(true);
         } else {
         closeAndResetEboardModal();
         }
