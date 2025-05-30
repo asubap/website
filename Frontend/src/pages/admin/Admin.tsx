@@ -124,7 +124,6 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    console.log("Admin.tsx: Main useEffect triggered. Session:", session);
     if (!session) return;
 
     const fetchAdmins = async () => {
@@ -159,7 +158,6 @@ const Admin = () => {
     };
 
     const fetchSponsors = async () => {
-      console.log("Admin.tsx: fetchSponsors called");
       const token = session.access_token;
       fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/`, {
         method: "GET",
@@ -771,12 +769,12 @@ const Admin = () => {
       />
 
       {/* Add padding-top to account for fixed navbar */}
-      <div className="flex flex-col flex-grow pt-24">
+      <div className="flex flex-col flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">
         <main className="order-1 md:order-1">
-          <h1 className="text-4xl font-bold text-left w-full px-8 sm:px-16 lg:px-24 pt-8 mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
             Admin Dashboard
           </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full px-8 sm:px-16 lg:px-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full">
             {/* Announcements column - now order-3 on mobile to appear after Past Events */}
             <div className="order-3 md:order-2">
               <div className="flex items-center mb-2">

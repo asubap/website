@@ -12,7 +12,11 @@ interface EventCheckInProps {
   checkInWindowMinutes?: number;
 }
 
-export const isEventInSession = (eventDate: string, eventTime: string, eventHours: number) => {
+export const isEventInSession = (
+  eventDate: string,
+  eventTime: string,
+  eventHours: number
+) => {
   if (!eventDate || !eventTime || !eventHours) return false;
   const start = new Date(`${eventDate}T${eventTime}`);
   const end = new Date(start.getTime() + eventHours * 60 * 60 * 1000);
@@ -35,21 +39,31 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
   const { session } = useAuth();
   const { showToast } = useToast();
 
-  const alreadyCheckedIn = (eventAttending || []).includes(session?.user?.id || "");
+  const alreadyCheckedIn = (eventAttending || []).includes(
+    session?.user?.id || ""
+  );
 
   const inSession = isEventInSession(eventDate, eventTime, eventHours);
 
   const checkIn = async () => {
     console.log("inside checkin");
     if (!inSession) {
-      showToast("You can only check in during the event session window.", "error");
+      showToast(
+        "You can only check in during the event session window.",
+        "error"
+      );
       return;
     }
     const eventStart = new Date(`${eventDate}T${eventTime}`);
     const now = new Date();
-    const checkInDeadline = new Date(eventStart.getTime() + checkInWindowMinutes * 60 * 1000);
+    const checkInDeadline = new Date(
+      eventStart.getTime() + checkInWindowMinutes * 60 * 1000
+    );
     if (now > checkInDeadline) {
-      showToast(`You are checking in after the allowed ${checkInWindowMinutes}-minute window.`, "error");
+      showToast(
+        `You are checking in after the allowed ${checkInWindowMinutes}-minute window.`,
+        "error"
+      );
       return;
     }
     console.log("before geolocation");
@@ -86,7 +100,10 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
         console.log("accuracy", accuracy);
         if (latitude === 0 || longitude === 0 || accuracy === 0) {
           setStatus("error");
-          showToast("Failed to retrieve your location. Please try again.", "error");
+          showToast(
+            "Failed to retrieve your location. Please try again.",
+            "error"
+          );
           return;
         }
         try {
@@ -112,6 +129,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
             showToast(data.error || "Check-in failed.", "error");
           }
         } catch (err) {
+          console.log("error", err);
           setStatus("error");
           showToast("Network error during check-in.", "error");
         }
@@ -119,7 +137,10 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
       (err) => {
         setStatus("error");
         if (err.code === err.PERMISSION_DENIED) {
-          showToast("Permission denied. Please allow location access.", "error");
+          showToast(
+            "Permission denied. Please allow location access.",
+            "error"
+          );
         } else {
           showToast("Failed to retrieve your location.", "error");
         }
@@ -137,15 +158,23 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
       <button
         onClick={checkIn}
         className={`w-full sm:w-40 px-4 py-2 text-white rounded-md text-sm font-medium ${
-          !inSession || alreadyCheckedIn || status === "sending" || status === "locating"
+          !inSession ||
+          alreadyCheckedIn ||
+          status === "sending" ||
+          status === "locating"
             ? "bg-gray-400 cursor-not-allowed"
             : status === "success"
             ? "bg-green-600"
-            : (status === "error" || (status === "idle" && !alreadyCheckedIn))
+            : status === "error" || (status === "idle" && !alreadyCheckedIn)
             ? "bg-[#AF272F] hover:bg-[#8f1f26]"
             : "bg-[#AF272F] hover:bg-[#8f1f26]"
         } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#AF272F]`}
-        disabled={!inSession || alreadyCheckedIn || status === "sending" || status === "locating"}
+        disabled={
+          !inSession ||
+          alreadyCheckedIn ||
+          status === "sending" ||
+          status === "locating"
+        }
       >
         {alreadyCheckedIn
           ? "Checked In"
