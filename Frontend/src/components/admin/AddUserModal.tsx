@@ -18,7 +18,14 @@ interface FormErrors {
   emails?: string;
 }
 
-const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: AddUserModalProps) => {
+const AddUserModal = ({
+  role,
+  title,
+  label,
+  buttonText,
+  onClose,
+  onUserAdded,
+}: AddUserModalProps) => {
   useScrollLock(true);
   const { showToast } = useToast();
   const [emailsInput, setEmailsInput] = useState("");
@@ -28,7 +35,9 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
   const [showConfirmCloseModal, setShowConfirmCloseModal] = useState(false);
   const initialStateRef = useRef({ emailsInput });
 
-  const hasChanges = () => emailsInput !== initialStateRef.current.emailsInput || pendingEmails.length > 0;
+  const hasChanges = () =>
+    emailsInput !== initialStateRef.current.emailsInput ||
+    pendingEmails.length > 0;
 
   const handleCloseAttempt = () => {
     if (isLoading) return;
@@ -98,7 +107,9 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
     setIsLoading(true);
     const emailsToAdd = [...pendingEmails];
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         showToast("Authentication error. Please log in again.", "error");
         setIsLoading(false);
@@ -113,15 +124,25 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ user_email: email, role }),
-        }).then(async (response) => {
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            return { email, success: false, error: errorData.message || `Failed to add ${email}` };
-          }
-          return { email, success: true };
-        }).catch(error => {
-          return { email, success: false, error: error.message || `Network error for ${email}` };
         })
+          .then(async (response) => {
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              return {
+                email,
+                success: false,
+                error: errorData.message || `Failed to add ${email}`,
+              };
+            }
+            return { email, success: true };
+          })
+          .catch((error) => {
+            return {
+              email,
+              success: false,
+              error: error.message || `Network error for ${email}`,
+            };
+          })
       );
       const results = await Promise.allSettled(addUserPromises);
       const successfulEmails: string[] = [];
@@ -132,13 +153,18 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
         } else if (result.status === "fulfilled" && !result.value.success) {
           failedEmails.push(`${result.value.email} (${result.value.error})`);
         } else if (result.status === "rejected") {
-          const reason = result.reason as any;
-          failedEmails.push(`Unknown email (Error: ${reason?.message || 'Unknown error'})`);
+          const reason = result.reason as Error;
+          failedEmails.push(
+            `Unknown email (Error: ${reason?.message || "Unknown error"})`
+          );
         }
       });
       if (successfulEmails.length > 0) {
         onUserAdded(successfulEmails);
-        showToast(`${successfulEmails.length} user(s) added successfully.`, "success");
+        showToast(
+          `${successfulEmails.length} user(s) added successfully.`,
+          "success"
+        );
         setEmailsInput("");
         setPendingEmails([]);
         onClose();
@@ -151,7 +177,11 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
         );
       }
     } catch (error) {
-      showToast("Failed to add user(s). Please try again.", "error");
+      console.error("Error adding users:", error);
+      showToast(
+        "Failed to add user(s). Please try again. Check the console for more details.",
+        "error"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -214,8 +244,8 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
               aria-invalid={!!errors.emails}
               aria-describedby={errors.emails ? "emails-error" : undefined}
               disabled={isLoading}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   handleAddUsers();
                 }
@@ -229,7 +259,7 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
             {/* Pending emails list */}
             {pendingEmails.length > 0 && (
               <div className="mt-2 flex flex-col gap-2">
-                {pendingEmails.map(email => (
+                {pendingEmails.map((email) => (
                   <div
                     key={email}
                     className="w-full border border-bapred rounded-md px-4 py-2 flex justify-between items-center bg-white"
@@ -253,15 +283,33 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
           <div className="flex justify-end mt-6">
             <button
               onClick={handleAddUsers}
-              className={`px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors flex items-center justify-center ${isLoading ? "opacity-75 cursor-not-allowed" : ""}`}
+              className={`px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors flex items-center justify-center ${
+                isLoading ? "opacity-75 cursor-not-allowed" : ""
+              }`}
               disabled={isLoading}
               type="button"
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Adding...
                 </>
@@ -286,4 +334,4 @@ const AddUserModal = ({ role, title, label, buttonText, onClose, onUserAdded }: 
   );
 };
 
-export default AddUserModal; 
+export default AddUserModal;

@@ -6,6 +6,7 @@ import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../context/toast/ToastContext";
+import ProfilePictureUpload from "../../components/common/ProfilePictureUpload";
 
 type ProfileData = {
   name: string;
@@ -44,11 +45,11 @@ export default function ProfileEditModal({
     useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  const [photoPreview, setPhotoPreview] = useState<string | null>(
+  const [currentPfpUrl, setCurrentPfpUrl] = useState<string | null>(
     profileData.photoUrl || null
   );
-  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
-  const [showPicConfirmation, setShowPicConfirmation] = useState(false);
+  const [isUploadingPfp, setIsUploadingPfp] = useState(false);
+  const [showPfpDeleteConfirm, setShowPfpDeleteConfirm] = useState(false);
   const { session } = useAuth();
   const { showToast } = useToast();
 
@@ -57,10 +58,12 @@ export default function ProfileEditModal({
       setFormData(profileData);
       initialDataRef.current = profileData;
       if (profileData.photoUrl) {
-        setPhotoPreview(`${profileData.photoUrl}?t=${Date.now()}`);
+        setCurrentPfpUrl(`${profileData.photoUrl}?t=${Date.now()}`);
       } else {
-        setPhotoPreview(null);
+        setCurrentPfpUrl(null);
       }
+      setIsUploadingPfp(false);
+      setShowPfpDeleteConfirm(false);
     }
   }, [isOpen, profileData]);
 
@@ -69,12 +72,17 @@ export default function ProfileEditModal({
   }, []);
 
   const hasUnsavedChanges = () => {
-    const relevantInitialData = { ...initialDataRef.current };
-    const relevantFormData = { ...formData };
+    const formChanged =
+      JSON.stringify({
+        ...formData,
+        photoUrl: undefined,
+      }) !==
+      JSON.stringify({
+        ...initialDataRef.current,
+        photoUrl: undefined,
+      });
 
-    return (
-      JSON.stringify(relevantInitialData) !== JSON.stringify(relevantFormData)
-    );
+    return formChanged;
   };
 
   const handleCloseAttempt = () => {
@@ -105,21 +113,17 @@ export default function ProfileEditModal({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePhotoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!event.target.files || event.target.files.length === 0) return;
-    const file = event.target.files[0];
-
-    const previewUrl = URL.createObjectURL(file);
-    setPhotoPreview(previewUrl);
-
-    setUploadingProfilePic(true);
+  const handlePfpFileSelect = async (file: File) => {
+    if (!session?.access_token) {
+      showToast("Authentication error.", "error");
+      return;
+    }
+    setIsUploadingPfp(true);
 
     try {
-      const token = session?.access_token;
-      const formData = new FormData();
-      formData.append("file", file);
+      const token = session.access_token;
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
 
       const uploadResponse = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/member-info/${
@@ -127,30 +131,24 @@ export default function ProfileEditModal({
         }/pfp`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+          headers: { Authorization: `Bearer ${token}` },
+          body: uploadFormData,
         }
       );
 
       if (!uploadResponse.ok) {
-        throw new Error("Failed to upload photo");
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to upload photo");
       }
 
       const data = await uploadResponse.json();
-
       const newPhotoUrl = `${data.photoUrl}?t=${Date.now()}`;
-      setPhotoPreview(newPhotoUrl);
-      setFormData((prev) => {
-        const updated = { ...prev, photoUrl: data.photoUrl };
-        onSave(updated);
-        initialDataRef.current = updated;
-        return updated;
-      });
+      setCurrentPfpUrl(newPhotoUrl);
+      setFormData((prev) => ({
+        ...prev,
+        photoUrl: data.photoUrl,
+      }));
       showToast("Profile picture uploaded successfully!", "success");
-
-      URL.revokeObjectURL(previewUrl);
     } catch (error) {
       console.error("Error uploading photo:", error);
       showToast(
@@ -158,52 +156,46 @@ export default function ProfileEditModal({
         "error"
       );
     } finally {
-      setUploadingProfilePic(false);
+      setIsUploadingPfp(false);
     }
   };
 
-  const confirmProfilePicDelete = () => {
-    setShowPicConfirmation(true);
-  };
+  const handlePfpDelete = async () => {
+    if (!session?.access_token) {
+      showToast("Authentication error.", "error");
+      return;
+    }
+    setIsUploadingPfp(true);
 
-  const cancelProfilePicDelete = () => {
-    setShowPicConfirmation(false);
-  };
-
-  const handlePhotoDelete = async () => {
     try {
-      setUploadingProfilePic(true);
-      const token = session?.access_token;
-
+      const token = session.access_token;
       const deleteResponse = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/member-info/${
           profileData.email
         }/pfp`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       if (!deleteResponse.ok) {
-        throw new Error("Failed to delete photo");
+        const errorData = await deleteResponse.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to delete photo");
       }
+
       showToast("Profile picture deleted successfully!", "success");
-      setPhotoPreview(null);
-      setFormData((prev) => {
-        const updated = { ...prev, photoUrl: "" };
-        onSave(updated);
-        initialDataRef.current = updated;
-        return updated;
-      });
+      setCurrentPfpUrl(null);
+      setFormData((prev) => ({
+        ...prev,
+        photoUrl: "",
+      }));
     } catch (error) {
       console.error("Error deleting photo:", error);
       showToast("Failed to delete profile picture. Please try again.", "error");
     } finally {
-      setUploadingProfilePic(false);
-      setShowPicConfirmation(false);
+      setIsUploadingPfp(false);
+      setShowPfpDeleteConfirm(false);
     }
   };
 
@@ -236,7 +228,10 @@ export default function ProfileEditModal({
       }
     }
 
-    if (!hasUnsavedChanges()) {
+    if (
+      !hasUnsavedChanges() &&
+      currentPfpUrl === initialDataRef.current.photoUrl
+    ) {
       onClose();
       return;
     }
@@ -267,8 +262,10 @@ export default function ProfileEditModal({
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to update profile");
       }
-      initialDataRef.current = formData;
-      onSave(formData);
+      initialDataRef.current = { ...formData, photoUrl: currentPfpUrl || "" };
+      onSave({ ...formData, photoUrl: currentPfpUrl || "" });
+      showToast("Profile updated successfully!", "success");
+      onClose();
     } catch (error) {
       console.error("Error updating profile:", error);
       showToast(
@@ -280,57 +277,20 @@ export default function ProfileEditModal({
 
   const formContent = (
     <div className="flex flex-col overflow-y-auto max-h-[60vh] sm:max-h-[75vh] p-1">
-      <div className="w-full flex justify-center items-center p-6 pt-4 md:pt-6">
-        <div className="relative group">
-          {uploadingProfilePic && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center z-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-            </div>
-          )}
-          <div className="w-36 h-36 bg-[#d9d9d9] rounded-full flex items-center justify-center overflow-hidden mb-4">
-            {photoPreview ? (
-              <img
-                src={photoPreview}
-                alt="Profile Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="text-center text-sm text-gray-500">
-                <div>No Photo</div>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 mt-2">
-            <label
-              className={`px-4 py-2 bg-[#af272f] text-white rounded-full hover:bg-[#8f1f26] transition-colors cursor-pointer text-center text-sm ${
-                uploadingProfilePic ? "opacity-60 cursor-not-allowed" : ""
-              }`}
-              title={
-                uploadingProfilePic ? "Uploading..." : "Choose a profile photo"
-              }
-            >
-              {uploadingProfilePic ? "Uploading..." : "Upload Profile Photo"}
-              <input
-                accept="image/*"
-                className="hidden"
-                aria-label="Upload profile photo"
-                type="file"
-                onChange={handlePhotoUpload}
-                disabled={uploadingProfilePic}
-              />
-            </label>
-            {photoPreview && !uploadingProfilePic && (
-              <button
-                type="button"
-                onClick={confirmProfilePicDelete}
-                className="px-4 py-2 border border-[#d9d9d9] rounded-full text-[#202020] hover:bg-gray-100 transition-colors text-sm"
-                disabled={uploadingProfilePic}
-              >
-                Delete Photo
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="w-full flex p-6 pt-4 md:pt-6">
+        <ProfilePictureUpload
+          currentProfileUrl={currentPfpUrl}
+          onFileSelect={handlePfpFileSelect}
+          onDelete={handlePfpDelete}
+          uploading={isUploadingPfp}
+          altText="Profile Preview"
+          showDeleteConfirmationDialog={setShowPfpDeleteConfirm}
+          isDeleteConfirmationDialogVisible={showPfpDeleteConfirm}
+          confirmDeleteAction={() => {}}
+          cancelDeleteAction={() => setShowPfpDeleteConfirm(false)}
+          recommendedSizeText="Recommended: Square image (e.g., 250x250px)"
+          placeholderImageUrl="/default-avatar.png"
+        />
       </div>
 
       <div className="w-full p-6 pt-0 md:pt-2">
@@ -375,6 +335,7 @@ export default function ProfileEditModal({
                 onChange={handleChange}
                 className="border border-[#d9d9d9] rounded-lg p-3 w-full"
                 required
+                disabled
               />
             </div>
             <div>
@@ -396,7 +357,7 @@ export default function ProfileEditModal({
             </div>
           </div>
 
-          <div className="flex flex-row gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1">
               <label
                 htmlFor="major"
@@ -431,6 +392,8 @@ export default function ProfileEditModal({
                 className="border border-[#d9d9d9] rounded-lg p-3 w-full"
               />
             </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1 relative">
               <label
                 htmlFor="status"
@@ -505,19 +468,6 @@ export default function ProfileEditModal({
           </div>
         </div>
       </div>
-
-      {showPicConfirmation && (
-        <ConfirmDialog
-          isOpen={showPicConfirmation}
-          onClose={cancelProfilePicDelete}
-          onConfirm={handlePhotoDelete}
-          title="Confirm Deletion"
-          message="Are you sure you want to remove your profile picture?"
-          confirmText="Remove"
-          cancelText="Cancel"
-          preventOutsideClick={true}
-        />
-      )}
     </div>
   );
 
@@ -537,10 +487,11 @@ export default function ProfileEditModal({
           </button>
           <button
             type="submit"
-            form="profile-edit-form"
+            onClick={handleSubmit}
             className="px-4 py-2 text-sm font-medium text-white bg-bapred border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+            disabled={isUploadingPfp}
           >
-            Save Changes
+            {isUploadingPfp ? "Uploading..." : "Save Changes"}
           </button>
         </div>
       }
@@ -556,25 +507,7 @@ export default function ProfileEditModal({
           cancelText="Keep Editing"
         />
       )}
-      <div className="p-6">
-        <form
-          id="profile-edit-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-          onKeyDown={(e) => {
-            if (
-              e.key === "Enter" &&
-              (e.target as HTMLElement).tagName !== "TEXTAREA"
-            ) {
-              e.preventDefault();
-            }
-          }}
-        >
-          {formContent}
-        </form>
-      </div>
+      <div className="p-6">{formContent}</div>
     </Modal>
   );
 }
