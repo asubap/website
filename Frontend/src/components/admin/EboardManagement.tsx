@@ -6,19 +6,13 @@ import React, {
     useMemo,
   } from "react";
   import {
-    ChevronDown,
-    ChevronRight,
-    Eye,
     MoreHorizontal,
     Trash2,
   } from "lucide-react";
   import { useAuth } from "../../context/auth/authProvider";
   import { toast } from "react-hot-toast";
   import LoadingSpinner from "../common/LoadingSpinner";
-  import ConfirmationModal from "../common/ConfirmationModal";
   import EboardModal from "./EboardModal";
-  import ResourceModal from "./ResourceModal";
-  import ResourcePreviewModal from "../ui/ResourcePreviewModal";
   import Fuse from "fuse.js";
   import SearchInput from "../common/SearchInput";
   
