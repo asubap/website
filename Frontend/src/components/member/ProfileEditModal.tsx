@@ -7,27 +7,13 @@ import Modal from "../../components/ui/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../context/toast/ToastContext";
 import ProfilePictureUpload from "../../components/common/ProfilePictureUpload";
-
-type ProfileData = {
-  name: string;
-  email: string;
-  phone: string;
-  major: string;
-  graduationDate: string;
-  status: string;
-  about: string;
-  internship: string;
-  photoUrl: string;
-  hours: string;
-  rank: string;
-  role?: string;
-};
+import { MemberDetail } from "../../types";
 
 interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  profileData: ProfileData;
-  onSave: (formData: ProfileData) => void;
+  profileData: MemberDetail;
+  onSave: (formData: MemberDetail) => void;
   showRank?: boolean;
   showRole?: boolean;
 }
@@ -39,8 +25,8 @@ export default function ProfileEditModal({
   onSave,
   showRank = false,
 }: ProfileEditModalProps) {
-  const [formData, setFormData] = useState<ProfileData>(profileData);
-  const initialDataRef = useRef<ProfileData>(profileData);
+  const [formData, setFormData] = useState<MemberDetail>(profileData);
+  const initialDataRef = useRef<MemberDetail>(profileData);
   const [showDiscardConfirmDialog, setShowDiscardConfirmDialog] =
     useState(false);
   const [isClient, setIsClient] = useState(false);
