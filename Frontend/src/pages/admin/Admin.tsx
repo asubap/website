@@ -6,6 +6,7 @@ import SponsorList from "../../components/admin/SponsorList";
 import { useToast } from "../../context/toast/ToastContext";
 import AddSponsorModal from "../../components/admin/AddSponsorModal";
 import ResourceManagement from "../../components/admin/ResourceManagement";
+import EboardManagement from "../../components/admin/EboardManagement";
 import CreateAnnouncementModal from "../../components/admin/CreateAnnouncementModal";
 import EditAnnouncementModal from "../../components/admin/EditAnnouncementModal";
 import ViewAnnouncementModal from "../../components/admin/ViewAnnouncementModal";
@@ -877,6 +878,11 @@ const Admin = () => {
             {/* Resource Management */}
             <div className="order-7 md:order-7 col-span-1 md:col-span-2 pb-8">
               <ResourceManagement />
+            </div>
+
+            {/* Eboard Management */}
+            <div className="order-8 md:order-8 col-span-1 md:col-span-2 pb-8">
+              <EboardManagement />
             </div>
           </div>
         </main>
