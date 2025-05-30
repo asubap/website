@@ -110,26 +110,28 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Modal panel */}
         <div
-          className={`inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:w-full ${sizeClasses[size]}`}
+          className={`inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:w-full ${sizeClasses[size]} flex flex-col max-h-[90vh]`}
         >
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="sm:flex sm:items-start">
-              <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">
-                    {title}
-                  </h3>
-                  <button
-                    onClick={onClose}
-                    className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-                <div className="mt-4">{children}</div>
-              </div>
+          {/* Header Section */}
+          <div className="bg-white px-4 pt-5 pb-2 sm:px-6 sm:pt-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium leading-6 text-gray-900">
+                {title}
+              </h3>
+              <button
+                onClick={onClose}
+                className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <X size={20} />
+              </button>
             </div>
           </div>
+
+          {/* Scrollable Content Section */}
+          <div className="bg-white px-4 sm:px-6 flex-grow overflow-y-auto pr-2 pb-4">
+            {children}
+          </div>
+
           {(footer || (showFooter && (onConfirm || cancelText))) && (
             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               {footer ? (
