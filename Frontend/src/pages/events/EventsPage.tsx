@@ -34,6 +34,10 @@ const EventsPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
+  // Add state for announce confirmation modal
+  const [showAnnounceModal, setShowAnnounceModal] = useState(false);
+  const [eventToAnnounce, setEventToAnnounce] = useState<Event | null>(null);
+
   // State for pagination/load more
   const PAST_EVENTS_INCREMENT = 3;
   const [visiblePastEventsCount, setVisiblePastEventsCount] = useState(
@@ -115,10 +119,16 @@ const EventsPage: React.FC = () => {
     }
   };
 
-  // Update the announce event function to send the complete event object
   const handleAnnounceEvent = async (event: Event) => {
+    setEventToAnnounce(event);
+    setShowAnnounceModal(true);
+  };
+
+  const handleAnnounceConfirm = async () => {
+    if (!eventToAnnounce || !session?.access_token) return;
+
     try {
-      if (!session?.access_token && role !== "e-board") {
+      if (role !== "e-board") {
         showToast(
           "You must be logged in to announce events and be part of Eboard",
           "error"
@@ -126,7 +136,6 @@ const EventsPage: React.FC = () => {
         return;
       }
 
-      // Send the full event object as provided from the EventCard component
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/events/send-event`,
         {
@@ -136,22 +145,21 @@ const EventsPage: React.FC = () => {
             Authorization: `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
-            // Include all event fields explicitly to ensure nothing is missed
-            id: event.id,
-            event_name: event.event_name,
-            event_description: event.event_description,
-            event_location: event.event_location,
-            event_lat: event.event_lat,
-            event_long: event.event_long,
-            event_date: event.event_date,
-            event_time: event.event_time,
-            event_rsvped: event.event_rsvped,
-            event_attending: event.event_attending,
-            event_hours: event.event_hours,
-            event_hours_type: event.event_hours_type,
-            sponsors_attending: event.sponsors_attending,
-            check_in_window: event.check_in_window,
-            rsvped_users: event.rsvped_users
+            id: eventToAnnounce.id,
+            event_name: eventToAnnounce.event_name,
+            event_description: eventToAnnounce.event_description,
+            event_location: eventToAnnounce.event_location,
+            event_lat: eventToAnnounce.event_lat,
+            event_long: eventToAnnounce.event_long,
+            event_date: eventToAnnounce.event_date,
+            event_time: eventToAnnounce.event_time,
+            event_rsvped: eventToAnnounce.event_rsvped,
+            event_attending: eventToAnnounce.event_attending,
+            event_hours: eventToAnnounce.event_hours,
+            event_hours_type: eventToAnnounce.event_hours_type,
+            sponsors_attending: eventToAnnounce.sponsors_attending,
+            check_in_window: eventToAnnounce.check_in_window,
+            rsvped_users: eventToAnnounce.rsvped_users
           }),
         }
       );
@@ -164,6 +172,9 @@ const EventsPage: React.FC = () => {
     } catch (error) {
       console.error("Error announcing event:", error);
       showToast("Failed to announce event", "error");
+    } finally {
+      setShowAnnounceModal(false);
+      setEventToAnnounce(null);
     }
   };
 
@@ -448,6 +459,22 @@ const EventsPage: React.FC = () => {
           title="Delete Event"
           message={`Are you sure you want to delete the event "${eventToDelete.event_name}"? This action cannot be undone.`}
           confirmText="Delete"
+          cancelText="Cancel"
+        />
+      )}
+
+      {/* Announce Confirmation Modal */}
+      {showAnnounceModal && eventToAnnounce && (
+        <ConfirmationModal
+          isOpen={showAnnounceModal}
+          onClose={() => {
+            setShowAnnounceModal(false);
+            setEventToAnnounce(null);
+          }}
+          onConfirm={handleAnnounceConfirm}
+          title="Announce Event"
+          message={`Are you sure you want to announce the event "${eventToAnnounce.event_name}"?`}
+          confirmText="Announce"
           cancelText="Cancel"
         />
       )}
