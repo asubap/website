@@ -298,16 +298,6 @@ export const EventCard: React.FC<EventCardProps> = ({
 
       <div className="col-span-1">
         <div className="flex justify-end items-start mb-3 space-x-2">
-          {/* Add Delete button if onDelete prop is provided */}
-          {isAdmin && onDelete && (
-            <button
-              onClick={onDelete}
-              className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
-              title="Delete this event"
-            >
-              <Trash2 size={18} />
-            </button>
-          )}
           {/* Add Announce button if onAnnounce prop is provided */}
           {onAnnounce && !isPast && (
             <button
@@ -324,6 +314,16 @@ export const EventCard: React.FC<EventCardProps> = ({
               className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
             >
               <MoreHorizontal size={18} />
+            </button>
+          )}
+          {/* Add Delete button if onDelete prop is provided */}
+          {isAdmin && onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
+              title="Delete this event"
+            >
+              <Trash2 size={18} />
             </button>
           )}
         </div>
