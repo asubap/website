@@ -151,6 +151,7 @@ const EventsPage: React.FC = () => {
             event_hours_type: event.event_hours_type,
             sponsors_attending: event.sponsors_attending,
             check_in_window: event.check_in_window,
+            rsvped_users: event.rsvped_users
           }),
         }
       );
