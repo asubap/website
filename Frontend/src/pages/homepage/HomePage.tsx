@@ -5,6 +5,7 @@ import WhoWeAre from "../../components/Hero/WhoWeAre";
 import { useAuth } from "../../context/auth/authProvider";
 import { getNavLinks } from "../../components/nav/NavLink";
 
+
 export default function Homepage() {
   const { session, role } = useAuth();
 

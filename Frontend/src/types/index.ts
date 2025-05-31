@@ -67,3 +67,12 @@ export interface Sponsor {
   tier?: string;
   emails?: string[]; // Was required, making optional if not always present
 }
+
+export type EboardFacultyEntry = {
+  role: string;
+  role_email: string;
+  email: string;
+  profile_photo_url?: string;
+  name: string | null;
+  major: string | null;
+};
