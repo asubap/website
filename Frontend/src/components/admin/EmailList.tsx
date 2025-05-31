@@ -14,7 +14,7 @@ import { MemberDetail } from "../../types";
 interface EmailListProps {
   emails: { email: string; name?: string; role?: string }[];
   onDelete: (email: string) => void;
-  userType: "admin" | "sponsor";
+  userType: "admin" | "sponsor" | "member";
   onEdit?: (email: string) => void;
   memberDetails?: { [key: string]: MemberDetail };
   onSave?: (updatedData: MemberDetail) => Promise<void> | void;

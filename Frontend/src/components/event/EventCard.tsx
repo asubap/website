@@ -446,7 +446,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 {attendees.length > 0 ? (
                   <EmailList
                     emails={attendees.map(attendee => ({ email: attendee.email, name: attendee.name }))}
-                    userType="admin"
+                    userType="member"
                     clickable={false}
                     onDelete={handleDeleteAttendee}
                   />

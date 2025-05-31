@@ -865,7 +865,7 @@ const Admin = () => {
                 <EmailList
                   emails={members}
                   onDelete={handleDelete}
-                  userType="admin"
+                  userType="member"
                   onEdit={handleMemberEdit}
                   onSave={handleMemberUpdateSave}
                   memberDetails={memberDetails}
