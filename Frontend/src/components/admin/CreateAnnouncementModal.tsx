@@ -30,12 +30,12 @@ const CreateAnnouncementModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showConfirmCloseModal, setShowConfirmCloseModal] = useState(false);
+  const [showConfirmCreateModal, setShowConfirmCreateModal] = useState(false);
 
   // Store initial state to check for changes
   const initialStateRef = useRef({
     title,
     description,
-  
   });
 
   // Function to check if form data has changed
@@ -43,7 +43,6 @@ const CreateAnnouncementModal = ({
     const current = {
       title,
       description,
-  
     };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
   };
@@ -71,22 +70,30 @@ const CreateAnnouncementModal = ({
     }
   };
 
-  const handleCreateAnnouncement = async () => {
+  const validateForm = () => {
     const newErrors: FormErrors = {};
 
     // --- Validation ---
     if (!title.trim()) newErrors.title = "Title is required";
     if (!description.trim()) newErrors.description = "Description is required";
-   
 
     // --- Update errors state and return if invalid ---
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;
+      return false;
     }
 
-    // Clear errors if validation passes
-    setErrors({});
+    return true;
+  };
+
+  const handleCreateClick = () => {
+    if (validateForm()) {
+      setShowConfirmCreateModal(true);
+    }
+  };
+
+  const handleCreateAnnouncement = async () => {
+    setShowConfirmCreateModal(false);
     setIsLoading(true);
 
     try {
@@ -104,7 +111,6 @@ const CreateAnnouncementModal = ({
       const announcementData = {
         title: title.trim(),
         description: description.trim(),
-   
       };
 
       const response = await fetch(
@@ -132,11 +138,8 @@ const CreateAnnouncementModal = ({
       }
 
       const data = await response.json();
-
-      // Only call the onAnnouncementCreated function, which will handle the toast and page refresh
       onAnnouncementCreated(data);
       
-      // No need to close the modal here as the page will refresh
     } catch (error) {
       console.error("Error creating announcement:", error);
       if (!`${error}`.includes("Error: ")) {
@@ -249,10 +252,6 @@ const CreateAnnouncementModal = ({
             )}
           </div>
 
-          
-
-         
-
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 mt-6">
             <button
@@ -264,7 +263,7 @@ const CreateAnnouncementModal = ({
               Cancel
             </button>
             <button
-              onClick={handleCreateAnnouncement}
+              onClick={handleCreateClick}
               className={`px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors flex items-center justify-center ${
                 isLoading ? "opacity-75 cursor-not-allowed" : ""
               }`}
@@ -303,7 +302,7 @@ const CreateAnnouncementModal = ({
         </div>
       </div>
 
-      {/* Confirmation Modal Integration */}
+      {/* Confirmation Modal for Closing */}
       <ConfirmationModal
         isOpen={showConfirmCloseModal}
         onClose={() => setShowConfirmCloseModal(false)}
@@ -312,6 +311,17 @@ const CreateAnnouncementModal = ({
         message="You have unsaved changes. Are you sure you want to close this form?"
         confirmText="Discard"
         cancelText="Keep Editing"
+      />
+
+      {/* Confirmation Modal for Creating */}
+      <ConfirmationModal
+        isOpen={showConfirmCreateModal}
+        onClose={() => setShowConfirmCreateModal(false)}
+        onConfirm={handleCreateAnnouncement}
+        title="Create Announcement?"
+        message="Are you sure you want to create this announcement?"
+        confirmText="Create"
+        cancelText="Cancel"
       />
     </>,
     document.body

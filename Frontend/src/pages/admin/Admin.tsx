@@ -336,12 +336,7 @@ const Admin = () => {
 
   // Modified to show confirmation
   const handleAnnouncementCreated = (newAnnouncement: Announcement) => {
-    showConfirmationDialog(
-      "Confirm Create Announcement",
-      `Are you sure you want to create the announcement titled "${newAnnouncement.title}"?`,
-      () => actuallyCreateAnnouncement(newAnnouncement),
-      "Confirm Create"
-    );
+    actuallyCreateAnnouncement(newAnnouncement);
   };
 
   // Actual function to update announcement after confirmation
@@ -365,12 +360,7 @@ const Admin = () => {
 
   // Modified to show confirmation
   const handleAnnouncementUpdated = (updatedAnnouncement: Announcement) => {
-    showConfirmationDialog(
-      "Confirm Update Announcement",
-      `Are you sure you want to save changes to "${updatedAnnouncement.title}"?`,
-      () => actuallyUpdateAnnouncement(updatedAnnouncement),
-      "Confirm Update"
-    );
+    actuallyUpdateAnnouncement(updatedAnnouncement);
   };
 
   const handleEditAnnouncementClick = (announcement: Announcement) => {
