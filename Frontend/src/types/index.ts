@@ -52,6 +52,8 @@ export type Event = {
   event_hours_type: string;
   sponsors_attending: string[];
   check_in_window: number;
+  rsvped_users?: { name: string; email: string }[];
+  attending_users?: { name: string; email: string }[];
 };
 
 export interface Sponsor {
