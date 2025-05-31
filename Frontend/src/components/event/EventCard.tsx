@@ -3,7 +3,7 @@ import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event as EventType } from "../../types";
-import { Megaphone, Trash2, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { Megaphone, Trash2, ChevronDown, ChevronUp, Plus, MoreHorizontal } from "lucide-react";
 import EmailList from "../admin/EmailList";
 import { useToast } from "../../context/toast/ToastContext";
 import Modal from "../ui/Modal";
@@ -302,29 +302,28 @@ export const EventCard: React.FC<EventCardProps> = ({
           {isAdmin && onDelete && (
             <button
               onClick={onDelete}
-              className="px-2 py-1 text-sm bg-bapred text-white rounded hover:bg-bapreddark transition-colors flex items-center"
+              className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
               title="Delete this event"
             >
-              <Trash2 size={16} />
+              <Trash2 size={18} />
             </button>
           )}
           {/* Add Announce button if onAnnounce prop is provided */}
           {onAnnounce && !isPast && (
             <button
               onClick={onAnnounce}
-              className="px-3 py-1 text-sm bg-bapred text-white rounded hover:bg-bapreddark transition-colors flex items-center"
+              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
               title="Announce this event"
             >
-              <Megaphone size={16} className="mr-1" /> 
-              <span className="hidden sm:inline">Announce</span>
+              <Megaphone size={18} className="mr-1" /> 
             </button>
           )}
           {isAdmin && onEdit && (
             <button
               onClick={onEdit}
-              className="px-3 py-1 text-sm bg-bapred text-white rounded hover:bg-bapreddark transition-colors"
+              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
             >
-              Edit
+              <MoreHorizontal size={18} />
             </button>
           )}
         </div>
