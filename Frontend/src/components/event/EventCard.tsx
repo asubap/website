@@ -3,8 +3,6 @@ import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
 import { Event as EventType } from "../../types";
-import EventRSVPsModal from "./EventRSVPsModal";
-import EventAttendeesModal from "./EventAttendeesModal";
 import { Megaphone, Trash2, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import EmailList from "../admin/EmailList";
 import { useToast } from "../../context/toast/ToastContext";
@@ -61,14 +59,11 @@ export const EventCard: React.FC<EventCardProps> = ({
   const [selectedEntityMenu, setSelectedEntityMenu] = useState<"attendees" | "rsvps" | null>(null);
   const [showAddRSVPModal, setShowAddRSVPModal] = useState(false);
   const [showAddAttendeeModal, setShowAddAttendeeModal] = useState(false);
-  const [newRSVPEmail, setNewRSVPEmail] = useState("");
-  const [newAttendeeEmail, setNewAttendeeEmail] = useState("");
   const [isAddingRSVP, setIsAddingRSVP] = useState(false);
   const [isAddingAttendee, setIsAddingAttendee] = useState(false);
   const [allMembers, setAllMembers] = useState<{name: string, email: string}[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<{name: string, email: string}[]>([]);
   const [searchValue, setSearchValue] = useState('');
-  const [selectedMember, setSelectedMember] = useState<{name: string, email: string} | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<{name: string, email: string}[]>([]);
 
   // Role checking logic - Check for string role names
@@ -115,7 +110,6 @@ export const EventCard: React.FC<EventCardProps> = ({
           m.email.toLowerCase().includes(value.toLowerCase())
       )
     );
-    setSelectedMember(null);
   };
 
   const handleSelectMember = (member: {name: string, email: string}) => {
@@ -535,9 +529,9 @@ export const EventCard: React.FC<EventCardProps> = ({
             <button
               type="submit"
               className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-              disabled={selectedMembers.length === 0}
+              disabled={selectedMembers.length === 0 || isAddingRSVP}
             >
-              Add RSVP
+              {isAddingRSVP ? "Adding..." : "Add RSVP"}
             </button>
           </div>
         </form>
@@ -612,9 +606,9 @@ export const EventCard: React.FC<EventCardProps> = ({
             <button
               type="submit"
               className="px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-              disabled={selectedMembers.length === 0}
+              disabled={selectedMembers.length === 0 || isAddingAttendee}
             >
-              Add Attendee
+              {isAddingAttendee ? "Adding..." : "Add Attendee"}
             </button>
           </div>
         </form>
