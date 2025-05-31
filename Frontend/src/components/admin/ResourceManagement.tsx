@@ -1,17 +1,5 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
+import React, {useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { ChevronDown, ChevronRight, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../common/LoadingSpinner";
@@ -125,6 +113,10 @@ const ResourceManagement: React.FC = () => {
   const [resourceToPreview, setResourceToPreview] = useState<Resource | null>(
     null
   );
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [showDeleteResourceModal, setShowDeleteResourceModal] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState<{ categoryId: string; resourceId: string } | null>(null);
 
   const fetchResources = useCallback(async () => {
     if (authLoading) {
@@ -429,21 +421,24 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteResource = async (
-    categoryId: string,
-    resourceId: string
-  ) => {
-    if (
-      !session?.access_token ||
-      !window.confirm("Are you sure you want to delete this resource?")
-    )
-      return;
+  const handleDeleteResource = async (categoryId: string, resourceId: string) => {
+    if (!session?.access_token) return;
+    setResourceToDelete({ categoryId, resourceId });
+    setShowDeleteResourceModal(true);
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!session?.access_token) return;
+    setCategoryToDelete(categoryId);
+    setShowDeleteCategoryModal(true);
+  };
+
+  const handleConfirmDeleteResource = async () => {
+    if (!session?.access_token || !resourceToDelete) return;
 
     try {
       const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/resources/${categoryId}/resources/${resourceId}/delete`,
+        `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}/delete`,
         {
           method: "POST",
           headers: {
@@ -459,21 +454,18 @@ const ResourceManagement: React.FC = () => {
     } catch (error) {
       console.error("Error deleting resource:", error);
       toast.error("Failed to delete resource");
+    } finally {
+      setShowDeleteResourceModal(false);
+      setResourceToDelete(null);
     }
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (
-      !session?.access_token ||
-      !window.confirm(
-        "Are you sure you want to delete this category? All resources in this category will also be deleted."
-      )
-    )
-      return;
+  const handleConfirmDeleteCategory = async () => {
+    if (!session?.access_token || !categoryToDelete) return;
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${categoryId}/delete`,
+        `${import.meta.env.VITE_BACKEND_URL}/resources/${categoryToDelete}/delete`,
         {
           method: "POST",
           headers: {
@@ -489,6 +481,9 @@ const ResourceManagement: React.FC = () => {
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
+    } finally {
+      setShowDeleteCategoryModal(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -777,6 +772,32 @@ const ResourceManagement: React.FC = () => {
           cancelText="Cancel"
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showDeleteResourceModal}
+        onClose={() => {
+          setShowDeleteResourceModal(false);
+          setResourceToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteResource}
+        title="Delete Resource"
+        message="Are you sure you want to delete this resource? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteCategoryModal}
+        onClose={() => {
+          setShowDeleteCategoryModal(false);
+          setCategoryToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteCategory}
+        title="Delete Category"
+        message="Are you sure you want to delete this category? All resources in this category will also be deleted. This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
