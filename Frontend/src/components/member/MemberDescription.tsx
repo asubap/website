@@ -259,7 +259,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
           <p className="text-[#202020]">{profileData.about}</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 lg:mb-0 gap-4">
+        <div className="flex flex-col-reverse sm:flex-row justify-between items-center mb-8 lg:mb-0 gap-4">
           <button
             className="bg-[#af272f] text-white px-6 py-3 rounded-md hover:bg-[#8f1f26] transition-colors flex items-center gap-2"
             onClick={() => window.open("https://your-slack-link.com", "_blank")}
