@@ -10,6 +10,8 @@ import {
   Clock,
   Info,
   User,
+  Award,
+  Target,
 } from "lucide-react";
 
 interface NetworkListProps {
@@ -144,6 +146,18 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                       <User className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="text-gray-700">
                         Role: {formatRoleName(entity.role)}
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Award className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="text-gray-700">
+                        Rank: {entity.rank || "Not Provided"}
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Target className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="text-gray-700">
+                        Status: {entity.status || "Not Specified"}
                       </span>
                     </div>
                   </>

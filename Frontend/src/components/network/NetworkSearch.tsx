@@ -9,9 +9,12 @@ interface Filters {
 
 interface NetworkSearchProps {
   onSearch: (query: string, filters: Filters) => void;
+  availableGraduationYears: string[];
+  availableMajors: string[];
+  availableStatuses: string[];
 }
 
-const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch }) => {
+const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch, availableGraduationYears, availableMajors, availableStatuses }) => {
   const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
@@ -116,10 +119,11 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch }) => {
               className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="">All Years</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
+              {availableGraduationYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -137,11 +141,11 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch }) => {
               className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="">All Majors</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="Accounting">Accounting</option>
-              <option value="Finance">Finance</option>
-              <option value="Business">Business</option>
-              <option value="Economics">Economics</option>
+              {availableMajors.map((major) => (
+                <option key={major} value={major}>
+                  {major}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -159,9 +163,11 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch }) => {
               className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Pledge">Pledge</option>
-              <option value="Alumni">Alumni</option>
+              {availableStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
             </select>
           </div>
         </div>
