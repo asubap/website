@@ -9,6 +9,8 @@ import {
   Link as LinkIcon,
   Mail,
   User,
+  Award,
+  Target,
 } from "lucide-react";
 import { useToast } from "../../context/toast/ToastContext";
 
@@ -90,6 +92,16 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
         <div className="flex items-center">
           <GraduationCap className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
           <span>Graduating: {member.graduationDate || "Not Provided"}</span>
+        </div>
+
+        <div className="flex items-center">
+          <Award className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
+          <span>Rank: {member.rank || "Not Provided"}</span>
+        </div>
+
+        <div className="flex items-center">
+          <Target className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
+          <span>Status: {member.status || "Not Specified"}</span>
         </div>
 
         {/* Hours */}

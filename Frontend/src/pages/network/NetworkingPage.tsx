@@ -32,6 +32,8 @@ interface BackendMember {
   profile_photo_url?: string | null;
   total_hours?: number;
   role?: string | null;
+  rank?: string | null;
+  member_status?: string;
   // Add potential fallback fields from previous structure if needed
   first_name?: string;
   last_name?: string;
@@ -78,6 +80,11 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   const memberAbout = item.about || item.bio || "";
   const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
 
+  // Map API rank to interface rank format
+  const memberRank = item.rank === "current" ? "Current" : 
+                     item.rank === "alumni" ? "Alumni" : 
+                     "Current"; // default to Current
+
   return {
     id: item.id.toString(),
     type: "member",
@@ -85,8 +92,8 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
     email: item.user_email || "Not Provided",
     phone: item.phone || "Not Provided",
     major: item.major || "Not Provided",
-    graduationDate: item.graduating_year || item.year || "Not Provided",
-    status: "Not Specified",
+    graduationDate: item.graduating_year?.toString() || item.year || "Not Provided",
+    status: item.member_status || "Not Specified",
     about: memberAbout,
     internship: item.internship || "Not Specified",
     photoUrl: memberPhotoUrl,
@@ -96,7 +103,7 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
     serviceHours: item.service_hours?.toString() ?? "0",
     socialHours: item.social_hours?.toString() ?? "0",
     links: memberLinks,
-    rank: item.role || "Not Provided",
+    rank: memberRank,
     role: item.role || "general-member",
   };
 };
@@ -164,6 +171,43 @@ const NetworkingPage = () => {
     () => [...members, ...allSponsors],
     [members, allSponsors]
   );
+
+  // Generate dynamic filter options from members data
+  const availableGraduationYears = useMemo(() => {
+    const years = members
+      .map(member => member.graduationDate)
+      .filter(year => year && year !== "Not Provided")
+      .sort();
+    return [...new Set(years)]; // Remove duplicates
+  }, [members]);
+
+  const availableMajors = useMemo(() => {
+    const majors = members
+      .map(member => member.major)
+      .filter(major => major && major !== "Not Provided")
+      .sort();
+    return [...new Set(majors)]; // Remove duplicates
+  }, [members]);
+
+  const availableStatuses = useMemo(() => {
+    // Fixed status options for rank-based filtering
+    const rankStatuses = ["Current", "Pledge", "Alumni"];
+    
+    // Dynamic member status options from actual data
+    const memberStatuses = members
+      .map(member => member.status)
+      .filter(status => status && status !== "Not Specified")
+      .sort();
+    const uniqueMemberStatuses = [...new Set(memberStatuses)];
+    
+    // Add "Looking for Full-time" if not already present
+    if (!uniqueMemberStatuses.includes("Looking for Full-time")) {
+      uniqueMemberStatuses.push("Looking for Full-time");
+    }
+    
+    // Combine and return all status options
+    return [...rankStatuses, ...uniqueMemberStatuses];
+  }, [members]);
 
   // Fuse.js setup
   const fuseOptions = {
@@ -302,7 +346,7 @@ const NetworkingPage = () => {
       }
     }
 
-    // 2. Apply Filters (on top of fuzzy search results or all entities)image.png
+    // 2. Apply Filters (on top of fuzzy search results or all entities)
     const filteredResults = results.filter((entity) => {
       const isMember = (entity: Member | Sponsor): entity is Member =>
         entity.type === "member";
@@ -313,12 +357,19 @@ const NetworkingPage = () => {
           !filters.graduationYear ||
           entity.graduationDate === filters.graduationYear;
         const majorMatch = !filters.major || entity.major === filters.major;
-        const statusMatch = !filters.status || entity.status === filters.status; // Assumes status uses role
+        // Filter by status: handle both rank-based statuses and member_status values
+        const statusMatch = !filters.status || 
+          (filters.status === "Current" && entity.rank === "Current") ||
+          (filters.status === "Alumni" && entity.rank === "Alumni") ||
+          (filters.status === "Pledge" && entity.rank === "Pledge") ||
+          (filters.status === "Looking for Internship" && entity.status === "Looking for Internship") ||
+          (filters.status === "Looking for Full-time" && entity.status === "Looking for Full-time") ||
+          (filters.status === "Not Looking" && entity.status === "Not Looking");
         return yearMatch && majorMatch && statusMatch;
       } else {
-        // Sponsor filtering logic (if any filters apply to sponsors)
-        // Currently, no specific filters for sponsors are defined, so they pass if they match the search
-        return true;
+        // Sponsor filtering logic: only show sponsors when no member-specific filters are applied
+        const hasMemberSpecificFilters = filters.graduationYear || filters.major || filters.status;
+        return !hasMemberSpecificFilters; // Hide sponsors if any member-specific filters are active
       }
     });
 
@@ -332,7 +383,12 @@ const NetworkingPage = () => {
           Network
         </h1>
 
-        <NetworkSearch onSearch={handleSearch} />
+        <NetworkSearch 
+          onSearch={handleSearch}
+          availableGraduationYears={availableGraduationYears}
+          availableMajors={availableMajors}
+          availableStatuses={availableStatuses}
+        />
 
         <div className="mt-6">
           {isMembersLoading || isSponsorsLoading ? (
