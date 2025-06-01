@@ -176,19 +176,29 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
   return (
     <main className="flex flex-col lg:flex-row flex-1 py-4 px-8 sm:py-8 sm:px-16 gap-12 lg:gap-20 mt-[150px]">
       <div className="w-full lg:w-1/2 relative">
-        <button
-          onClick={handleOpenAnnouncementsModal}
-          className="absolute top-16 sm:top-2 right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
-          aria-label="View Announcements"
-          title="View Announcements"
-        >
-          <Bell size={50} className="text-[#af272f]" strokeWidth={2.5} />
-          {announcementBadgeCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#af272f] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
-              {announcementBadgeCount > 9 ? "9+" : announcementBadgeCount}
-            </span>
-          )}
-        </button>
+        <div className="absolute top-16 sm:top-2 right-2 flex flex-col items-center gap-2">
+          <button
+            onClick={handleOpenAnnouncementsModal}
+            className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
+            aria-label="View Announcements"
+            title="View Announcements"
+          >
+            <Bell size={50} className="text-[#af272f]" strokeWidth={2.5} />
+            {announcementBadgeCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#af272f] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
+                {announcementBadgeCount > 9 ? "9+" : announcementBadgeCount}
+              </span>
+            )}
+          </button>
+          <button
+            className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
+            onClick={() => window.open("https://your-slack-link.com", "_blank")}
+            aria-label="Go to Slack"
+            title="Go to Slack"
+          >
+            <FaSlack className="w-6 h-6 text-[#af272f]" />
+          </button>
+        </div>
 
         <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
           Welcome back, {name}!
@@ -259,14 +269,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
           <p className="text-[#202020]">{profileData.about}</p>
         </div>
 
-        <div className="flex flex-col-reverse sm:flex-row justify-between items-center mb-8 lg:mb-0 gap-4">
-          <button
-            className="bg-[#af272f] text-white px-6 py-3 rounded-md hover:bg-[#8f1f26] transition-colors flex items-center gap-2"
-            onClick={() => window.open("https://your-slack-link.com", "_blank")}
-          >
-            <FaSlack className="w-4 h-4" />
-            Go to Slack
-          </button>
+        <div className="flex flex-col sm:flex-row justify-end items-center mb-8 lg:mb-0 gap-4">
           <button
             className="bg-[#af272f] text-white px-6 py-3 rounded-md hover:bg-[#8f1f26] transition-colors"
             onClick={() => setIsEditModalOpen(true)}
