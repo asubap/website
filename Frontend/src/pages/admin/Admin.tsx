@@ -770,12 +770,6 @@ const Admin = () => {
             <div className="order-3 md:order-2">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Announcements</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowCreateAnnouncementModal(true)}
-                >
-                  + <span className="hidden md:inline">New </span>Announcement
-                </button>
               </div>
               {loadingAnnouncements ? (
                 <LoadingSpinner text="Loading announcements..." size="md" />
@@ -785,6 +779,7 @@ const Admin = () => {
                   onEdit={handleEditAnnouncementClick}
                   onView={handleViewAnnouncementClick}
                   onDelete={handleDeleteAnnouncementClick}
+                  onCreateNew={() => setShowCreateAnnouncementModal(true)}
                 />
               ) : (
                 <p className="text-gray-500 text-m">
@@ -797,12 +792,6 @@ const Admin = () => {
             <div className="order-4 md:order-4">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Admin Users</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowAddAdminModal(true)}
-                >
-                  + <span className="hidden md:inline">Add </span>Admin
-                </button>
               </div>
               {loadingAdmins ? (
                 <LoadingSpinner text="Loading admins..." size="md" />
@@ -812,6 +801,7 @@ const Admin = () => {
                   onDelete={handleDelete}
                   userType="admin"
                   clickable={false}
+                  onCreateNew={() => setShowAddAdminModal(true)}
                 />
               )}
             </div>
@@ -820,12 +810,6 @@ const Admin = () => {
             <div className="order-5 md:order-5">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Sponsors</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowAddSponsorModal(true)}
-                >
-                  + <span className="hidden md:inline">New </span>Sponsor
-                </button>
               </div>
               <SponsorList
                 emails={sponsors}
@@ -835,6 +819,7 @@ const Admin = () => {
                 onTierChangeConfirm={handleSponsorTierChangeConfirm}
                 onProfileUpdateConfirm={promptSponsorProfileUpdate}
                 showConfirmationDialog={showConfirmationDialog}
+                onCreateNew={() => setShowAddSponsorModal(true)}
               />
             </div>
 
@@ -842,12 +827,7 @@ const Admin = () => {
             <div className="order-6 md:order-6">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">General Members</h2>
-                <button
-                  className="ml-auto px-4 py-2 bg-bapred text-white text-sm rounded-md hover:bg-bapreddark transition-colors"
-                  onClick={() => setShowAddMemberModal(true)}
-                >
-                  + <span className="hidden md:inline">Add </span>Member
-                </button>
+          
               </div>
               {loadingMembers ? (
                 <LoadingSpinner text="Loading members..." size="md" />
@@ -859,6 +839,7 @@ const Admin = () => {
                   onEdit={handleMemberEdit}
                   onSave={handleMemberUpdateSave}
                   memberDetails={memberDetails}
+                  onCreateNew={() => setShowAddMemberModal(true)}
                 />
               )}
             </div>

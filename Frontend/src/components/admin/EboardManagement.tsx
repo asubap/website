@@ -11,6 +11,7 @@ import ConfirmationModal from "../common/ConfirmationModal";
 type EboardFacultyEntry = {
   id: string;
   name: string;
+  rank: number;
   role: string;
   email: string;
   memberEmail: string;
@@ -28,6 +29,7 @@ const EboardManagement: React.FC = () => {
   const [members, setMembers] = useState<{ email: string; name?: string }[]>([]);
   const initialEntryStateRef = useRef({
     name: "",
+    rank: 1,
     role: "",
     email: "",
     memberEmail: "",
@@ -37,6 +39,7 @@ const EboardManagement: React.FC = () => {
   const [eboardFormData, setEboardFormData] = useState<EboardFacultyEntry>({
     id: "",
     name: "",
+    rank: 1,
     role: "",
     email: "",
     memberEmail: "",
@@ -79,6 +82,7 @@ const EboardManagement: React.FC = () => {
       const entriesWithIds = data.map((entry: any) => ({
         id: entry.id || crypto.randomUUID(),
         role: entry.role,
+        rank: entry.rank || 1,
         email: entry.role_email,      // Role Email
         memberEmail: entry.email,     // Member Email
         name: entry.name,
@@ -137,6 +141,7 @@ const EboardManagement: React.FC = () => {
     const initialState: EboardFacultyEntry = {
       id: "",
       name: "",
+      rank: 1,
       role: "",
       email: "",
       memberEmail: "",
@@ -154,7 +159,7 @@ const EboardManagement: React.FC = () => {
     setShowEboardModal(true);
   };
 
-  const handleEboardDataChange = (field: keyof EboardFacultyEntry, value: string) => {
+  const handleEboardDataChange = (field: keyof EboardFacultyEntry, value: string | number) => {
     setEboardFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -173,6 +178,7 @@ const EboardManagement: React.FC = () => {
             role: eboardFormData.role,
             role_email: eboardFormData.email,
             email: eboardFormData.memberEmail,
+            rank: eboardFormData.rank,
           }),
         }
       );
@@ -203,6 +209,7 @@ const EboardManagement: React.FC = () => {
             role_email: selectedEntry.email,
             role: eboardFormData.role,
             email: eboardFormData.memberEmail,
+            rank: eboardFormData.rank,
           }),
         }
       );
@@ -376,6 +383,7 @@ const EboardManagement: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-2 text-sm text-bapgray">
+                  <div>Rank: {entry.rank}</div>
                   <div>Role: {entry.role}</div>
                   <div>Role Email: {entry.email}</div>
                   <div>Member Email: {entry.memberEmail}</div>

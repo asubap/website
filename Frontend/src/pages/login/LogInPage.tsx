@@ -57,7 +57,7 @@ const LogInPage = () => {
         <main className="flex-grow flex flex-col items-center justify-center h-full p-8 pt-32 px-8 sm:px-16 lg:px-24">
           <div className="flex flex-col md:grid md:grid-cols-[auto_min-content_auto] items-center gap-4 md:gap-8 h-full">
             <div className="flex flex-col items-center gap-6 p-8">
-              <h1 className="text-4xl font-bold font-outfit">
+              <h1 className="text-3xl sm:text-3xl md:text-4xl font-bold font-outfit">
                 Welcome Back<span className="text-bapred">.</span>
               </h1>
               <GoogleLogin />

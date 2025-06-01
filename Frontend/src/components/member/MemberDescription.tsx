@@ -192,7 +192,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
           </button>
           <button
             className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
-            onClick={() => window.open("https://your-slack-link.com", "_blank")}
+            onClick={() => window.open("https://beta-alpha-psi-space.slack.com/", "_blank")}
             aria-label="Go to Slack"
             title="Go to Slack"
           >
@@ -200,8 +200,9 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
           </button>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
-          Welcome back, {name}!
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center sm:text-left">
+          <span className="block sm:inline">Welcome back,</span>{" "}
+          <span className="block sm:inline">{name}!</span>
         </h2>
 
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">

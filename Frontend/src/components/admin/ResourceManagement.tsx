@@ -611,28 +611,30 @@ const ResourceManagement: React.FC = () => {
                       {category.resourceType === "firm" ? "Firm" : "Chapter"}
                     </span>
                   </div>
-                  <div className="space-x-2 flex items-center flex-shrink-0">
+                  <div className="flex items-center flex-shrink-0">
                     <button
                       onClick={() => handleOpenAddResourceModal(category)}
-                      className="bg-bapred text-white px-3 py-1 rounded-md hover:bg-opacity-90 text-sm"
+                      className="bg-bapred text-white px-3 py-1 rounded-md hover:bg-opacity-90 text-sm mr-2"
                       title="Add Resource"
                     >
                       +
                     </button>
-                    <button
-                      onClick={() => handleOpenEditCategoryModal(category)}
-                      className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
-                      title="Edit Category"
-                    >
-                      <MoreHorizontal size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
-                      title="Delete Category"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => handleOpenEditCategoryModal(category)}
+                        className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                        title="Edit Category"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
+                        title="Delete Category"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {expandedCategories.has(category.id) && (

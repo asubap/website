@@ -33,6 +33,8 @@ interface SponsorListProps {
     confirmText?: string,
     cancelText?: string
   ) => void;
+  onCreateNew?: () => void;
+  clickable?: boolean;
 }
 
 interface SponsorProfileData {
@@ -50,6 +52,8 @@ const SponsorList = ({
   onTierChangeConfirm,
   onProfileUpdateConfirm,
   showConfirmationDialog,
+  onCreateNew,
+  clickable,
 }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,7 +64,8 @@ const SponsorList = ({
   const { session } = useAuth();
   const [loadingSponsor, setLoadingSponsor] = useState(false);
 
-  const handleDeleteClick = (email: string) => {
+  const handleDeleteClick = (email: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEmailToDelete(email);
   };
 
@@ -129,11 +134,8 @@ const SponsorList = ({
     }
   };
 
-  const handleCancelDelete = () => {
-    setEmailToDelete(null);
-  };
-
-  const handleChangeTier = async (email: string, newTier: string) => {
+  const handleChangeTier = async (email: string, newTier: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     onTierChangeConfirm(email, newTier, () => {
       // This successCallback will be invoked by Admin.tsx after API success
       // The onTierChanged prop (e.g., refetchSponsors) is managed by Admin.tsx
@@ -149,14 +151,27 @@ const SponsorList = ({
     );
 
   return (
-    <>
-      {/* Search Bar */}
-      <SearchInput
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search sponsors by name or email..."
-        containerClassName="mb-2"
-      />
+    <div className="w-full flex flex-col">
+      {/* Search Bar and Add Button */}
+      <div className="flex items-center gap-4 w-full sm:w-auto mb-2">
+        <SearchInput
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search sponsors..."
+          containerClassName="flex-grow sm:w-64"
+          inputClassName="px-3 py-2"
+        />
+        {onCreateNew && (
+          <button
+            onClick={onCreateNew}
+            className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90 flex items-center justify-center whitespace-nowrap text-sm font-medium"
+          >
+            <span className="mr-1">+</span>
+            <span className="hidden md:inline mr-1">New</span>
+            Sponsor
+          </button>
+        )}
+      </div>
       <div className="w-full h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {loadingSponsor && (
           <div className="fixed inset-0 z-50">
@@ -170,14 +185,14 @@ const SponsorList = ({
         {filteredSponsors.map(({ email, tier }) => (
           <div
             key={email}
-            className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() => handleEditClick(email)}
+            className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
           >
             <span className="text-gray-800 text-m pr-2">{email}</span>
-            <div className="flex items-center space-x-2 ml-auto">
+            <div className="flex items-center space-x-2">
               <select
                 value={tier}
-                onChange={(e) => handleChangeTier(email, e.target.value)}
+                onChange={(e) => handleChangeTier(email, e.target.value, e as any)}
                 className="rounded-md bg-bapgraylight text-bapgray font-bold focus:outline-none px-2 py-1 text-sm"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -197,10 +212,7 @@ const SponsorList = ({
                 <MoreHorizontal size={16} />
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteClick(email);
-                }}
+                onClick={(e) => handleDeleteClick(email, e)}
                 className="text-bapred hover:text-bapreddark p-1"
                 aria-label={`Delete ${email}`}
               >
@@ -215,7 +227,7 @@ const SponsorList = ({
             email={emailToDelete}
             userType={userType}
             onConfirm={handleConfirmDelete}
-            onCancel={handleCancelDelete}
+            onCancel={() => setEmailToDelete(null)}
           />
         )}
 
@@ -244,7 +256,7 @@ const SponsorList = ({
           />
         )}
       </div>
-    </>
+    </div>
   );
 };
 

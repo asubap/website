@@ -9,6 +9,7 @@ interface AnnouncementListShortProps {
   onEdit?: (announcement: Announcement) => void;
   onView?: (announcement: Announcement) => void;
   onDelete?: (announcement: Announcement) => void;
+  onCreateNew?: () => void;
 }
 
 export const AnnouncementListShort = ({
@@ -16,6 +17,7 @@ export const AnnouncementListShort = ({
   onEdit,
   onView,
   onDelete,
+  onCreateNew,
 }: AnnouncementListShortProps) => {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -44,13 +46,26 @@ export const AnnouncementListShort = ({
 
   return (
     <div className="w-full flex flex-col">
-      {/* Search Bar */}
-      <SearchInput
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search announcements by title or description..."
-        containerClassName="mb-2"
-      />
+      {/* Search Bar and Add Button */}
+      <div className="flex items-center gap-4 w-full sm:w-auto mb-2">
+        <SearchInput
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search announcements by title or description..."
+          containerClassName="flex-grow sm:w-64"
+          inputClassName="px-3 py-2"
+        />
+        {onCreateNew && (
+          <button
+            onClick={onCreateNew}
+            className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90 flex items-center justify-center whitespace-nowrap text-sm font-medium"
+          >
+            <span className="mr-1">+</span>
+            <span className="hidden md:inline mr-1">New</span>
+            Announcement
+          </button>
+        )}
+      </div>
       <div className="h-[300px] flex flex-col py-2 gap-2 overflow-y-scroll scrollbar-thumb-bapgray scrollbar-track-bapgraylight">
         {filteredAnnouncements.map((announcement) => (
           <div

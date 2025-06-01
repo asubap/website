@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, FileText, Image, File, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Image, File, Eye } from "lucide-react";
 import ResourcePreviewModal from "../ui/ResourcePreviewModal";
 
 // Define the interfaces for our data structure
@@ -80,7 +80,7 @@ const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category, expanded,
         onClick={handleToggle}
         className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 text-left"
       >
-        <div className="flex-1">
+        <div className="flex-1 max-w-[60%] sm:max-w-none">
           <h3 className="text-xl font-semibold text-gray-900">{category.name}</h3>
           <p className="text-sm text-gray-600 mt-1">{category.description}</p>
         </div>
@@ -115,14 +115,15 @@ const ResourceCategory: React.FC<ResourceCategoryProps> = ({ category, expanded,
                 <div>
                   <button
                     onClick={() => handleOpenPreviewModal(resource)}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-bapred rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+                    className={`p-1.5 rounded-md text-gray-600 hover:bg-gray-100 ${
+                      !resource.signed_url ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                     disabled={!resource.signed_url}
                     title={
                       !resource.signed_url ? "Preview unavailable" : "Preview Resource"
                     }
                   >
-                    <ExternalLink size={16} className="mr-1" />
-                    Preview
+                    <Eye size={18} />
                   </button>
                 </div>
               </div>

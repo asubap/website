@@ -19,6 +19,7 @@ interface EmailListProps {
   memberDetails?: { [key: string]: MemberDetail };
   onSave?: (updatedData: MemberDetail) => Promise<void> | void;
   clickable?: boolean;
+  onCreateNew?: () => void;
 }
 
 const EmailList = ({
@@ -29,6 +30,7 @@ const EmailList = ({
   memberDetails = {},
   onSave,
   clickable = true,
+  onCreateNew,
 }: EmailListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [emailToEdit, setEmailToEdit] = useState<string | null>(null);
@@ -79,14 +81,27 @@ const EmailList = ({
   );
 
   return (
-    <>
-      {/* Search Bar */}
-      <SearchInput
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search members by name or email..."
-        containerClassName="mb-2"
-      />
+    <div className="w-full flex flex-col">
+      {/* Search Bar and Add Button */}
+      <div className="flex items-center gap-4 w-full sm:w-auto mb-2">
+        <SearchInput
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={`Search ${userType}s...`}
+          containerClassName="flex-grow sm:w-64"
+          inputClassName="px-3 py-2"
+        />
+        {onCreateNew && (
+          <button
+            onClick={onCreateNew}
+            className="bg-bapred text-white px-4 py-2 rounded-md hover:bg-opacity-90 flex items-center justify-center whitespace-nowrap text-sm font-medium"
+          >
+            <span className="mr-1">+</span>
+            <span className="hidden md:inline mr-1">New</span>
+            {userType === 'admin' ? 'Admin' : 'Member'}
+          </button>
+        )}
+      </div>
       {isLoading && (
         <div className="fixed inset-0 z-50">
           <div className="flex min-h-screen items-center justify-center">
@@ -161,7 +176,7 @@ const EmailList = ({
             />
           )}
       </div>
-    </>
+    </div>
   );
 };
 

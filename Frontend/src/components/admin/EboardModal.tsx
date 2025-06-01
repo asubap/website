@@ -8,6 +8,7 @@ interface EboardModalProps {
   onConfirm: () => void;
   isEditing: boolean;
   eboardData: {
+    rank: number;
     name: string;
     role: string;
     email: string;
@@ -15,7 +16,7 @@ interface EboardModalProps {
     major: string;
     location: string;
   };
-  onEboardDataChange: (field: "name" | "role" | "email" | "memberEmail" | "major" | "location", value: string) => void;
+  onEboardDataChange: (field: "rank" | "name" | "role" | "email" | "memberEmail" | "major" | "location", value: string | number) => void;
   hideImageField?: boolean;
   members: { email: string; name?: string }[];
 }
@@ -131,6 +132,24 @@ const EboardModal: React.FC<EboardModalProps> = ({
       size="md"
     >
       <div className="space-y-6 py-4 max-h-[90vh] overflow-y-auto">
+        {/* Rank Input */}
+        <div>
+          <label
+            htmlFor="rank"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Rank <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="rank"
+            min={1}
+            value={eboardData.rank}
+            onChange={(e) => onEboardDataChange("rank", Number(e.target.value))}
+            className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
+            required
+          />
+        </div>
         {/* Role Name Input */}
         <div>
           <label
@@ -142,8 +161,8 @@ const EboardModal: React.FC<EboardModalProps> = ({
           <input
             type="text"
             id="role"
-            value={eboardData.role}
-            onChange={(e) => onEboardDataChange("role", e.target.value)}
+            value={eboardData.name}
+            onChange={(e) => onEboardDataChange("name", e.target.value)}
             className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
             required
           />

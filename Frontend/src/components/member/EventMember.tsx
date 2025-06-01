@@ -60,7 +60,7 @@ const EventMember: React.FC = () => {
       <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
         Events In-Session
       </h2>
-      <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[400px] space-y-4">
+      <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[600px] sm:max-h-[400px] space-y-4">
         {inSessionEvents.length > 0 ? (
           inSessionEvents.map((event) => (
             <EventCard key={event.id} event={event} isPast={false} hideRSVP={true} />
@@ -74,7 +74,7 @@ const EventMember: React.FC = () => {
         Upcoming Events
       </h2>
 
-      <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[400px] space-y-4">
+      <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[600px] sm:max-h-[400px] space-y-4">
         {upcomingEvents.length > 0 ? (
           upcomingEvents.map((event) => (
             <EventCard key={event.id} event={event} isPast={false} />
@@ -88,7 +88,7 @@ const EventMember: React.FC = () => {
         Past Events
       </h2>
 
-      <div className="overflow-y-auto pr-2 sm:pr-4 max-h-[400px] space-y-4">
+      <div className="overflow-y-auto pr-2 sm:pr-4 max-h-[600px] sm:max-h-[400px] space-y-4">
         {pastEvents.length > 0 ? (
           pastEvents.map((event) => (
             <EventCard key={event.id} event={event} isPast={true} />

@@ -264,17 +264,16 @@ export const EventCard: React.FC<EventCardProps> = ({
   return (
     <div
       ref={registerRef}
-      // Apply base styles, border, always-on ring-2/inset, transition-colors, and conditional ring color
-      className={`p-6 bg-white rounded-lg shadow-md grid grid-cols-2 border border-gray-200 ring-2 ring-inset transition-colors duration-200 ease-in-out ${highlightClasses}`}
+      className={`p-6 bg-white rounded-lg shadow-md border border-gray-200 ring-2 ring-inset transition-colors duration-200 ease-in-out ${highlightClasses}`}
     >
-      <div className="col-span-1">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-xl font-semibold text-[#8C1D40]">
-            {event.event_name}
-          </h3>
-        </div>
+      <div className="mb-4">
+        <h3 className="text-2xl sm:text-3xl font-bold font-outfit text-bapred">
+          {event.event_name}
+        </h3>
+      </div>
 
-        <div className="space-y-2 mb-4">
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="space-y-2">
           {event.event_location && (
             <div>
               <span className="font-semibold text-gray-700">Location: </span>
@@ -291,58 +290,56 @@ export const EventCard: React.FC<EventCardProps> = ({
           )}
         </div>
 
-        <p className="text-gray-600 text-sm mb-4">
-          {event.event_description}
-        </p>
-      </div>
-
-      <div className="col-span-1">
-        <div className="flex justify-end items-start mb-3 space-x-2">
-          {/* Add Announce button if onAnnounce prop is provided */}
-          {onAnnounce && !isPast && (
-            <button
-              onClick={onAnnounce}
-              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
-              title="Announce this event"
-            >
-              <Megaphone size={18} className="mr-1" /> 
-            </button>
+        <div className="space-y-2">
+          {event.event_hours_type && (
+            <div>
+              <span className="font-semibold text-gray-700">Hours: </span>
+              <span className="text-gray-600">
+                {event.event_hours} {event.event_hours_type}
+              </span>
+            </div>
           )}
-          {isAdmin && onEdit && (
-            <button
-              onClick={onEdit}
-              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
-            >
-              <MoreHorizontal size={18} />
-            </button>
-          )}
-          {/* Add Delete button if onDelete prop is provided */}
-          {isAdmin && onDelete && (
-            <button
-              onClick={onDelete}
-              className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
-              title="Delete this event"
-            >
-              <Trash2 size={18} />
-            </button>
+          {event.sponsors_attending && (
+            <div>
+              <span className="font-semibold text-gray-700">Sponsors: </span>
+              <span className="text-gray-600">
+                {event.sponsors_attending.join(", ")}
+              </span>
+            </div>
           )}
         </div>
-        {event.event_hours_type && (
-          <div>
-            <span className="font-semibold text-gray-700">Hours: </span>
-            <span className="text-gray-600">
-              {event.event_hours} {event.event_hours_type}
-            </span>
-          </div>
-        )}
+      </div>
 
-        {event.sponsors_attending && (
-          <div>
-            <span className="font-semibold text-gray-700">Sponsors: </span>
-            <span className="text-gray-600">
-              {event.sponsors_attending.join(", ")}
-            </span>
-          </div>
+      <p className="text-gray-600 text-sm mb-4">
+        {event.event_description}
+      </p>
+
+      <div className="flex justify-end items-start mb-3 space-x-2">
+        {onAnnounce && !isPast && (
+          <button
+            onClick={onAnnounce}
+            className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+            title="Announce this event"
+          >
+            <Megaphone size={18} className="mr-1" /> 
+          </button>
+        )}
+        {isAdmin && onEdit && (
+          <button
+            onClick={onEdit}
+            className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        )}
+        {isAdmin && onDelete && (
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
+            title="Delete this event"
+          >
+            <Trash2 size={18} />
+          </button>
         )}
       </div>
 
