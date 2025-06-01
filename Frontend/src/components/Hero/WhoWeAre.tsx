@@ -1,7 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../context/auth/authProvider";
+import { useToast } from "../../context/toast/ToastContext";
+import Modal from "../ui/Modal";
 
 export default function WhoWeAre() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { role, session } = useAuth();
+  const { showToast } = useToast();
+  const [applyFormUrl, setApplyFormUrl] = useState("https://docs.google.com/forms/d/e/1FAIpQLSciA9BqK7uwVXsjTAId5EJIw-kIvseIxHPeoCo7oGNWy6t3Wg/closedform");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [newUrl, setNewUrl] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    // Fetch Google Form URL from backend
+    const fetchApplyFormUrl = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/links?link_name=forms`);
+        if (response.ok) {
+          const data = await response.json();
+          setApplyFormUrl(data[0]?.link || "");
+        }
+      } catch (error) {
+        console.error("Error fetching apply form URL:", error);
+      }
+    };
+
+    fetchApplyFormUrl();
+  }, []);
 
   useEffect(() => {
     // Load Instagram embed script
@@ -24,6 +50,39 @@ export default function WhoWeAre() {
       }
     };
   }, []);
+
+  const handleEditClick = () => {
+    setNewUrl(applyFormUrl);
+    setShowEditModal(true);
+  };
+
+  const handleSaveUrl = async () => {
+    if (!session) return;
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/links`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ link_name: 'forms', link: newUrl })
+      });
+
+      if (response.ok) {
+        setApplyFormUrl(newUrl);
+        showToast("Apply form URL updated successfully", "success");
+        setShowEditModal(false);
+      } else {
+        throw new Error("Failed to update URL");
+      }
+    } catch (error) {
+      console.error("Error updating apply form URL:", error);
+      showToast("Failed to update apply form URL", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <section
@@ -52,14 +111,38 @@ export default function WhoWeAre() {
 
           {/* Apply Button */}
           <div className="mt-6 md:mt-8">
-            <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLSciA9BqK7uwVXsjTAId5EJIw-kIvseIxHPeoCo7oGNWy6t3Wg/closedform"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-6 py-3 sm:px-8 sm:py-4 text-lg sm:text-xl font-semibold text-white bg-[#AF272F] hover:bg-[#8F1F26] transition-colors duration-300 rounded-md shadow-lg"
-            >
-              Click Here To Apply!
-            </a>
+            <div className="relative inline-block">
+              <a
+                href={applyFormUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 sm:px-8 sm:py-4 text-lg sm:text-xl font-semibold text-white bg-[#AF272F] hover:bg-[#8F1F26] transition-colors duration-300 rounded-md shadow-lg"
+              >
+                Click Here To Apply!
+              </a>
+              {role === "e-board" && (
+                <button
+                  onClick={handleEditClick}
+                  className="absolute -top-2 -right-2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                  title="Edit Apply Form URL"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -391,6 +474,26 @@ export default function WhoWeAre() {
           </footer>
         </blockquote>
       </div>
+
+      {/* Edit URL Modal - use Modal from @common */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Apply Form URL"
+        onConfirm={handleSaveUrl}
+        confirmText={isSaving ? "Saving..." : "Save"}
+        cancelText="Cancel"
+        showFooter={true}
+      >
+        <input
+          type="text"
+          value={newUrl}
+          onChange={(e) => setNewUrl(e.target.value)}
+          className="w-full p-2 border rounded-md mb-4"
+          placeholder="Enter Google Form URL"
+          disabled={isSaving}
+        />
+      </Modal>
     </section>
   );
 }

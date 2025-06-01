@@ -6,9 +6,13 @@ import { supabase } from "../../context/auth/supabaseClient";
 import MemberDescription from "../../components/member/MemberDescription";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { getNavLinks } from "../../components/nav/NavLink";
+import { FaSlack } from "react-icons/fa";
 
 // Add environment variable for backend URL
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+// Slack link
+const SLACK_LINK = "https://your-slack-link.com"; // Replace with your actual Slack link
 
 const MemberView = () => {
   const { session, role } = useAuth();
@@ -143,6 +147,8 @@ const MemberView = () => {
           />
         </>
       )}
+
+      
 
       <Footer backgroundColor="#AF272F" />
     </div>

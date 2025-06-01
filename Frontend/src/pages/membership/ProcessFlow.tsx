@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ProcessStep } from "../../components/ui/ProcessStep";
 import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
@@ -9,6 +9,23 @@ import { getNavLinks } from "../../components/nav/NavLink";
 export const ProcessFlow = () => {
   const { session } = useAuth();
   const navLinks = getNavLinks(!!session);
+  const [applyFormUrl, setApplyFormUrl] = useState("");
+
+  useEffect(() => {
+    const fetchApplyFormUrl = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/links?link_name=forms`);
+        if (response.ok) {
+          const data = await response.json();
+          setApplyFormUrl(data[0]?.link || "");
+        }
+      } catch (error) {
+        console.error("Error fetching apply form URL:", error);
+      }
+    };
+
+    fetchApplyFormUrl();
+  }, []);
 
   const steps = [
     {
@@ -90,10 +107,7 @@ export const ProcessFlow = () => {
         <div className="text-center mt-8">
           <button
             className="text-white text-xl md:text-2xl font-bold px-8 py-4 bg-[#AF272F] hover:bg-[#8f1f25] transition-colors rounded-md shadow-md"
-            onClick={() =>
-              (window.location.href =
-                "https://docs.google.com/forms/d/e/1FAIpQLSciA9BqK7uwVXsjTAId5EJIw-kIvseIxHPeoCo7oGNWy6t3Wg/closedform")
-            }
+            onClick={() => window.open(applyFormUrl, "_blank")}
           >
             Click Here To Apply!
           </button>
