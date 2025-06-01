@@ -773,7 +773,7 @@ const Admin = () => {
               </div>
               {loadingAnnouncements ? (
                 <LoadingSpinner text="Loading announcements..." size="md" />
-              ) : announcements.length > 0 ? (
+              ) : (
                 <AnnouncementListShort
                   announcements={announcements}
                   onEdit={handleEditAnnouncementClick}
@@ -781,10 +781,6 @@ const Admin = () => {
                   onDelete={handleDeleteAnnouncementClick}
                   onCreateNew={() => setShowCreateAnnouncementModal(true)}
                 />
-              ) : (
-                <p className="text-gray-500 text-m">
-                  No announcements available.
-                </p>
               )}
             </div>
 
