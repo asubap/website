@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import Modal from "../ui/Modal"; // Assuming Modal is in ui
 import { createPortal } from "react-dom";
+import Toast from "../../components/ui/Toast";
 
 interface EboardModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface EboardModalProps {
   onConfirm: () => void;
   isEditing: boolean;
   eboardData: {
-    rank: number;
+    rank: number | '';
     name: string;
     role: string;
     email: string;
@@ -34,6 +35,7 @@ const EboardModal: React.FC<EboardModalProps> = ({
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
+  const [showToast, setShowToast] = useState(false);
 
   // Sync searchQuery with eboardData.memberEmail when modal opens or memberEmail changes
   useEffect(() => {
@@ -123,99 +125,120 @@ const EboardModal: React.FC<EboardModalProps> = ({
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={isEditing ? "Edit Eboard Member" : "Add Eboard Member"}
-      onConfirm={onConfirm}
-      confirmText={isEditing ? "Update" : "Add"}
-      size="md"
-    >
-      <div className="space-y-6 py-4 max-h-[90vh] overflow-y-auto">
-        {/* Rank Input */}
-        <div>
-          <label
-            htmlFor="rank"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Rank <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            id="rank"
-            min={1}
-            value={eboardData.rank}
-            onChange={(e) => onEboardDataChange("rank", Number(e.target.value))}
-            className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-            required
-          />
-        </div>
-        {/* Role Name Input */}
-        <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Role Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="role"
-            value={eboardData.name}
-            onChange={(e) => onEboardDataChange("name", e.target.value)}
-            className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-            required
-          />
-        </div>
-
-        {/* Role-Email Input */}
-        <div>
-          <label
-            htmlFor="role-email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Role Email <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            id="role-email"
-            value={eboardData.email}
-            onChange={(e) => onEboardDataChange("email", e.target.value)}
-            className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
-            required
-          />
-        </div>
-
-        {/* Member Search and Selection */}
-        <div>
-          <label
-            htmlFor="member-email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Member Email <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={isEditing ? "Edit Eboard Member" : "Add Eboard Member"}
+        onConfirm={() => {
+          onConfirm();
+          setShowToast(true);
+        }}
+        confirmText={isEditing ? "Update" : "Add"}
+        size="md"
+      >
+        <div className="space-y-6 py-4 max-h-[90vh] overflow-y-auto">
+          {/* Rank Input */}
+          <div>
+            <label
+              htmlFor="rank"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Rank <span className="text-red-500">*</span>
+            </label>
             <input
-              ref={inputRef}
-              type="text"
-              id="member-email"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowResults(true);
+              type="number"
+              id="rank"
+              min={1}
+              step={1}
+              pattern="[1-9][0-9]*"
+              value={eboardData.rank}
+              onChange={e => {
+                let val = e.target.value.replace(/^0+/, '');
+                if (val === '') {
+                  onEboardDataChange("rank", '');
+                } else if (!isNaN(Number(val)) && Number(val) > 0) {
+                  onEboardDataChange("rank", Number(val));
+                }
               }}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setShowResults(true)}
-              placeholder="Search members by name or email..."
               className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
               required
-              autoComplete="off"
             />
           </div>
+          {/* Role Name Input */}
+          <div>
+            <label
+              htmlFor="role"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Role Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="role"
+              value={eboardData.role}
+              onChange={(e) => onEboardDataChange("role", e.target.value)}
+              className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
+              required
+            />
+          </div>
+
+          {/* Role-Email Input */}
+          <div>
+            <label
+              htmlFor="role-email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Role Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="role-email"
+              value={eboardData.email}
+              onChange={(e) => onEboardDataChange("email", e.target.value)}
+              className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
+              required
+            />
+          </div>
+
+          {/* Member Search and Selection */}
+          <div>
+            <label
+              htmlFor="member-email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Member Email <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                ref={inputRef}
+                type="text"
+                id="member-email"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowResults(true);
+                }}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setShowResults(true)}
+                placeholder="Search members by name or email..."
+                className="block w-full px-3 py-2 text-base bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bapred focus:border-bapred"
+                required
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          {dropdown}
         </div>
-        {dropdown}
-      </div>
-    </Modal>
+      </Modal>
+      {showToast && (
+        <Toast
+          message="Eboard member updated!"
+          type="success"
+          onClose={() => setShowToast(false)}
+        />
+      )}
+    </>
   );
 };
 

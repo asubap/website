@@ -53,7 +53,6 @@ const SponsorList = ({
   onProfileUpdateConfirm,
   showConfirmationDialog,
   onCreateNew,
-  clickable,
 }: SponsorListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");

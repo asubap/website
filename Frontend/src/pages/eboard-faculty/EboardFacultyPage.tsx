@@ -82,36 +82,38 @@ const EboardFacultyPage: React.FC = () => {
               Executive Board & Faculty
             </h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {eboardEntries.map((entry, index) => (
-                <div
-                  key={index}
-                  className="bg-white shadow-xl rounded-lg p-6 flex flex-col items-center text-center"
-                >
-                  {entry.profile_photo_url && (
-                    <img
-                      src={entry.profile_photo_url}
-                      alt={`Photo of ${entry.name || entry.role}`}
-                      className="w-32 h-32 rounded-full object-cover mb-4"
-                    />
-                  )}
-                  <h2 className="text-xl font-semibold">{entry.name || "-"}</h2>
-                  <p className="text-bapred font-medium">{entry.role}</p>
-                  <p className="text-sm text-bapgray">{entry.major || ""}</p>
-                  {entry.role_email && (
-                    <button
-                      type="button"
-                      className="text-bapred hover:underline focus:outline-none text-sm mt-2"
-                      title="Copy role email to clipboard"
-                      onClick={() => {
-                        navigator.clipboard.writeText(entry.role_email);
-                        showToast("Role email copied to clipboard!", "success");
-                      }}
-                    >
-                      {entry.role_email}
-                    </button>
-                  )}
-                </div>
-              ))}
+              {[...eboardEntries]
+                .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
+                .map((entry, index) => (
+                  <div
+                    key={index}
+                    className="bg-white shadow-xl rounded-lg p-6 flex flex-col items-center text-center"
+                  >
+                    {entry.profile_photo_url && (
+                      <img
+                        src={entry.profile_photo_url}
+                        alt={`Photo of ${entry.name || entry.role}`}
+                        className="w-32 h-32 rounded-full object-cover mb-4"
+                      />
+                    )}
+                    <h2 className="text-xl font-semibold">{entry.name || "-"}</h2>
+                    <p className="text-bapred font-medium">{entry.role}</p>
+                    <p className="text-sm text-bapgray">{entry.major || ""}</p>
+                    {entry.role_email && (
+                      <button
+                        type="button"
+                        className="text-bapred hover:underline focus:outline-none text-sm mt-2"
+                        title="Copy role email to clipboard"
+                        onClick={() => {
+                          navigator.clipboard.writeText(entry.role_email);
+                          showToast("Role email copied to clipboard!", "success");
+                        }}
+                      >
+                        {entry.role_email}
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
         </section>

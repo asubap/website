@@ -7,6 +7,7 @@ import EboardModal from "./EboardModal";
 import Fuse from "fuse.js";
 import SearchInput from "../common/SearchInput";
 import ConfirmationModal from "../common/ConfirmationModal";
+import { useToast } from "../../context/toast/ToastContext";
 
 type EboardFacultyEntry = {
   id: string;
@@ -21,6 +22,7 @@ type EboardFacultyEntry = {
 
 const EboardManagement: React.FC = () => {
   const { session, loading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [entries, setEntries] = useState<EboardFacultyEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -249,11 +251,11 @@ const EboardManagement: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to delete eboard member");
       }
-      toast.success("Eboard member deleted successfully");
+      showToast("Eboard member deleted successfully", "success");
       fetchResources();
     } catch (error) {
       console.error("Error deleting eboard member:", error);
-      toast.error("Failed to delete eboard member");
+      showToast("Failed to delete eboard member", "error");
     } finally {
       setShowDeleteModal(false);
       setMemberToDelete(null);
@@ -413,6 +415,21 @@ const EboardManagement: React.FC = () => {
         onEboardDataChange={handleEboardDataChange}
         hideImageField={true}
         members={members}
+      />
+
+      <ConfirmationModal
+        isOpen={showConfirmEboardClose}
+        onClose={() => setShowConfirmEboardClose(false)}
+        onConfirm={() => {
+          setShowConfirmEboardClose(false);
+          setShowEboardModal(false);
+          setSelectedEntry(null);
+          showToast("Changes discarded.", "info");
+        }}
+        title="Discard Changes?"
+        message="You have unsaved changes. Are you sure you want to close this form?"
+        confirmText="Discard"
+        cancelText="Keep Editing"
       />
 
       <ConfirmationModal

@@ -75,4 +75,5 @@ export type EboardFacultyEntry = {
   profile_photo_url?: string;
   name: string | null;
   major: string | null;
+  rank?: number;
 };
