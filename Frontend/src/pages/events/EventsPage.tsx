@@ -289,7 +289,7 @@ const EventsPage: React.FC = () => {
       />
       <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-outfit font-bold text-bapred mb-6 text-center">
             Events
           </h1>
           {/* Search Bar */}
