@@ -85,7 +85,7 @@ export default function AboutPage() {
                 Mission
               </h2>
               <p className="text-gray-800 font-pt-serif text-base sm:text-md">
-                The mission of Beta Alpha Psi, the premier international honor
+                The mission of Beta Alpha Psi, the premier international honors
                 and service organization for financial and business information
                 students and professionals, is to inspire and support excellence
                 by: encouraging the study and practice of accountancy, finance,
