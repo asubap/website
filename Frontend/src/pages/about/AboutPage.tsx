@@ -166,7 +166,7 @@ export default function AboutPage() {
                 <li className="text-gray-800 font-pt-serif text-base sm:text-md">
                   <span className="font-bold">Banquet:</span> A biannual event where BAP members
                   get to enjoy a nice dinner while seating with professionals all from distinct firms, seeing
-                  their peers get inductedand celebrate the milestones of the semester.
+                  their peers get inducted and celebrate the milestones of the semester.
                 </li>
               </ul>
             </div>
