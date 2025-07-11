@@ -99,9 +99,8 @@ export default function WhoWeAre() {
           <p className="text-gray-800 mb-4 text-base sm:text-lg">
             Beta Alpha Psi is the premier international honor and service
             organization for accounting, finance, and information systems
-            students and professionals. The primary objective of Beta Alpha Psi
-            Accounting Honorary Organization is to encourage and give
-            recognition to scholastic and professional excellence in the
+            students and professionals. The primary objective of Beta Alpha Psi 
+            is to encourage and give recognition to scholastic and professional excellence in the
             business information field. This includes promoting the study and
             practice of accounting, finance, economics, and information systems;
             providing opportunities for self-development, service, and
