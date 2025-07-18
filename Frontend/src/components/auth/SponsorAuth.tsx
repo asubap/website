@@ -79,8 +79,10 @@ const SponsorAuth = () => {
     const passcode = passcodeElement.value;
 
     // After backend says "auth success" and sends token
+    // replace spaces with -
+    const sponsorEmail = companyName.replace(/\s+/g, "-");
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: `${companyName.toLowerCase()}@example.com`,
+      email: `${sponsorEmail.toLowerCase()}@example.com`,
       password: `${passcode}`,
     });
 
