@@ -85,7 +85,7 @@ export default function AboutPage() {
                 Mission
               </h2>
               <p className="text-gray-800 font-pt-serif text-base sm:text-md">
-                The mission of Beta Alpha Psi, the premier international honor
+                The mission of Beta Alpha Psi, the premier international honors
                 and service organization for financial and business information
                 students and professionals, is to inspire and support excellence
                 by: encouraging the study and practice of accountancy, finance,
@@ -146,15 +146,14 @@ export default function AboutPage() {
 
               <ul className="list-disc pl-4 sm:pl-6 mb-4 space-y-3 sm:space-y-4">
                 <li className="text-gray-800 font-pt-serif text-base sm:text-md">
-                  <span className="font-bold">Meet the Firms:</span> A privately
+                  <span className="font-bold">Networking Night Career Fair:</span> A privately
                   held event where BAP members have a chance to directly meet
-                  with recruiters from several firms before W.P. Carey's Meet
-                  the Firms, giving BAP members a more personal and earlier
-                  exposure before all other ASU students.
+                  with recruiters from several firms, giving BAP members a more personal and better
+                  exposure than all other ASU students.
                 </li>
                 <li className="text-gray-800 font-pt-serif text-base sm:text-md">
-                  <span className="font-bold">Professional Panels:</span> Firm
-                  presentations where BAP members can learn more about different
+                  <span className="font-bold">Firm Presentations:</span> Weekly events
+                  and panels where BAP members can learn more about different
                   professional topics, services firms provide, firm culture, as
                   well as job/internship opportunities.
                 </li>
@@ -163,6 +162,11 @@ export default function AboutPage() {
                   signature event where the Beta Tau chapter hosts local high
                   schools at ASU to teach them about a career opportunities at
                   Arizona State University.
+                </li>
+                <li className="text-gray-800 font-pt-serif text-base sm:text-md">
+                  <span className="font-bold">Banquet:</span> A biannual event where BAP members
+                  get to enjoy a nice dinner while seating with professionals all from distinct firms, seeing
+                  their peers get inducted and celebrate the milestones of the semester.
                 </li>
               </ul>
             </div>
