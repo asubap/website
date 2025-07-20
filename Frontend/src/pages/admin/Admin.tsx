@@ -243,7 +243,9 @@ const Admin = () => {
     }
   };
 
-  const handleDeleteSponsor = async (email: string) => {
+
+  // this is supposed to take name parameter
+  const handleDeleteSponsor = async (sponsorName: string) => {
     if (!session) return;
 
     const token = session.access_token;
@@ -256,10 +258,10 @@ const Admin = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ sponsor_name: email }),
+          body: JSON.stringify({ sponsor_name: sponsorName }),
         }
       );
-      setSponsors(sponsors.filter((e) => e !== email));
+      setSponsors(sponsors.filter((e) => e !== sponsorName));
       showToast("Sponsor deleted successfully", "success");
     } catch (error) {
       console.error("Error deleting sponsor:", error);

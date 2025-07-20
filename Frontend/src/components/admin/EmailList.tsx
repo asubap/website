@@ -151,7 +151,7 @@ const EmailList = ({
 
         {emailToDelete && (
           <DeleteConfirmation
-            email={emailToDelete}
+            name={emails.find(m => m.email === emailToDelete)?.name || emailToDelete}
             userType={userType}
             onConfirm={handleConfirmDelete}
             onCancel={() => setEmailToDelete(null)}

@@ -17,7 +17,7 @@ interface SponsorUpdateData {
 interface SponsorListProps {
   emails: string[];
   tiers: string[];
-  onDelete: (email: string) => void;
+  onDelete: (sponsorName: string) => void;
   userType: "admin" | "sponsor";
   onTierChanged?: () => void;
   onTierChangeConfirm: (
@@ -124,7 +124,10 @@ const SponsorList = ({
 
   const handleConfirmDelete = () => {
     if (emailToDelete) {
-      onDelete(emailToDelete);
+      // Find the sponsor profile to get the company name
+      const currentSponsorProfile = sponsorProfile && sponsorToEdit === emailToDelete ? sponsorProfile : null;
+      const sponsorName = currentSponsorProfile?.sponsorName || emailToDelete;
+      onDelete(sponsorName);
       showToast(
         `${userType === "admin" ? "Admin" : "Sponsor"} removed successfully`,
         "success"
@@ -223,7 +226,7 @@ const SponsorList = ({
 
         {emailToDelete && (
           <DeleteConfirmation
-            email={emailToDelete}
+            name={sponsorProfile && sponsorToEdit === emailToDelete ? sponsorProfile.sponsorName : emailToDelete}
             userType={userType}
             onConfirm={handleConfirmDelete}
             onCancel={() => setEmailToDelete(null)}

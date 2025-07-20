@@ -1,14 +1,14 @@
 import ConfirmDialog from "../common/ConfirmDialog";
 
 interface DeleteConfirmationProps {
-    email: string;
+    name: string;
     userType: 'admin' | 'sponsor' | 'member';
     onConfirm: () => void;
     onCancel: () => void;
 }
 
-const DeleteConfirmation = ({ email, userType, onConfirm, onCancel }: DeleteConfirmationProps) => {
-    const confirmMessage = `Are you sure you want to remove ${userType || 'member'} ${email}?`;
+const DeleteConfirmation = ({ name, userType, onConfirm, onCancel }: DeleteConfirmationProps) => {
+    const confirmMessage = `Are you sure you want to remove ${userType || 'member'} ${name}?`;
     
     return (
         <ConfirmDialog
