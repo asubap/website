@@ -52,7 +52,7 @@ export const ProcessFlow = () => {
         "Continue to contribute 16 hours per semester (at least 6 professional, at least 6 community service, at least 2 social and 2 of your choice).",
         "Pay the Member fee",
         "Maintain at least a 3.0 major and overall GPA.",
-        "All members are eligible to run for any position on the executive board, regardless of how long they have been members.",
+        "All members are eligible to run for positions on the executive board, regardless of how long they have been members.",
       ],
     },
   ];
