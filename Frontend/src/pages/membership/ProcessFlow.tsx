@@ -38,7 +38,7 @@ export const ProcessFlow = () => {
     {
       title: "Candidate",
       requirements: [
-        "Must complete the 32 service and professional hours requirement (at least 12 professional hours, at least 12 service hours) with 16 hours commonly done in one semester.",
+        "Must complete the 32 service and professional hours requirement (at least 12 professional hours, at least 12 service hours, at least 4 social hours and 4 hours of your choice) with 16 hours commonly done in one semester.",
         "You can complete up to 5 non-BAP professional hours and 5 non-BAP community service hours, as long as you provide documentation.",
         "Pay the Candidate fee.",
         "Complete first upper-division major course (i.e., ACC 340, FIN 302, CIS 340)*.",
@@ -49,7 +49,7 @@ export const ProcessFlow = () => {
       title: "Member",
       requirements: [
         "Membership is achieved once 32 hours are completed and the GPA requirement is met.",
-        "Continue to contribute 16 hours per semester (at least 6 professional, at least 6 community service).",
+        "Continue to contribute 16 hours per semester (at least 6 professional, at least 6 community service, at least 2 social and 2 of your choice).",
         "Pay the Member fee",
         "Maintain at least a 3.0 major and overall GPA.",
         "All members are eligible to run for any position on the executive board, regardless of how long they have been members.",
