@@ -1,6 +1,6 @@
 import { Sponsor } from "../../types";
 import Modal from "../ui/Modal";
-import { Info, Link as LinkIcon, Mail, Check, Eye, Download } from 'lucide-react';
+import { Info, Link as LinkIcon, Mail, Check, Eye } from 'lucide-react';
 import { useToast } from "../../context/toast/ToastContext";
 import { useState } from "react";
 import ResourcePreviewModal from "../ui/ResourcePreviewModal";
