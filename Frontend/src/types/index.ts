@@ -63,7 +63,7 @@ export interface Sponsor {
   about: string;
   links?: string[] | null;
   photoUrl?: string | null;
-  resources?: string[] | null;
+  resources?: { label: string; url: string }[] | null;
   tier?: string;
   emails?: string[]; // Was required, making optional if not always present
 }

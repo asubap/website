@@ -1,8 +1,9 @@
 import { Sponsor } from "../../types";
 import Modal from "../ui/Modal";
-import { Info, Link as LinkIcon, Mail, Check } from 'lucide-react';
+import { Info, Link as LinkIcon, Mail, Check, Eye, Download } from 'lucide-react';
 import { useToast } from "../../context/toast/ToastContext";
 import { useState } from "react";
+import ResourcePreviewModal from "../ui/ResourcePreviewModal";
 
 interface SponsorProfileModalProps {
   sponsor: Sponsor;
@@ -16,6 +17,7 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
   onClose,
 }) => {
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [previewResource, setPreviewResource] = useState<{ name: string; signed_url: string; mime_type?: string } | null>(null);
   const { showToast } = useToast();
 
   const handleCopyEmail = (email: string) => {
@@ -23,6 +25,18 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
     setCopiedEmail(email);
     showToast("Email copied to clipboard!", "success");
     setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
+  const handlePreviewResource = (resource: { label: string; url: string }) => {
+    setPreviewResource({
+      name: resource.label,
+      signed_url: resource.url,
+      mime_type: undefined // We don't have MIME type info from the networking page
+    });
+  };
+
+  const closePreview = () => {
+    setPreviewResource(null);
   };
 
   const profileContent = (
@@ -85,11 +99,24 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
       <div className="border-t pt-6">
         <h4 className="text-lg font-semibold mb-2">Resources</h4>
         {sponsor.resources && sponsor.resources.length > 0 ? (
-          <ul className="list-disc list-inside">
+          <div className="space-y-2">
             {sponsor.resources.map((resource, index) => (
-              <li key={index} className="text-gray-700">{resource}</li>
+              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span className="text-gray-700 truncate flex-1">
+                  {resource.label}
+                </span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePreviewResource(resource)}
+                    className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                    title="Preview resource"
+                  >
+                    <Eye size={18} />
+                  </button>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
           <p className="text-gray-500 italic">No resources provided</p>
         )}
@@ -124,17 +151,26 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Sponsor Details"
-      size="lg"
-      showFooter={true}
-      cancelText="Close"
-      preventOutsideClick={false}
-    >
-      {profileContent}
-    </Modal>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Sponsor Details"
+        size="lg"
+        showFooter={true}
+        cancelText="Close"
+        preventOutsideClick={false}
+      >
+        {profileContent}
+      </Modal>
+
+      {/* Resource Preview Modal */}
+      <ResourcePreviewModal
+        isOpen={!!previewResource}
+        onClose={closePreview}
+        resource={previewResource}
+      />
+    </>
   );
 };
 

@@ -47,8 +47,8 @@ interface BackendMember {
 // Define interface for sponsor resources
 interface SponsorResource {
   id?: number;
-  label?: string;
-  url?: string;
+  label: string;  // Make label required since backend should provide it
+  url: string;    // Make url required since backend should provide it
   uploadDate?: string;
 }
 
@@ -148,7 +148,10 @@ const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
     about: item.about || "No description available.",
     links: parsedLinks,
     photoUrl: item.pfp_url || "/placeholder-logo.png",
-    resources: item.resources?.map((r) => r.url || "") || [],
+    resources: item.resources?.map((r) => ({ 
+      label: r.label || "Resource", 
+      url: r.url || "" 
+    })) || [],
     emails: item.emails || [],
   };
 };

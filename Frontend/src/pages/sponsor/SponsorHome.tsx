@@ -307,23 +307,25 @@ const SponsorHome = () => {
     }
 
     try {
-      // Use the endpoint DELETE /sponsors/:companyName/resources
-      // Send resourceUrl in the request body
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${
-          sponsorData.name
-        }/resources`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json", // Important for sending data in body
-          },
-          data: {
-            // Use 'data' key for request body in axios.delete
-            resourceUrl: resource.url,
-          },
-        }
-      );
+      // Check if this is a blob URL (Vercel Blob storage)
+      const isBlobUrl = resource.url.includes('blob.vercel-storage.com');
+      
+      if (isBlobUrl) {
+        // Delete from Vercel Blob first
+        await axios.delete(
+          `${import.meta.env.VITE_BACKEND_URL}/blob-upload/sponsor/${sponsorData.name}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            data: {
+              blobUrl: resource.url,
+            },
+          }
+        );
+      }
+      
       // Refresh resource list after deletion
       fetchResources();
     } catch (error) {

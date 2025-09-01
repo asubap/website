@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { upload } from '@vercel/blob/client';
 import { ChevronDown, ChevronRight, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
 import { toast } from "react-hot-toast";
@@ -345,30 +346,68 @@ const ResourceManagement: React.FC = () => {
     setResourceFormData((prev) => ({ ...prev, file }));
   };
 
+
+
   const handleAddResourceSubmit = async () => {
     if (!session?.access_token || !selectedCategory || !resourceFormData.file)
       return;
 
     try {
-      const formData = new FormData();
-      formData.append("name", resourceFormData.name);
-      formData.append("description", resourceFormData.description);
-      formData.append("file", resourceFormData.file);
+      if (resourceFormData.file.size > 4.5 * 1024 * 1024) {
+        // Large file - use Vercel Blob upload
+        const blob = await upload(resourceFormData.file.name, resourceFormData.file, {
+          access: 'public',
+          handleUploadUrl: `${import.meta.env.VITE_BACKEND_URL}/blob-upload/resources/${selectedCategory.id}?token=${session.access_token}`,
+        });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${
-          selectedCategory.id
-        }/resources`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: formData,
+        console.log("blob", blob);
+
+        // Create resource with blob URL
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/resources/${selectedCategory.id}/resources`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              name: resourceFormData.name,
+              description: resourceFormData.description,
+              blobUrl: blob.url 
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Failed to create resource: ${response.status} ${errorData}`);
         }
-      );
+      } else {
+        // Small file - use existing upload
+        const formData = new FormData();
+        formData.append("name", resourceFormData.name);
+        formData.append("description", resourceFormData.description);
+        formData.append("file", resourceFormData.file);
 
-      if (!response.ok) throw new Error("Failed to add resource");
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/resources/${
+            selectedCategory.id
+          }/resources`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Failed to add resource: ${response.status} ${errorData}`);
+        }
+      }
 
       toast.success("Resource added successfully");
       closeAndResetResourceModal();
@@ -385,32 +424,66 @@ const ResourceManagement: React.FC = () => {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("name", resourceFormData.name);
-      formData.append("description", resourceFormData.description);
+      if (resourceFormData.file && resourceFormData.file.size > 4.5 * 1024 * 1024) {
+        // Large file - use Vercel Blob upload
+        const blob = await upload(resourceFormData.file.name, resourceFormData.file, {
+          access: 'public',
+          handleUploadUrl: `${import.meta.env.VITE_BACKEND_URL}/blob-upload/resources/${selectedCategory.id}`,
+        });
 
-      // Only append file if a new one was selected
-      if (resourceFormData.file) {
-        formData.append("file", resourceFormData.file);
-      } else {
-        // Explicitly indicate we want to keep the existing file
-        formData.append("keepExistingFile", "true");
-      }
+        // Update resource with blob URL
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/resources/${selectedCategory.id}/resources/${selectedResource.id}/update`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              name: resourceFormData.name,
+              description: resourceFormData.description,
+              blobUrl: blob.url 
+            })
+          }
+        );
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${
-          selectedCategory.id
-        }/resources/${selectedResource.id}/update`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: formData,
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Failed to update resource: ${response.status} ${errorData}`);
         }
-      );
+      } else {
+        // Small file or no new file - use existing upload
+        const formData = new FormData();
+        formData.append("name", resourceFormData.name);
+        formData.append("description", resourceFormData.description);
 
-      if (!response.ok) throw new Error("Failed to update resource");
+        // Only append file if a new one was selected
+        if (resourceFormData.file) {
+          formData.append("file", resourceFormData.file);
+        } else {
+          // Explicitly indicate we want to keep the existing file
+          formData.append("keepExistingFile", "true");
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/resources/${
+            selectedCategory.id
+          }/resources/${selectedResource.id}/update`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Failed to update resource: ${response.status} ${errorData}`);
+        }
+      }
 
       toast.success("Resource updated successfully");
       closeAndResetResourceModal();
@@ -437,17 +510,42 @@ const ResourceManagement: React.FC = () => {
     if (!session?.access_token || !resourceToDelete) return;
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}/delete`,
+      // First, get the resource details to check if it's a blob URL
+      const resourceResponse = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
         }
       );
 
-      if (!response.ok) throw new Error("Failed to delete resource");
+      if (resourceResponse.ok) {
+        const resource = await resourceResponse.json();
+        
+        // Check if this is a blob URL (Vercel Blob storage)
+        if (resource.signed_url && resource.signed_url.includes('blob.vercel-storage.com')) {
+          // Delete from Vercel Blob first
+          const blobDeleteResponse = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/blob-upload/resources/${resourceToDelete.categoryId}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                blobUrl: resource.signed_url,
+              }),
+            }
+          );
+
+          if (!blobDeleteResponse.ok) {
+            console.warn("Failed to delete blob, but continuing with resource deletion");
+          }
+        }
+      }
 
       toast.success("Resource deleted successfully");
       fetchResources();
