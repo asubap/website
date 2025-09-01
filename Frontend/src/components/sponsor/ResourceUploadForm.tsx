@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { upload } from '@vercel/blob/client';
 
 interface ResourceUploadFormProps {
   sponsorName: string; // Needed for the API endpoint
@@ -15,35 +16,127 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
   const [resourceName, setResourceName] = useState("");
   const [resourceDescription, setResourceDescription] = useState(""); // New state for description
   const [uploading, setUploading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  // Allowed file extensions and MIME types
+  const ALLOWED_EXTENSIONS = [
+    '.pdf', '.doc', '.docx', '.txt', '.rtf',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
+    '.xls', '.xlsx', '.csv',
+    '.ppt', '.pptx',
+  ];
+
+  const ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+    'application/rtf',
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ];
+
+  // File validation function
+  const validateFile = (file: File): string | null => {
+    // Check file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      return `File size must be less than 50MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`;
+    }
+
+    // Check file extension
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
+      return `File type not allowed. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}`;
+    }
+
+    // Check MIME type
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return `File type not supported. Please upload a valid file.`;
+    }
+
+    return null; // File is valid
+  };
+
+
 
   const handleResourceUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !resourceName || !token || !sponsorName) return;
 
+    // Validate file before upload
+    const validationError = validateFile(file);
+    if (validationError) {
+      setFileError(validationError);
+      return;
+    }
+
     setUploading(true);
+    setFileError(null); // Clear any previous errors
     try {
-      const formData = new FormData();
-      formData.append("resourceLabel", resourceName);
-      formData.append("description", resourceDescription); // Add description to FormData
-      formData.append("file", file);
+      if (file.size > 4.5 * 1024 * 1024) {
+        // Large file - use Vercel Blob upload
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: `${import.meta.env.VITE_BACKEND_URL}/blob-upload/sponsor/${sponsorName}?token=${token}`,
+        });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            // Content-Type is set automatically for FormData
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.text(); // Or response.json() if API returns JSON error
-        throw new Error(
-          `Failed to upload resource: ${response.status} ${errorData}`
+        // Create resource with blob URL
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              resourceLabel: resourceName,
+              description: resourceDescription,
+              blobUrl: blob.url
+            })
+          }
         );
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(
+            `Failed to create resource: ${response.status} ${errorData}`
+          );
+        }
+      } else {
+        // Small file - use existing upload
+        const formData = new FormData();
+        formData.append("resourceLabel", resourceName);
+        formData.append("description", resourceDescription);
+        formData.append("file", file);
+
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsorName}/resources`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              // Content-Type is set automatically for FormData
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(
+            `Failed to upload resource: ${response.status} ${errorData}`
+          );
+        }
       }
 
       setFile(null);
@@ -90,9 +183,18 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
           <label className="block mb-1 font-medium">File</label>
           <input
             type="file"
-            // Reset file input visually if needed by setting key={file ? file.name : 'empty'}
-            // or by managing the input value directly (more complex)
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              const selectedFile = e.target.files?.[0] || null;
+              setFile(selectedFile);
+              
+              // Validate file when selected
+              if (selectedFile) {
+                const error = validateFile(selectedFile);
+                setFileError(error);
+              } else {
+                setFileError(null);
+              }
+            }}
             className="w-full text-sm text-gray-500
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-md file:border-0
@@ -101,10 +203,17 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
                 hover:file:bg-opacity-90"
             required
           />
+          {fileError && (
+            <p className="text-red-600 text-sm mt-1">{fileError}</p>
+          )}
+          <p className="text-gray-500 text-xs mt-1">
+            Allowed file types: PDF, DOC, DOCX, TXT, RTF, Images (JPG, PNG, GIF, WebP, SVG), 
+            Excel (XLS, XLSX, CSV), PowerPoint (PPT, PPTX). Max size: 50MB.
+          </p>
         </div>
         <button
           type="submit"
-          disabled={!file || !resourceName || uploading || !sponsorName}
+          disabled={!file || !resourceName || uploading || !sponsorName || !!fileError}
           className="px-4 py-2 bg-bapred text-white rounded disabled:opacity-50"
         >
           {uploading ? "Uploading..." : "Upload Resource"}
