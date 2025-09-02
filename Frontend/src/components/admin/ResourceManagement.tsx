@@ -2,7 +2,7 @@ import React, {useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { upload } from '@vercel/blob/client';
 import { ChevronDown, ChevronRight, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/auth/authProvider";
-import { toast } from "react-hot-toast";
+import { useToast } from "../../context/toast/ToastContext";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ConfirmationModal from "../common/ConfirmationModal";
 import CategoryModal from "./CategoryModal";
@@ -70,6 +70,7 @@ const formatDate = (dateString: string): string => {
 
 const ResourceManagement: React.FC = () => {
   const { session, loading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
@@ -158,7 +159,7 @@ const ResourceManagement: React.FC = () => {
       setCategories(mapped);
     } catch (error) {
       console.error("Error fetching resources:", error);
-      toast.error("Failed to load resources");
+      showToast("Failed to load resources", "error");
       setCategories([]); // Reset categories on error
     } finally {
       setIsLoading(false);
@@ -266,12 +267,12 @@ const ResourceManagement: React.FC = () => {
         }
       );
       if (!response.ok) throw new Error("Failed to add category");
-      toast.success("Category added successfully");
+      showToast("Category added successfully", "success");
       closeAndResetCategoryModal();
       fetchResources();
     } catch (error) {
       console.error("Error adding category:", error);
-      toast.error("Failed to add category");
+      showToast("Failed to add category", "error");
     }
   };
 
@@ -292,12 +293,12 @@ const ResourceManagement: React.FC = () => {
         }
       );
       if (!response.ok) throw new Error("Failed to update category");
-      toast.success("Category updated successfully");
+      showToast("Category updated successfully", "success");
       closeAndResetCategoryModal();
       fetchResources();
     } catch (error) {
       console.error("Error updating category:", error);
-      toast.error("Failed to update category");
+      showToast("Failed to update category", "error");
     }
   };
 
@@ -411,12 +412,12 @@ const ResourceManagement: React.FC = () => {
         }
       }
 
-      toast.success("Resource added successfully");
+      showToast("Resource added successfully", "success");
       closeAndResetResourceModal();
       fetchResources();
     } catch (error) {
       console.error("Error adding resource:", error);
-      toast.error("Failed to add resource");
+      showToast("Failed to add resource", "error");
     } finally {
       setIsAddingResource(false);
     }
@@ -489,12 +490,12 @@ const ResourceManagement: React.FC = () => {
         }
       }
 
-      toast.success("Resource updated successfully");
+      showToast("Resource updated successfully", "success");
       closeAndResetResourceModal();
       fetchResources();
     } catch (error) {
       console.error("Error updating resource:", error);
-      toast.error("Failed to update resource");
+      showToast("Failed to update resource", "error");
     }
   };
 
@@ -516,7 +517,7 @@ const ResourceManagement: React.FC = () => {
     try {
       // Check if this is a blob URL (Vercel Blob storage) using the resource we already have
       if (resourceToDelete.resource.signed_url && resourceToDelete.resource.signed_url.includes('blob.vercel-storage.com')) {
-        // Delete from Vercel Blob first
+        // Delete from Vercel Blob (this also deletes the database record)
         const blobDeleteResponse = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/blob-upload/resources/${resourceToDelete.categoryId}`,
           {
@@ -532,31 +533,31 @@ const ResourceManagement: React.FC = () => {
         );
 
         if (!blobDeleteResponse.ok) {
-          console.warn("Failed to delete blob, but continuing with resource deletion");
+          throw new Error("Failed to delete blob resource");
+        }
+      } else {
+        // Delete non-blob resource from database only
+        const deleteResourceResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}/delete`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!deleteResourceResponse.ok) {
+          throw new Error("Failed to delete resource from database");
         }
       }
 
-      // Delete the resource record from database (handles both blob and non-blob resources)
-      const deleteResourceResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}/delete`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!deleteResourceResponse.ok) {
-        throw new Error("Failed to delete resource from database");
-      }
-
-      toast.success("Resource deleted successfully");
+      showToast("Resource deleted successfully", "success");
       fetchResources();
     } catch (error) {
       console.error("Error deleting resource:", error);
-      toast.error("Failed to delete resource");
+      showToast("Failed to delete resource", "error");
     } finally {
       setShowDeleteResourceModal(false);
       setResourceToDelete(null);
@@ -579,11 +580,11 @@ const ResourceManagement: React.FC = () => {
 
       if (!response.ok) throw new Error("Failed to delete category");
 
-      toast.success("Category deleted successfully");
+      showToast("Category deleted successfully", "success");
       fetchResources();
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast.error("Failed to delete category");
+      showToast("Failed to delete category", "error");
     } finally {
       setShowDeleteCategoryModal(false);
       setCategoryToDelete(null);
