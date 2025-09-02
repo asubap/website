@@ -117,7 +117,7 @@ const ResourceManagement: React.FC = () => {
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [showDeleteResourceModal, setShowDeleteResourceModal] = useState(false);
-  const [resourceToDelete, setResourceToDelete] = useState<{ categoryId: string; resourceId: string } | null>(null);
+  const [resourceToDelete, setResourceToDelete] = useState<{ categoryId: string; resourceId: string; resource: Resource } | null>(null);
 
   const fetchResources = useCallback(async () => {
     if (authLoading) {
@@ -494,9 +494,9 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteResource = async (categoryId: string, resourceId: string) => {
+  const handleDeleteResource = async (resource: Resource, categoryId: string) => {
     if (!session?.access_token) return;
-    setResourceToDelete({ categoryId, resourceId });
+    setResourceToDelete({ categoryId, resourceId: resource.id, resource });
     setShowDeleteResourceModal(true);
   };
 
@@ -510,40 +510,25 @@ const ResourceManagement: React.FC = () => {
     if (!session?.access_token || !resourceToDelete) return;
 
     try {
-      // First, get the resource details to check if it's a blob URL
-      const resourceResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
-
-      if (resourceResponse.ok) {
-        const resource = await resourceResponse.json();
-        
-        // Check if this is a blob URL (Vercel Blob storage)
-        if (resource.signed_url && resource.signed_url.includes('blob.vercel-storage.com')) {
-          // Delete from Vercel Blob first
-          const blobDeleteResponse = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL}/blob-upload/resources/${resourceToDelete.categoryId}`,
-            {
-              method: "DELETE",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                blobUrl: resource.signed_url,
-              }),
-            }
-          );
-
-          if (!blobDeleteResponse.ok) {
-            console.warn("Failed to delete blob, but continuing with resource deletion");
+      // Check if this is a blob URL (Vercel Blob storage) using the resource we already have
+      if (resourceToDelete.resource.signed_url && resourceToDelete.resource.signed_url.includes('blob.vercel-storage.com')) {
+        // Delete from Vercel Blob first
+        const blobDeleteResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/blob-upload/resources/${resourceToDelete.categoryId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              blobUrl: resourceToDelete.resource.signed_url,
+            }),
           }
+        );
+
+        if (!blobDeleteResponse.ok) {
+          console.warn("Failed to delete blob, but continuing with resource deletion");
         }
       }
 
@@ -787,7 +772,7 @@ const ResourceManagement: React.FC = () => {
                               </button>
                               <button
                                 onClick={() =>
-                                  handleDeleteResource(category.id, resource.id)
+                                  handleDeleteResource(resource, category.id)
                                 }
                                 className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
                                 title="Delete Resource"
