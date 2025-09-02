@@ -118,6 +118,7 @@ const ResourceManagement: React.FC = () => {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [showDeleteResourceModal, setShowDeleteResourceModal] = useState(false);
   const [resourceToDelete, setResourceToDelete] = useState<{ categoryId: string; resourceId: string; resource: Resource } | null>(null);
+  const [isAddingResource, setIsAddingResource] = useState(false);
 
   const fetchResources = useCallback(async () => {
     if (authLoading) {
@@ -352,6 +353,7 @@ const ResourceManagement: React.FC = () => {
     if (!session?.access_token || !selectedCategory || !resourceFormData.file)
       return;
 
+    setIsAddingResource(true);
     try {
       if (resourceFormData.file.size > 4.5 * 1024 * 1024) {
         // Large file - use Vercel Blob upload
@@ -415,6 +417,8 @@ const ResourceManagement: React.FC = () => {
     } catch (error) {
       console.error("Error adding resource:", error);
       toast.error("Failed to add resource");
+    } finally {
+      setIsAddingResource(false);
     }
   };
 
@@ -530,6 +534,22 @@ const ResourceManagement: React.FC = () => {
         if (!blobDeleteResponse.ok) {
           console.warn("Failed to delete blob, but continuing with resource deletion");
         }
+      }
+
+      // Delete the resource record from database (handles both blob and non-blob resources)
+      const deleteResourceResponse = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/resources/${resourceToDelete.categoryId}/resources/${resourceToDelete.resourceId}/delete`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!deleteResourceResponse.ok) {
+        throw new Error("Failed to delete resource from database");
       }
 
       toast.success("Resource deleted successfully");
@@ -818,6 +838,7 @@ const ResourceManagement: React.FC = () => {
         resourceData={resourceFormData}
         onResourceDataChange={handleResourceDataChange}
         onFileChange={handleResourceFileChange}
+        isLoading={isAddingResource}
       />
 
       {showPreviewModal && resourceToPreview && (

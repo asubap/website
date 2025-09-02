@@ -1,6 +1,7 @@
 import React from "react";
 import Modal from "../ui/Modal";
 import { FileText } from "lucide-react";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 interface ResourceData {
   name: string;
@@ -19,6 +20,7 @@ interface ResourceModalProps {
   resourceData: ResourceData;
   onResourceDataChange: (field: "name" | "description", value: string) => void;
   onFileChange: (file: File | null) => void;
+  isLoading?: boolean;
 }
 
 const ResourceModal: React.FC<ResourceModalProps> = ({
@@ -29,6 +31,7 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
   resourceData,
   onResourceDataChange,
   onFileChange,
+  isLoading = false,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -57,9 +60,16 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={isEditing ? "Edit Resource" : "Add Resource"}
-      confirmText={isEditing ? "Save Changes" : "Add Resource"}
+      confirmText={isLoading ? "Adding..." : (isEditing ? "Save Changes" : "Add Resource")}
       onConfirm={onConfirm}
       size="md"
+      footer={
+        isLoading ? (
+          <div className="flex items-center justify-center py-2">
+            <LoadingSpinner text="Adding resource..." size="sm" />
+          </div>
+        ) : undefined
+      }
     >
       <div className="space-y-4">
         <div>
@@ -74,6 +84,7 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-bapred focus:border-bapred"
             placeholder="Enter resource name"
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -89,6 +100,7 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
             placeholder="Enter resource description"
             rows={3}
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -115,12 +127,14 @@ const ResourceModal: React.FC<ResourceModalProps> = ({
               onChange={handleFileChange}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-bapred file:text-white hover:file:bg-opacity-90"
               required={!isEditing} // Required only for new resources
+              disabled={isLoading}
             />
             {resourceData.file && (
               <button
                 onClick={clearFile}
                 className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
                 type="button"
+                disabled={isLoading}
               >
                 Clear
               </button>
