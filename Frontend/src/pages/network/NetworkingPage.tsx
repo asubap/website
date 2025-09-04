@@ -83,6 +83,7 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   // Map API rank to interface rank format
   const memberRank = item.rank === "current" ? "Current" : 
                      item.rank === "alumni" ? "Alumni" : 
+                     item.rank === "pledge" ? "Pledge" :
                      "Current"; // default to Current
 
   return {
