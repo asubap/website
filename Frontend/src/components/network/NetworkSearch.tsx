@@ -34,7 +34,6 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch, availableGradua
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
-    triggerSearch(e.target.value, filters);
   };
 
   const handleReset = () => {
@@ -48,13 +47,7 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch, availableGradua
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const newFilters = { ...filters, [name]: value };
-    setFilters(newFilters);
-    triggerSearch(query, newFilters);
-  };
-
-  const triggerSearch = (currentQuery: string, currentFilters: Filters) => {
-    onSearch(currentQuery, currentFilters);
+    setFilters({ ...filters, [name]: value });
   };
 
   return (
@@ -65,7 +58,6 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch, availableGradua
             <SearchInput
               value={query}
               onChange={handleInputChange}
-              onIconClick={() => onSearch(query, filters)}
               placeholder="Search by name, major, or email..."
             />
           </div>

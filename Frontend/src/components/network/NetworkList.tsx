@@ -45,9 +45,9 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {entities.map((entity) => (
+        {entities.map((entity, index) => (
           <div
-            key={entity.id || entity.name}
+            key={`${entity.type}-${entity.id || entity.name}-${index}`}
             className="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200"
             onClick={() => {
               if (entity.type === "member") {

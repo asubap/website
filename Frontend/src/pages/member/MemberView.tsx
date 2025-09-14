@@ -15,7 +15,8 @@ const MemberView = () => {
   const email = session?.user?.email || "";
 
   const [sponsorProfileUrl] = useState(
-    "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+    // "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+    ""
   );
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [loading, setLoading] = useState(true);

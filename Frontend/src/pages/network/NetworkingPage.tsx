@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import NetworkSearch from "../../components/network/NetworkSearch";
 import Fuse from "fuse.js";
@@ -336,7 +336,7 @@ const NetworkingPage = () => {
     }
   }, [isMembersLoading, isSponsorsLoading, networkEntities]);
 
-  const handleSearch = (query: string, filters: Filters) => {
+  const handleSearch = useCallback((query: string, filters: Filters) => {
     let results = networkEntities; // Start with combined list
 
     // 1. Apply Fuzzy Search (if query exists)
@@ -378,7 +378,7 @@ const NetworkingPage = () => {
     });
 
     setFilteredEntities(filteredResults);
-  };
+  }, [fuse, networkEntities]);
 
   return (
     <NetworkingLayout navLinks={getNavLinks(!!session)}>

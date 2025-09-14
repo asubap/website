@@ -214,6 +214,12 @@ export default function ProfileEditModal({
       }
     }
 
+    // Check if profile picture is required
+    if (!currentPfpUrl) {
+      showToast("Profile picture is required. Please upload a profile picture before saving.", "error");
+      return;
+    }
+
     if (
       !hasUnsavedChanges() &&
       currentPfpUrl === initialDataRef.current.photoUrl
