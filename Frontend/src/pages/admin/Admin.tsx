@@ -467,6 +467,7 @@ const Admin = () => {
               : raw.hours || "0",
           rank: raw.rank || raw.role || "Not Provided",
           role: raw.role || "general-member",
+          event_attendance: raw.event_attendance || [],
         };
 
         // Update member details with fresh data

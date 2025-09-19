@@ -7,7 +7,11 @@ import { isEventInSession } from "../event/EventCheckIn";
 const getEventDateTime = (event: Event) =>
   new Date(`${event.event_date}T${event.event_time || '00:00:00'}`);
 
-const EventMember: React.FC = () => {
+interface EventMemberProps {
+  eventAttendance?: any[];
+}
+
+const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const { session } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -85,16 +89,40 @@ const EventMember: React.FC = () => {
       </div>
 
       <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
-        Past Events
+        Attended Events
       </h2>
 
       <div className="overflow-y-auto pr-2 sm:pr-4 max-h-[600px] sm:max-h-[400px] space-y-4">
-        {pastEvents.length > 0 ? (
-          pastEvents.map((event) => (
-            <EventCard key={event.id} event={event} isPast={true} />
+        {eventAttendance && eventAttendance.length > 0 ? (
+          eventAttendance.map((attendedEvent, index) => (
+            <div key={index} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                {attendedEvent.event_name || 'Event'}
+              </h3>
+              <p className="text-gray-600 text-sm mb-2">
+                {attendedEvent.event_description || 'No description available'}
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                {attendedEvent.event_date && (
+                  <span className="bg-gray-100 px-2 py-1 rounded">
+                    Date: {new Date(attendedEvent.event_date).toLocaleDateString()}
+                  </span>
+                )}
+                {attendedEvent.event_hours && (
+                  <span className="bg-blue-100 px-2 py-1 rounded">
+                    Hours: {attendedEvent.event_hours}
+                  </span>
+                )}
+                {attendedEvent.event_hours_type && (
+                  <span className="bg-green-100 px-2 py-1 rounded">
+                    Type: {attendedEvent.event_hours_type}
+                  </span>
+                )}
+              </div>
+            </div>
           ))
         ) : (
-          <p className="text-gray-500">No past events</p>
+          <p className="text-gray-500">No attended events</p>
         )}
       </div>
     </div>

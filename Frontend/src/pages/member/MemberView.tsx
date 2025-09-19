@@ -37,6 +37,7 @@ const MemberView = () => {
     professional_hours: string;
     service_hours: string;
     social_hours: string;
+    event_attendance: any[];
   }>({
     id: "",
     user_email: "",
@@ -52,6 +53,7 @@ const MemberView = () => {
     professional_hours: "",
     service_hours: "",
     social_hours: "",
+    event_attendance: [],
   });
 
   // const [photoLoading, setPhotoLoading] = useState<boolean>(false);
@@ -141,6 +143,7 @@ const MemberView = () => {
             professionalHours={userDetails.professional_hours || "0"}
             serviceHours={userDetails.service_hours || "0"}
             socialHours={userDetails.social_hours || "0"}
+            eventAttendance={userDetails.event_attendance || []}
           />
         </>
       )}

@@ -34,6 +34,7 @@ interface BackendMember {
   role?: string | null;
   rank?: string | null;
   member_status?: string;
+  event_attendance?: any[];
   // Add potential fallback fields from previous structure if needed
   first_name?: string;
   last_name?: string;
@@ -106,6 +107,7 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
     links: memberLinks,
     rank: memberRank,
     role: item.role || "general-member",
+    event_attendance: item.event_attendance || [],
   };
 };
 

@@ -26,6 +26,7 @@ interface MemberDescriptionProps {
   socialHours: string;
   id?: string;
   role?: string;
+  eventAttendance?: any[];
 }
 
 const READ_ANNOUNCEMENTS_KEY = "readAnnouncementIds";
@@ -67,6 +68,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
   socialHours,
   id,
   role,
+  eventAttendance,
 }) => {
   const { session } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -280,7 +282,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
         </div>
       </div>
 
-      <EventMember />
+      <EventMember eventAttendance={eventAttendance} />
 
       <ProfileEditModal
         isOpen={isEditModalOpen}
