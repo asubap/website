@@ -55,10 +55,6 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
     .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) >= today)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
 
-  const pastEvents = events
-    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) < today)
-    .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
-
   return (
     <div className="w-full lg:w-1/2">
       <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
