@@ -246,15 +246,15 @@ const EventsPage: React.FC = () => {
   });
 
   const inSessionEvents = filteredEvents.filter((event) =>
-    isEventInSession(event.event_date, event.event_time, event.event_hours)
+    isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0)
   );
   const upcomingEvents = filteredEvents
     .filter(
       (event) =>
         !isEventInSession(
           event.event_date,
-          event.event_time,
-          event.event_hours
+          event.event_time || '00:00:00',
+          event.event_hours || 0
         ) && getEventDateTime(event) >= today
     )
     .sort(
@@ -265,8 +265,8 @@ const EventsPage: React.FC = () => {
       (event) =>
         !isEventInSession(
           event.event_date,
-          event.event_time,
-          event.event_hours
+          event.event_time || '00:00:00',
+          event.event_hours || 0
         ) && getEventDateTime(event) < today
     )
     .sort(

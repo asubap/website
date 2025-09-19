@@ -236,8 +236,8 @@ const EditEventModal = ({
         event_hours_type: formData.hoursType,
         sponsors_attending: formData.sponsors,
         id: eventToEdit.id,
-        event_attending: eventToEdit.event_attending ?? null,
-        event_rsvped: eventToEdit.event_rsvped ?? null,
+        event_attending: eventToEdit.event_attending ?? [],
+        event_rsvped: eventToEdit.event_rsvped ?? [],
         check_in_window: formData.checkInWindow,
       };
 
