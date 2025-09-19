@@ -291,7 +291,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         </div>
 
         <div className="space-y-2">
-          {event.event_hours_type && (
+          {event.event_hours && event.event_hours_type && (
             <div>
               <span className="font-semibold text-gray-700">Hours: </span>
               <span className="text-gray-600">
@@ -299,7 +299,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               </span>
             </div>
           )}
-          {event.sponsors_attending && (
+          {event.sponsors_attending && event.sponsors_attending.length > 0 && (
             <div>
               <span className="font-semibold text-gray-700">Sponsors: </span>
               <span className="text-gray-600">

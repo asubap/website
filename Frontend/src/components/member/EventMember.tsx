@@ -50,9 +50,9 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
   // Split events into in-session, upcoming, and past
   const today = new Date();
 
-  const inSessionEvents = events.filter(event => isEventInSession(event.event_date, event.event_time, event.event_hours));
+  const inSessionEvents = events.filter(event => isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
   const upcomingEvents = events
-    .filter(event => !isEventInSession(event.event_date, event.event_time, event.event_hours) && getEventDateTime(event) >= today)
+    .filter(event => !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= today)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
 
   return (
@@ -90,33 +90,23 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
 
       <div className="overflow-y-auto pr-2 sm:pr-4 max-h-[600px] sm:max-h-[400px] space-y-4">
         {eventAttendance && eventAttendance.length > 0 ? (
-          eventAttendance.map((attendedEvent, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                {attendedEvent.event_name || 'Event'}
-              </h3>
-              <p className="text-gray-600 text-sm mb-2">
-                {attendedEvent.event_description || 'No description available'}
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                {attendedEvent.event_date && (
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    Date: {new Date(attendedEvent.event_date).toLocaleDateString()}
-                  </span>
-                )}
-                {attendedEvent.event_hours && (
-                  <span className="bg-blue-100 px-2 py-1 rounded">
-                    Hours: {attendedEvent.event_hours}
-                  </span>
-                )}
-                {attendedEvent.event_hours_type && (
-                  <span className="bg-green-100 px-2 py-1 rounded">
-                    Type: {attendedEvent.event_hours_type}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))
+          eventAttendance.map((attendedEvent, index) => {
+            // Transform attended event data to Event format for EventCard
+            const eventForCard: Event = {
+              id: attendedEvent.event_id?.toString() || index.toString(),
+              event_name: attendedEvent.event_name || 'Event',
+              event_description: attendedEvent.event_description || 'No description available',
+              event_location: attendedEvent.event_location,
+              event_date: attendedEvent.event_date || new Date().toISOString().split('T')[0],
+              event_time: attendedEvent.event_time,
+              event_hours: attendedEvent.event_hours,
+              event_hours_type: attendedEvent.event_hours_type,
+            };
+            
+            return (
+              <EventCard key={index} event={eventForCard} isPast={true} hideRSVP={true} />
+            );
+          })
         ) : (
           <p className="text-gray-500">No attended events</p>
         )}
