@@ -90,23 +90,30 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
 
       <div className="overflow-y-auto pr-2 sm:pr-4 max-h-[600px] sm:max-h-[400px] space-y-4">
         {eventAttendance && eventAttendance.length > 0 ? (
-          eventAttendance.map((attendedEvent, index) => {
-            // Transform attended event data to Event format for EventCard
-            const eventForCard: Event = {
-              id: attendedEvent.event_id?.toString() || index.toString(),
-              event_name: attendedEvent.event_name || 'Event',
-              event_description: attendedEvent.event_description || 'No description available',
-              event_location: attendedEvent.event_location,
-              event_date: attendedEvent.event_date || new Date().toISOString().split('T')[0],
-              event_time: attendedEvent.event_time,
-              event_hours: attendedEvent.event_hours,
-              event_hours_type: attendedEvent.event_hours_type,
-            };
-            
-            return (
-              <EventCard key={index} event={eventForCard} isPast={true} hideRSVP={true} />
-            );
-          })
+          eventAttendance
+            .sort((a, b) => {
+              // Sort by date in descending order (most recent first)
+              const dateA = new Date(a.event_date || 0);
+              const dateB = new Date(b.event_date || 0);
+              return dateB.getTime() - dateA.getTime();
+            })
+            .map((attendedEvent, index) => {
+              // Transform attended event data to Event format for EventCard
+              const eventForCard: Event = {
+                id: attendedEvent.event_id?.toString() || index.toString(),
+                event_name: attendedEvent.event_name || 'Event',
+                event_description: attendedEvent.event_description || 'No description available',
+                event_location: attendedEvent.event_location,
+                event_date: attendedEvent.event_date || new Date().toISOString().split('T')[0],
+                event_time: attendedEvent.event_time,
+                event_hours: attendedEvent.event_hours,
+                event_hours_type: attendedEvent.event_hours_type,
+              };
+              
+              return (
+                <EventCard key={index} event={eventForCard} isPast={true} hideRSVP={true} />
+              );
+            })
         ) : (
           <p className="text-gray-500">No attended events</p>
         )}
