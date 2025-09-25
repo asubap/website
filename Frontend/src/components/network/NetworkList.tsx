@@ -9,7 +9,6 @@ import {
   Mail,
   Clock,
   Info,
-  User,
   Award,
   Target,
 } from "lucide-react";
@@ -17,13 +16,6 @@ import {
 interface NetworkListProps {
   entities: (MemberDetail | Sponsor)[];
 }
-
-// Format role names to be more readable
-const formatRoleName = (role: string | null | undefined): string => {
-  if (!role) return "Not Provided";
-  if (role === "general-member") return "General Member";
-  return role.charAt(0).toUpperCase() + role.slice(1);
-};
 
 const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
   const [selectedNetworkEntity, setSelectedNetworkEntity] = useState<

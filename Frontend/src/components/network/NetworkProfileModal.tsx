@@ -8,7 +8,6 @@ import {
   Info,
   Link as LinkIcon,
   Mail,
-  User,
   Award,
   Target,
 } from "lucide-react";
@@ -19,12 +18,6 @@ interface NetworkProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const formatRoleName = (role: string | null | undefined): string => {
-  if (!role) return "Not Provided";
-  if (role === "general-member") return "General Member";
-  return role.charAt(0).toUpperCase() + role.slice(1);
-};
 
 const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
   member,
