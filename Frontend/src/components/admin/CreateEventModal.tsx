@@ -25,6 +25,7 @@ interface FormErrors {
   hours?: string;
   hoursType?: string;
   checkInWindow?: string;
+  eventLimit?: string;
   // No validation needed for sponsors or emailMembers currently
 }
 
@@ -43,6 +44,7 @@ const CreateEventModal = ({
   const [hours, setHours] = useState("");
   const [hoursType, setHoursType] = useState("professional");
   const [checkInWindow, setCheckInWindow] = useState(15);
+  const [eventLimit, setEventLimit] = useState(100);
   // const [emailMembers, setEmailMembers] = useState(false); // Keep if needed later, removed from UI
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -59,6 +61,7 @@ const CreateEventModal = ({
     hours,
     hoursType,
     checkInWindow,
+    eventLimit,
   });
 
   // Function to check if form data has changed
@@ -73,6 +76,7 @@ const CreateEventModal = ({
       hours,
       hoursType,
       checkInWindow,
+      eventLimit,
     };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
   };
@@ -156,6 +160,7 @@ const CreateEventModal = ({
         event_hours_type: hoursType,
         sponsors_attending: sponsors,
         check_in_window: checkInWindow,
+        event_limit: eventLimit
       };
 
       const response = await fetch(
@@ -473,6 +478,37 @@ const CreateEventModal = ({
               {errors.checkInWindow && (
                 <p id="checkInWindow-error" className="text-red-500 text-xs mt-1">
                   {errors.checkInWindow}
+                </p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="checkInWindow"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Event Limit (Number of People) *
+              </label>
+              <input
+                id="eventLimit"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 15"
+                value={eventLimit}
+                onChange={(e) => {
+                  setEventLimit(Number(e.target.value));
+                  clearError("eventLimit");
+                }}
+                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
+                  errors.eventLimit ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                aria-invalid={!!errors.eventLimit}
+                aria-describedby={errors.eventLimit ? "eventLimit-error" : undefined}
+              />
+              {errors.eventLimit && (
+                <p id="eventLimit-error" className="text-red-500 text-xs mt-1">
+                  {errors.eventLimit}
                 </p>
               )}
             </div>

@@ -372,7 +372,7 @@ export default function ProfileEditModal({
                 htmlFor="graduationDate"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Graduation Date <span className="text-red-500">*</span>
+                Graduation Year <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -433,6 +433,7 @@ export default function ProfileEditModal({
                   <option value="current">Current</option>
                   <option value="pledge">Pledge</option>
                   <option value="alumni">Alumni</option>
+                  <option value="inducted">Inducted</option>
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"

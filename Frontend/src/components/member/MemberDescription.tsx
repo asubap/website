@@ -231,7 +231,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
 
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-6">
           <div>
-            <span className="font-bold">Graduating:</span>{" "}
+            <span className="font-bold">Graduating Year:</span>{" "}
             {profileData.graduationDate}
           </div>
           <div>
