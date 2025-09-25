@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Bell } from "lucide-react";
 import { supabase } from "../../context/auth/supabaseClient";
 import { MemberDetail, Announcement } from "../../types";
@@ -81,6 +81,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
   const [allAnnouncementsData, setAllAnnouncementsData] = useState<
     Announcement[]
   >([]);
+  const hasFetchedAnnouncements = useRef(false);
 
   const calculateUnreadCount = useCallback(() => {
     const readIds = new Set(getReadAnnouncementIdsFromStorage());
@@ -129,7 +130,10 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
       }
     };
 
-    fetchAnnouncementsForBadgeAndModal();
+    if (!hasFetchedAnnouncements.current) {
+      fetchAnnouncementsForBadgeAndModal();
+      hasFetchedAnnouncements.current = true;
+    }
   }, []);
 
   useEffect(() => {

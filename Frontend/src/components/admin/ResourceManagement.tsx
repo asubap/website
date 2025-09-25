@@ -120,6 +120,7 @@ const ResourceManagement: React.FC = () => {
   const [showDeleteResourceModal, setShowDeleteResourceModal] = useState(false);
   const [resourceToDelete, setResourceToDelete] = useState<{ categoryId: string; resourceId: string; resource: Resource } | null>(null);
   const [isAddingResource, setIsAddingResource] = useState(false);
+  const hasFetchedResources = useRef(false);
 
   const fetchResources = useCallback(async () => {
     if (authLoading) {
@@ -168,7 +169,10 @@ const ResourceManagement: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading) {
-      fetchResources();
+      if (!hasFetchedResources.current) {
+        fetchResources();
+        hasFetchedResources.current = true;
+      }
     }
   }, [authLoading, fetchResources]);
 

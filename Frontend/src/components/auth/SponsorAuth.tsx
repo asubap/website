@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../context/auth/supabaseClient";
 import { useAuth } from "../../context/auth/authProvider";
 import { Eye, EyeOff } from "lucide-react";
@@ -9,6 +9,8 @@ const SponsorAuth = () => {
   const [sponsors, setSponsors] = useState<string[]>([]);
   const { setSession, setRole } = useAuth();
   const [showPasscode, setShowPasscode] = useState(false);
+
+  const hasFetchedSponsors = useRef(false);
 
   useEffect(() => {
     const fetchSponsors = async () => {
@@ -31,7 +33,10 @@ const SponsorAuth = () => {
         console.error("Error fetching sponsors:", error);
       }
     };
-    fetchSponsors();
+    if (!hasFetchedSponsors.current) {
+      fetchSponsors();
+      hasFetchedSponsors.current = true;
+    }
   }, []);
 
   // Get base URL for redirect

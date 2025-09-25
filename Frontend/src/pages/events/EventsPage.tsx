@@ -47,6 +47,8 @@ const EventsPage: React.FC = () => {
   // Add search state
   const [searchQuery, setSearchQuery] = useState("");
 
+  const hasFetchedEvents = useRef(false);
+
   // Add event handling functions
   const handleEventCreated = () => {
     window.location.reload();
@@ -204,7 +206,10 @@ const EventsPage: React.FC = () => {
       }
     };
 
-    fetchEvents();
+    if (!hasFetchedEvents.current) {
+      fetchEvents();
+      hasFetchedEvents.current = true;
+    }
   }, [session]);
 
   // Effect 2: Handle highlighting when location state changes or loading finishes

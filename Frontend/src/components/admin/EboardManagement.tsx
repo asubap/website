@@ -51,6 +51,9 @@ const EboardManagement: React.FC = () => {
   const [showConfirmEboardClose, setShowConfirmEboardClose] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
+  
+  const hasFetchedResources = useRef(false);
+  const hasFetchedMembers = useRef(false);
 
 
   const fetchResources = useCallback(async () => {
@@ -102,8 +105,9 @@ const EboardManagement: React.FC = () => {
   }, [session, authLoading]);
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && !hasFetchedResources.current) {
       fetchResources();
+      hasFetchedResources.current = true;
     }
   }, [authLoading, fetchResources]);
 
@@ -323,7 +327,8 @@ const EboardManagement: React.FC = () => {
   }, [session]);
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && !hasFetchedMembers.current) {
+      hasFetchedMembers.current = true;
       fetchMembers();
     }
   }, [authLoading, fetchMembers]);

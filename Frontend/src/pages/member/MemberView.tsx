@@ -1,5 +1,5 @@
 import Navbar from "../../components/layout/Navbar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
 import { supabase } from "../../context/auth/supabaseClient";
@@ -21,6 +21,8 @@ const MemberView = () => {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const hasFetchedMember = useRef(false);
 
   const [userDetails, setUserDetails] = useState<{
     id: string;
@@ -103,7 +105,10 @@ const MemberView = () => {
       }
     };
 
-    fetchMembers();
+    if (!hasFetchedMember.current) {
+      fetchMembers();
+      hasFetchedMember.current = true;
+    }
   }, []);
 
   return (

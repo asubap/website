@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import NetworkSearch from "../../components/network/NetworkSearch";
 import Fuse from "fuse.js";
@@ -172,6 +172,9 @@ const NetworkingPage = () => {
   const [membersError, setMembersError] = useState<string | null>(null);
   const [sponsorsError, setSponsorsError] = useState<string | null>(null);
 
+  const hasFetchedMembers = useRef(false);
+  const hasFetchedSponsors = useRef(false);
+
   // Combine members and sponsors for unified search and filtering
   const networkEntities = useMemo(
     () => [...members, ...allSponsors],
@@ -283,7 +286,10 @@ const NetworkingPage = () => {
       }
     };
 
-    fetchMembers();
+    if (!hasFetchedMembers.current) {
+      fetchMembers();
+      hasFetchedMembers.current = true;
+    }
   }, [session]);
 
   useEffect(() => {
@@ -326,8 +332,9 @@ const NetworkingPage = () => {
       }
     };
 
-    if (session?.access_token) {
+    if (session?.access_token && !hasFetchedSponsors.current) {
       fetchSponsors();
+      hasFetchedSponsors.current = true;
     }
   }, [session]);
 

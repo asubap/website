@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
@@ -18,6 +18,7 @@ const EboardFacultyPage: React.FC = () => {
   const { session, role } = useAuth();
   const { showToast } = useToast();
   const [eboardEntries, setEboardEntries] = useState<EboardFacultyEntry[]>([]);
+  const hasFetchedEboard = useRef(false);
 
   // Fetch e-board members from /eboard
   useEffect(() => {
@@ -62,7 +63,10 @@ const EboardFacultyPage: React.FC = () => {
       }
     };
 
-    fetchEboard();
+    if (!hasFetchedEboard.current) {
+      fetchEboard();
+      hasFetchedEboard.current = true;
+    }
   }, []); // Empty dependency array means this runs once on mount
 
   return (

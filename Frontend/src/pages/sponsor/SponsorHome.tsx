@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import SponsorDescription from "../../components/sponsor/SponsorDescription";
@@ -63,6 +63,9 @@ const SponsorHome = () => {
     message: string;
     onConfirmDiscard: () => void;
   } | null>(null);
+
+  const hasFetchedSponsorData = useRef(false);
+  const hasFetchedResources = useRef(false);
 
   // Helper function to format dates properly
   const formatDate = (dateString: string | undefined) => {
@@ -175,13 +178,19 @@ const SponsorHome = () => {
 
   useEffect(() => {
     if (token) {
-      fetchSponsorData();
+      if (!hasFetchedSponsorData.current) {
+        fetchSponsorData();
+        hasFetchedSponsorData.current = true;
+      }
     }
   }, [token, fetchSponsorData]);
 
   useEffect(() => {
     if (token && sponsorData.name) {
-      fetchResources();
+      if (!hasFetchedResources.current) {
+        fetchResources();
+        hasFetchedResources.current = true;
+      }
     }
   }, [token, sponsorData.name, fetchResources]);
 

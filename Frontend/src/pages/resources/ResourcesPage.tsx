@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
@@ -50,6 +50,7 @@ const ResourcesPage: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set()
   );
+  const hasFetchedResources = useRef(false);
 
   useEffect(() => {
     // If the user is a sponsor, redirect them back to the previous page or /auth/Home
@@ -108,7 +109,10 @@ const ResourcesPage: React.FC = () => {
       }
     };
 
-    fetchResources();
+    if (!hasFetchedResources.current) {
+      fetchResources();
+      hasFetchedResources.current = true;
+    }
   }, [session]);
 
   // Fuzzy search logic (same as admin page)

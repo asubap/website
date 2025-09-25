@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Event } from "../../types";
 import { supabase } from "../../context/auth/supabaseClient";
 import Navbar from "../../components/layout/Navbar";
@@ -13,6 +13,8 @@ const ViewEvent = () => {
   const [role] = useState<string[]>([]);
 
   const navLinks = [{ name: "Event", href: "#" }];
+
+  const hasFetchedEvent = useRef(false);
 
   const navigate = useNavigate();
 
@@ -47,7 +49,10 @@ const ViewEvent = () => {
       }
     };
 
-    fetchEvent();
+    if (!hasFetchedEvent.current) {
+      fetchEvent();
+      hasFetchedEvent.current = true;
+    }
   }, [eventId]); // Re-run if eventId changes
 
   const handleRoleClick = (selectedRole: string) => {

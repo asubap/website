@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
@@ -32,6 +32,7 @@ export default function SponsorsPage() {
   const [goldSponsors, setGoldSponsors] = useState<Sponsor[]>([]);
   const [silverSponsors, setSilverSponsors] = useState<Sponsor[]>([]);
   const [bronzeSponsors, setBronzeSponsors] = useState<Sponsor[]>([]);
+  const hasFetchedSponsors = useRef(false);
 
   // Effect 1: Fetch sponsors on component mount
   useEffect(() => {
@@ -60,7 +61,10 @@ export default function SponsorsPage() {
       }
     };
 
-    fetchSponsorsData();
+    if (!hasFetchedSponsors.current) {
+      fetchSponsorsData();
+      hasFetchedSponsors.current = true;
+    }
   }, []); // Empty dependency array: runs only once when the component mounts
 
   // Effect 2: Sort sponsors whenever the 'sponsors' state changes

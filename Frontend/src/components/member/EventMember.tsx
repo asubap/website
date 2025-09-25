@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import { EventCard } from "../event/EventCard";
 import { Event } from "../../types";
@@ -15,6 +15,7 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const { session } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  const hasFetchedEvents = useRef(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -44,7 +45,10 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
       }
     };
 
-    fetchEvents();
+    if (!hasFetchedEvents.current) {
+      fetchEvents();
+      hasFetchedEvents.current = true;
+    }
   }, [session, BACKEND_URL]);
 
   // Split events into in-session, upcoming, and past

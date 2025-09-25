@@ -20,16 +20,21 @@ const SponsorMultiSelect: React.FC<SponsorMultiSelectProps> = ({
   const [hoveredSponsor, setHoveredSponsor] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const hasFetchedSponsors = useRef(false);
+
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/names`)
-      .then((res) => res.json())
-      .then((data) => {
-        const names = data.map(
-          (item: { company_name: string }) => item.company_name
-        );
-        setSponsors(names);
-        setFiltered(names);
+    if (!hasFetchedSponsors.current) {
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/sponsors/names`)
+        .then((res) => res.json())
+        .then((data) => {
+          const names = data.map(
+            (item: { company_name: string }) => item.company_name
+          );
+          setSponsors(names);
+          setFiltered(names);
       });
+      hasFetchedSponsors.current = true;
+    }
   }, []);
 
   useEffect(() => {

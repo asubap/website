@@ -104,6 +104,10 @@ const Admin = () => {
     }
   );
 
+  const hasFetchedAdmins = useRef(false);
+  const hasFetchedSponsors = useRef(false);
+  const hasFetchedAnnouncements = useRef(false);
+
   const showConfirmationDialog = (
     title: string,
     message: string,
@@ -216,9 +220,18 @@ const Admin = () => {
         });
     };
 
-    fetchAdmins();
-    fetchSponsors();
-    fetchAnnouncements();
+    if (!hasFetchedAdmins.current) {
+      fetchAdmins();
+      hasFetchedAdmins.current = true;
+    }
+    if (!hasFetchedSponsors.current) {
+      fetchSponsors();
+      hasFetchedSponsors.current = true;
+    }
+    if (!hasFetchedAnnouncements.current) {
+      fetchAnnouncements();
+      hasFetchedAnnouncements.current = true;
+    }
   }, [session]); // Add session as dependency
 
   const handleDelete = async (email: string) => {

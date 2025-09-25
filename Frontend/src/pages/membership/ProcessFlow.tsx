@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ProcessStep } from "../../components/ui/ProcessStep";
 import { ProcessArrow } from "../../components/ui/ProcessArrow";
 import Navbar from "../../components/layout/Navbar";
@@ -10,6 +10,7 @@ export const ProcessFlow = () => {
   const { session } = useAuth();
   const navLinks = getNavLinks(!!session);
   const [applyFormUrl, setApplyFormUrl] = useState("");
+  const hasFetchedApplyFormUrl = useRef(false);
 
   useEffect(() => {
     const fetchApplyFormUrl = async () => {
@@ -24,7 +25,10 @@ export const ProcessFlow = () => {
       }
     };
 
-    fetchApplyFormUrl();
+    if (!hasFetchedApplyFormUrl.current) {
+      fetchApplyFormUrl();
+      hasFetchedApplyFormUrl.current = true;
+    }
   }, []);
 
   const steps = [
