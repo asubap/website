@@ -29,6 +29,7 @@ interface FormErrors {
   hours?: string;
   hoursType?: string;
   checkInWindow?: number;
+  eventLimit?: string;
 }
 
 interface FormDataState {
@@ -41,6 +42,7 @@ interface FormDataState {
   hours: string;
   hoursType: string;
   checkInWindow: number;
+  eventLimit: string;
 }
 
 const EditEventModal = ({
@@ -60,6 +62,7 @@ const EditEventModal = ({
     hours: "",
     hoursType: "professional", // Default value
     checkInWindow: 15,
+    eventLimit: "100",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -89,6 +92,7 @@ const EditEventModal = ({
       hours: eventToEdit.event_hours?.toString() || "",
       hoursType: eventToEdit.event_hours_type || "professional",
       checkInWindow: eventToEdit.check_in_window || 15,
+      eventLimit: eventToEdit.event_limit?.toString() || "100",
     };
     initialStateRef.current = initialState;
 
@@ -198,6 +202,7 @@ const EditEventModal = ({
         time: formData.time || "",
         sponsors: formData.sponsors,
         check_in_window: formData.checkInWindow,
+        event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
       };
       if (formData.hours.trim()) eventDataToUpdate.event_hours = parseFloat(formData.hours);
       if (formData.hoursType) eventDataToUpdate.event_hours_type = formData.hoursType;
@@ -239,6 +244,7 @@ const EditEventModal = ({
         event_attending: eventToEdit.event_attending ?? [],
         event_rsvped: eventToEdit.event_rsvped ?? [],
         check_in_window: formData.checkInWindow,
+        event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
       };
 
       onEventUpdated(updatedEvent);
@@ -376,6 +382,30 @@ const EditEventModal = ({
               {errors.checkInWindow && (
                 <p id="checkInWindow-error" className="text-red-500 text-xs mt-1">
                   {errors.checkInWindow}
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="eventLimit" className="block text-sm font-medium text-gray-700 mb-1">Event Limit *</label>
+              <input
+                id="eventLimit"
+                name="eventLimit"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 15"
+                value={formData.eventLimit}
+                onChange={handleInputChange}
+                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
+                  errors.eventLimit ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                aria-invalid={!!errors.eventLimit}
+                aria-describedby={errors.eventLimit ? "eventLimit-error" : undefined}
+              />
+              {errors.eventLimit && (
+                <p id="eventLimit-error" className="text-red-500 text-xs mt-1">
+                  {errors.eventLimit}
                 </p>
               )}
             </div>

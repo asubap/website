@@ -7,9 +7,11 @@ interface EventRSVPProps {
   eventId: string;
   eventRSVPed: string[];
   eventName: string;
+  isRSVPFull: boolean;
+  onRSVPChange?: () => void; // Optional callback to inform parent of RSVP change
 }
 
-const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }) => {
+const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName, isRSVPFull, onRSVPChange }) => {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [localRSVPed, setLocalRSVPed] = useState<boolean>(eventRSVPed.includes(useAuth().session?.user?.id || ""));
@@ -47,6 +49,7 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }
         setStatus("idle");
         setLocalRSVPed(!localRSVPed);
         toast.success(data.message);
+        onRSVPChange?.();
       } else {
         setStatus("error");
         toast.error(data.error || `${localRSVPed ? "Un-RSVP" : "RSVP"} failed.`);
@@ -63,14 +66,16 @@ const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName }
     <div>
       <button
         onClick={() => setShowConfirmModal(true)}
-        className={`w-full sm:w-40 px-4 py-2 text-white rounded-md text-sm font-medium ${
-          status === "sending"
-            ? "bg-gray-400"
+          className={`w-full sm:w-40 px-4 py-2 rounded-md text-sm font-medium ${
+            status === "sending"
+            ? "bg-gray-400 text-gray-600 cursor-not-allowed"
             : status === "error"
-            ? "bg-red-600"
-            : "bg-[#AF272F] hover:bg-[#8f1f26]"
+            ? "bg-red-600 text-white"
+            : isRSVPFull && !localRSVPed
+            ? "bg-gray-400 text-gray-600 cursor-not-allowed"  // Gray out only if full and not RSVPed
+            : "bg-[#AF272F] text-white hover:bg-[#8f1f26]"  // Normal red for RSVP/Un-RSVP
         } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#AF272F]`}
-        disabled={status === "sending"}
+        disabled={status === "sending" || (isRSVPFull && !localRSVPed)}  // Allow un-RSVP if already RSVPed
       >
         {localRSVPed ? "Un-RSVP" : "RSVP"}
       </button>

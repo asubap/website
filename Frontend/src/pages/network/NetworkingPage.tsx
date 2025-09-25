@@ -82,11 +82,11 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
 
   // Map API rank to interface rank format
-  const memberRank = item.rank === "current" ? "Current" : 
+  const memberRank = item.rank === "inducted" ? "Inducted" : 
                      item.rank === "alumni" ? "Alumni" : 
                      item.rank === "pledge" ? "Pledge" :
-                     "Current"; // default to Current
-
+                     "Inducted"; // default to Current
+  
   return {
     id: item.id.toString(),
     type: "member",

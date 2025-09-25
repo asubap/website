@@ -72,11 +72,21 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isLoggedIn = !!session;
   const isAdmin = role === "e-board";
 
+  const handleRSVPChange = async () => {
+    try {
+      const [updatedEvent] = await fetchEventById(event.id);
+      setRSVPs(updatedEvent.rsvped_users || []);
+    } catch (error) {
+      console.error("Error refetching event after RSVP:", error);
+    }
+  };
+
   // Define highlight classes using Tailwind ring utility - focusing on color transition
   const highlightClasses = isHighlighted
     ? "ring-bapred" // Apply red ring color when highlighted
     : "ring-transparent"; // Use transparent ring color when not highlighted
 
+  const isRSVPFull = event.event_limit ? rsvps.length >= event.event_limit : false;
   // Update state when event prop changes
   useEffect(() => {
     setAttendees(event.attending_users || []);
@@ -351,6 +361,8 @@ export const EventCard: React.FC<EventCardProps> = ({
                 eventId={event.id} 
                 eventRSVPed={event.event_rsvped || []} 
                 eventName={event.event_name}
+                isRSVPFull={isRSVPFull}
+                onRSVPChange={handleRSVPChange}
               />
             </div>
           )}

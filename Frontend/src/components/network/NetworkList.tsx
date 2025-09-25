@@ -139,7 +139,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     <div className="flex items-center text-sm">
                       <GraduationCap className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="text-gray-700">
-                        Graduating: {entity.graduationDate || "Not Provided"}
+                        Graduating Year: {entity.graduationDate || "Not Provided"}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">

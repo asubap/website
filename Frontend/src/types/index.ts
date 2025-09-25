@@ -55,6 +55,7 @@ export type Event = {
   check_in_window?: number;
   rsvped_users?: { name: string; email: string }[];
   attending_users?: { name: string; email: string }[];
+  event_limit?: number;
 };
 
 export interface Sponsor {
