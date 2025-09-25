@@ -430,7 +430,7 @@ export default function ProfileEditModal({
                   className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
                 >
                   <option value="">Select Rank</option>
-                  <option value="current">Current</option>
+                  {/* <option value="current">Current</option> */}
                   <option value="pledge">Pledge</option>
                   <option value="alumni">Alumni</option>
                   <option value="inducted">Inducted</option>

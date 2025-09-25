@@ -62,10 +62,10 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
               {member.major}
             </p>
           )}
-          <p className="text-md text-gray-500 flex items-center justify-center sm:justify-start mt-1">
+          {/* <p className="text-md text-gray-500 flex items-center justify-center sm:justify-start mt-1">
             <User className="w-5 h-5 mr-2 text-gray-500" />
             {formatRoleName(member.role)}
-          </p>
+          </p> */}
         </div>
       </div>
 
