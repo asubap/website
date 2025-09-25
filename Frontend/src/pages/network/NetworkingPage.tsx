@@ -365,7 +365,7 @@ const NetworkingPage = () => {
         const majorMatch = !filters.major || entity.major === filters.major;
         // Filter by status: handle both rank-based statuses and member_status values
         const statusMatch = !filters.status || 
-          (filters.status === "Current" && entity.rank === "Current") ||
+          (filters.status === "Inducted" && entity.rank === "Inducted") ||
           (filters.status === "Alumni" && entity.rank === "Alumni") ||
           (filters.status === "Pledge" && entity.rank === "Pledge") ||
           (filters.status === "Looking for Internship" && entity.status === "Looking for Internship") ||
