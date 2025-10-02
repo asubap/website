@@ -316,6 +316,16 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     hideRSVP={true}
+                    onEdit={
+                      role === "e-board"
+                        ? () => handleEditEventClick(event)
+                        : undefined
+                    }
+                    onAnnounce={
+                      role === "e-board"
+                        ? () => handleAnnounceEvent(event)
+                        : undefined
+                    }
                     onDelete={
                       role === "e-board"
                         ? () => handleDeleteEventClick(event)
