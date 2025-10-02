@@ -28,7 +28,8 @@ interface FormErrors {
   time?: string;
   hours?: string;
   hoursType?: string;
-  checkInWindow?: number;
+  checkInWindow?: string;
+  checkInRadius?: string;
   eventLimit?: string;
 }
 
@@ -42,6 +43,7 @@ interface FormDataState {
   hours: string;
   hoursType: string;
   checkInWindow: number;
+  checkInRadius: number;
   eventLimit: string;
 }
 
@@ -62,6 +64,7 @@ const EditEventModal = ({
     hours: "",
     hoursType: "professional", // Default value
     checkInWindow: 15,
+    checkInRadius: 50,
     eventLimit: "100",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +95,7 @@ const EditEventModal = ({
       hours: eventToEdit.event_hours?.toString() || "",
       hoursType: eventToEdit.event_hours_type || "professional",
       checkInWindow: eventToEdit.check_in_window || 15,
+      checkInRadius: eventToEdit.check_in_radius || 50,
       eventLimit: eventToEdit.event_limit?.toString() || "100",
     };
     initialStateRef.current = initialState;
@@ -170,6 +174,9 @@ const EditEventModal = ({
     if (!formData.time) newErrors.time = "Time is required";
     if (!formData.hours.trim()) newErrors.hours = "Event hours are required";
     if (!formData.hoursType) newErrors.hoursType = "Hours type is required";
+    if (!formData.checkInWindow) newErrors.checkInWindow = "Check-in window is required";
+    if (!formData.checkInRadius) newErrors.checkInRadius = "Check-in radius is required";
+    if (!formData.eventLimit) newErrors.eventLimit = "Event limit is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -202,6 +209,7 @@ const EditEventModal = ({
         time: formData.time || "",
         sponsors: formData.sponsors,
         check_in_window: formData.checkInWindow,
+        check_in_radius: formData.checkInRadius,
         event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
       };
       if (formData.hours.trim()) eventDataToUpdate.event_hours = parseFloat(formData.hours);
@@ -244,6 +252,7 @@ const EditEventModal = ({
         event_attending: eventToEdit.event_attending ?? [],
         event_rsvped: eventToEdit.event_rsvped ?? [],
         check_in_window: formData.checkInWindow,
+        check_in_radius: formData.checkInRadius,
         event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
       };
 
@@ -382,6 +391,30 @@ const EditEventModal = ({
               {errors.checkInWindow && (
                 <p id="checkInWindow-error" className="text-red-500 text-xs mt-1">
                   {errors.checkInWindow}
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="checkInRadius" className="block text-sm font-medium text-gray-700 mb-1">Check-in Radius (meters) *</label>
+              <input
+                id="checkInRadius"
+                name="checkInRadius"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 15"
+                value={formData.checkInRadius}
+                onChange={handleInputChange}
+                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
+                  errors.checkInRadius ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                aria-invalid={!!errors.checkInRadius}
+                aria-describedby={errors.checkInRadius ? "checkInRadius-error" : undefined}
+              />
+              {errors.checkInRadius && (
+                <p id="checkInRadius-error" className="text-red-500 text-xs mt-1">
+                  {errors.checkInRadius}
                 </p>
               )}
             </div>

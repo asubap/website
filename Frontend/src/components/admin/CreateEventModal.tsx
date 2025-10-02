@@ -25,6 +25,7 @@ interface FormErrors {
   hours?: string;
   hoursType?: string;
   checkInWindow?: string;
+  checkInRadius?: string;
   eventLimit?: string;
   // No validation needed for sponsors or emailMembers currently
 }
@@ -44,6 +45,7 @@ const CreateEventModal = ({
   const [hours, setHours] = useState("");
   const [hoursType, setHoursType] = useState("professional");
   const [checkInWindow, setCheckInWindow] = useState(15);
+  const [checkInRadius, setCheckInRadius] = useState(50);
   const [eventLimit, setEventLimit] = useState(100);
   // const [emailMembers, setEmailMembers] = useState(false); // Keep if needed later, removed from UI
   const [isLoading, setIsLoading] = useState(false);
@@ -61,6 +63,7 @@ const CreateEventModal = ({
     hours,
     hoursType,
     checkInWindow,
+    checkInRadius,
     eventLimit,
   });
 
@@ -76,6 +79,7 @@ const CreateEventModal = ({
       hours,
       hoursType,
       checkInWindow,
+      checkInRadius,
       eventLimit,
     };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
@@ -116,7 +120,9 @@ const CreateEventModal = ({
     if (!hours.trim()) newErrors.hours = "Event hours are required";
     if (!hoursType) newErrors.hoursType = "Hours type is required";
     if (!checkInWindow) newErrors.checkInWindow = "Check-in window is required";
-    
+    if (!checkInRadius) newErrors.checkInRadius = "Check-in radius is required";
+    if (!eventLimit) newErrors.eventLimit = "Event limit is required";
+
     const parsedHours = parseFloat(hours);
 
     if (hours.trim() && (isNaN(parsedHours) || parsedHours <= 0))
@@ -124,6 +130,9 @@ const CreateEventModal = ({
 
     if (isNaN(checkInWindow) || checkInWindow <= 0)
       newErrors.checkInWindow = "Must be a positive number";
+
+    if (isNaN(checkInRadius) || checkInRadius <= 0)
+      newErrors.checkInRadius = "Must be a positive number";
 
     // --- Update errors state and return if invalid ---
     if (Object.keys(newErrors).length > 0) {
@@ -160,6 +169,7 @@ const CreateEventModal = ({
         event_hours_type: hoursType,
         sponsors_attending: sponsors,
         check_in_window: checkInWindow,
+        check_in_radius: checkInRadius,
         event_limit: eventLimit
       };
 
@@ -483,10 +493,41 @@ const CreateEventModal = ({
             </div>
             <div>
               <label
-                htmlFor="checkInWindow"
+                htmlFor="checkInRadius"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Event Limit (Number of People) *
+                Check-in Radius (meters) *
+              </label>
+              <input
+                id="checkInRadius"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 15"
+                value={checkInRadius}
+                onChange={(e) => {
+                  setCheckInRadius(Number(e.target.value));
+                  clearError("checkInRadius");
+                }}
+                className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${
+                  errors.checkInRadius ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                aria-invalid={!!errors.checkInRadius}
+                aria-describedby={errors.checkInRadius ? "checkInRadius-error" : undefined}
+              />
+              {errors.checkInRadius && (
+                <p id="checkInRadius-error" className="text-red-500 text-xs mt-1">
+                  {errors.checkInRadius}
+                </p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="eventLimit"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Event Limit (# of People) *
               </label>
               <input
                 id="eventLimit"
