@@ -181,9 +181,8 @@ export const EventCard: React.FC<EventCardProps> = ({
       }
 
       // Fetch the latest event data
-      const [updatedEvent] = await fetchEventById(event.id);
+      const updatedEvent = await fetchEventById(event.id);
       setAttendees(updatedEvent.attending_users || []);
-      showToast("Attendee removed successfully", "success");
     } catch (error) {
       console.error("Error removing attendee:", error);
       showToast("Failed to remove attendee", "error");
@@ -199,7 +198,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     }
   }, [showAddRSVPModal, showAddAttendeeModal, allMembers]);
 
-  // Add RSVP for all selected
+  // Add RSVP for all selected -> method needs to be changed
   const handleAddRSVP = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!session?.access_token || selectedMembers.length === 0) return;
@@ -236,7 +235,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     setIsAddingAttendee(true);
     try {
       for (const member of selectedMembers) {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/add-member-attending`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/add-member-attending`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -244,9 +243,22 @@ export const EventCard: React.FC<EventCardProps> = ({
           },
           body: JSON.stringify({ eventId: event.id, userEmail: member.email }),
         });
+
+        const text = await res.text();
+
+        let body: any = text;
+        try { body = JSON.parse(text); } catch { /* keep as text */ }
+        
+        if (!res.ok) {
+          throw new Error(body?.error || `Add attendee failed: ${res.status}`);
+        }
       }
+
+
       // Fetch the latest event data
-      const [updatedEvent] = await fetchEventById(event.id);
+      const result = await fetchEventById(event.id);
+      const updatedEvent = result;
+
       setAttendees(updatedEvent.attending_users || []);
       showToast("Attendee(s) added successfully", "success");
       setShowAddAttendeeModal(false);

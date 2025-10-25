@@ -57,11 +57,18 @@ const EmailList = ({
     setEmailToEdit(email);
   };
 
+  const userTypeDisplayMap: Record<string, string> = {
+    admin: "Admin",
+    sponsor: "Sponsor",
+    member: "Member",
+    "general-member": "Member", // if you use this key elsewhere
+  };
+
   const handleConfirmDelete = () => {
     if (!emailToDelete) return;
     onDelete(emailToDelete);
     showToast(
-      `${userType === "admin" ? "Admin" : "Sponsor"} removed successfully`,
+      `${userTypeDisplayMap[userType] || "User"} removed successfully`,
       "success"
     );
     setEmailToDelete(null);
@@ -101,7 +108,7 @@ const EmailList = ({
           >
             <span className="mr-1">+</span>
             <span className="hidden md:inline mr-1">New</span>
-            {userType === 'admin' ? 'Admin' : 'Member'}
+            {userTypeDisplayMap[userType] || "Member"}
           </button>
         )}
       </div>
