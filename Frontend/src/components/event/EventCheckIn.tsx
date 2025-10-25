@@ -83,8 +83,9 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
       showToast("Already checked in.", "error");
       return;
     }
+
     console.log("before rsvped");
-    if (!(eventRSVPed || []).includes(session.user.id)) {
+    if (!(eventRSVPed || []).includes(session.user.id || "")) {
       setStatus("error");
       showToast("Cannot check in, not RSVP'd.", "error");
       return;
