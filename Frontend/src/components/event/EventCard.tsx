@@ -74,7 +74,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   const handleRSVPChange = async () => {
     try {
-      const [updatedEvent] = await fetchEventById(event.id);
+      const updatedEvent = await fetchEventById(event.id);
       setRSVPs(updatedEvent.rsvped_users || []);
     } catch (error) {
       console.error("Error refetching event after RSVP:", error);
@@ -150,7 +150,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
       if (!response.ok) throw new Error("Failed to remove RSVP");
       // Fetch the latest event data
-      const [updatedEvent] = await fetchEventById(event.id);
+      const updatedEvent = await fetchEventById(event.id);
       setRSVPs(updatedEvent.rsvped_users || []);
       showToast("RSVP removed successfully", "success");
     } catch (error) {
@@ -204,8 +204,9 @@ export const EventCard: React.FC<EventCardProps> = ({
     if (!session?.access_token || selectedMembers.length === 0) return;
     setIsAddingRSVP(true);
     try {
+      const errors: string[] = [];
       for (const member of selectedMembers) {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/rsvp/${event.id}`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events/rsvp/${event.id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -213,16 +214,27 @@ export const EventCard: React.FC<EventCardProps> = ({
           },
           body: JSON.stringify({ user_email: member.email }),
         });
+
+        if (!res.ok) {
+          const data = await res.json();
+          errors.push(`${member.name || member.email}: ${data.error || 'Failed to RSVP'}`);
+        }
       }
+
       // Fetch the latest event data
-      const [updatedEvent] = await fetchEventById(event.id);
+      const updatedEvent = await fetchEventById(event.id);
       setRSVPs(updatedEvent.rsvped_users || []);
-      showToast("RSVP(s) added successfully", "success");
-      setShowAddRSVPModal(false);
-      setSelectedMembers([]);
+
+      if (errors.length > 0) {
+        showToast(`${errors.join(', ')}`, "error");
+      } else {
+        showToast("RSVP(s) added successfully", "success");
+        setShowAddRSVPModal(false);
+        setSelectedMembers([]);
+      }
     } catch (error) {
       console.error("Error adding RSVP(s):", error);
-      showToast("Failed to add RSVP(s)", "error");
+      showToast("Failed to add RSVP(s)", error instanceof Error ? "error" : "error");
     } finally {
       setIsAddingRSVP(false);
     }
