@@ -54,8 +54,8 @@ export type Event = {
   sponsors_attending?: string[];
   check_in_window?: number;
   check_in_radius?: number;
-  rsvped_users?: { name: string; email: string }[];
-  attending_users?: { name: string; email: string }[];
+  rsvped_users?: { name: string; email?: string; user_email?: string }[];
+  attending_users?: { name: string; email?: string; user_email?: string }[];
   event_limit?: number;
 };
 

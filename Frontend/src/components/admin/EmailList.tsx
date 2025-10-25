@@ -51,7 +51,7 @@ const EmailList = ({
     if (member?.role === "e-board") return;
 
     setIsLoading(true);
-    await onEdit?.(email);
+    onEdit?.(email);
     setIsLoading(false);
 
     setEmailToEdit(email);
@@ -75,10 +75,13 @@ const EmailList = ({
     setEmailToEdit(null);
   };
 
-  // Filter emails based on search query
-  const filteredEmails = emails.filter(({ email, name }) =>
-    (name || email).toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter emails based on search query - also filter out invalid entries
+  const filteredEmails = emails
+    .filter(item => item && item.email) // Only include items with valid email
+    .filter(({ email, name }) => {
+      const searchText = (name || email || '').toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
 
   return (
     <div className="w-full flex flex-col">

@@ -10,8 +10,8 @@ import Modal from "../ui/Modal";
 import SearchInput from "../common/SearchInput";
 
 interface EventWithUsers extends EventType {
-  attending_users?: { name: string; email: string }[];
-  rsvped_users?: { name: string; email: string }[];
+  attending_users?: { name: string; email?: string; user_email?: string }[];
+  rsvped_users?: { name: string; email?: string; user_email?: string }[];
 }
 
 interface EventCardProps {
@@ -54,8 +54,8 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const { session, role, loading } = useAuth();
   const { showToast } = useToast();
-  const [attendees, setAttendees] = useState<{name: string, email: string}[]>(event.attending_users || []);
-  const [rsvps, setRSVPs] = useState<{name: string, email: string}[]>(event.rsvped_users || []);
+  const [attendees, setAttendees] = useState<{name: string, email?: string, user_email?: string}[]>(event.attending_users || []);
+  const [rsvps, setRSVPs] = useState<{name: string, email?: string, user_email?: string}[]>(event.rsvped_users || []);
   const [selectedEntityMenu, setSelectedEntityMenu] = useState<"attendees" | "rsvps" | null>(null);
   const [showAddRSVPModal, setShowAddRSVPModal] = useState(false);
   const [showAddAttendeeModal, setShowAddAttendeeModal] = useState(false);
@@ -89,8 +89,10 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isRSVPFull = event.event_limit ? rsvps.length >= event.event_limit : false;
   // Update state when event prop changes
   useEffect(() => {
-    setAttendees(event.attending_users || []);
-    setRSVPs(event.rsvped_users || []);
+    const attending = event.attending_users || [];
+    const rsvped = event.rsvped_users || [];
+    setAttendees(attending);
+    setRSVPs(rsvped);
   }, [event]);
 
   // Fetch all members when either modal opens
@@ -428,7 +430,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                 </div>
                 {rsvps.length > 0 ? (
                   <EmailList
-                    emails={rsvps.map(rsvp => ({ email: rsvp.email, name: rsvp.name }))}
+                    emails={rsvps
+                      .filter((rsvp): rsvp is {name: string, email: string, user_email: string} =>
+                        rsvp && !!(rsvp.email || rsvp.user_email)
+                      )
+                      .map(rsvp => ({
+                        email: (rsvp.email || rsvp.user_email)!,
+                        name: rsvp.name
+                      }))}
                     userType="admin"
                     clickable={false}
                     onDelete={handleDeleteRSVP}
@@ -454,7 +463,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                 </div>
                 {attendees.length > 0 ? (
                   <EmailList
-                    emails={attendees.map(attendee => ({ email: attendee.email, name: attendee.name }))}
+                    emails={attendees
+                      .filter((attendee): attendee is {name: string, email: string, user_email: string} =>
+                        attendee && !!(attendee.email || attendee.user_email)
+                      )
+                      .map(attendee => ({
+                        email: (attendee.email || attendee.user_email)!,
+                        name: attendee.name
+                      }))}
                     userType="member"
                     clickable={false}
                     onDelete={handleDeleteAttendee}
