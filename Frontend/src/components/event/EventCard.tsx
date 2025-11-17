@@ -327,11 +327,11 @@ export const EventCard: React.FC<EventCardProps> = ({
         </div>
 
         <div className="space-y-2">
-          {event.event_hours && event.event_hours_type && (
+          {(event.event_hours !== undefined && event.event_hours !== null) && event.event_hours_type && (
             <div>
               <span className="font-semibold text-gray-700">Hours: </span>
               <span className="text-gray-600">
-                {event.event_hours} {event.event_hours_type}
+                {event.event_hours === 0 ? '0' : `${event.event_hours} ${event.event_hours_type}`}
               </span>
             </div>
           )}

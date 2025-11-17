@@ -17,7 +17,7 @@ export const isEventInSession = (
   eventTime: string,
   eventHours: number
 ) => {
-  if (!eventDate || !eventTime || !eventHours) return false;
+  if (!eventDate || !eventTime || eventHours === undefined || eventHours === null) return false;
   const start = new Date(`${eventDate}T${eventTime}`);
   const end = new Date(start.getTime() + eventHours * 60 * 60 * 1000);
   const now = new Date();
