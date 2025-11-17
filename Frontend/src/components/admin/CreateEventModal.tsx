@@ -125,7 +125,7 @@ const CreateEventModal = ({
 
     const parsedHours = parseFloat(hours);
 
-    if (hours.trim() && (isNaN(parsedHours) || parsedHours <= 0))
+    if (hours.trim() && (isNaN(parsedHours) || parsedHours < 0))
       newErrors.hours = "Must be a positive number";
 
     if (isNaN(checkInWindow) || checkInWindow <= 0)
@@ -404,7 +404,7 @@ const CreateEventModal = ({
               <input
                 id="hours"
                 type="number"
-                min="0.5"
+                min="0"
                 step="0.5"
                 placeholder="e.g., 2"
                 value={hours}
