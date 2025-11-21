@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import Modal from "../ui/Modal";
 import { toast } from "react-hot-toast";
@@ -14,11 +14,15 @@ interface EventRSVPProps {
 const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName, isRSVPFull, onRSVPChange }) => {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [localRSVPed, setLocalRSVPed] = useState<boolean>(eventRSVPed.includes(useAuth().session?.user?.id || ""));
+  const [localRSVPed, setLocalRSVPed] = useState<boolean>(false);
   const { session } = useAuth();
 
-  // Keep localRSVPed in sync if eventRSVPed changes (e.g. after parent refresh)
-  // (Optional: can add useEffect if you want to sync with parent updates)
+  // Keep localRSVPed in sync when session loads or eventRSVPed changes
+  useEffect(() => {
+    if (session?.user?.id) {
+      setLocalRSVPed(eventRSVPed.includes(session.user.id));
+    }
+  }, [session?.user?.id, eventRSVPed]);
 
   const handleRSVPAction = async () => {
     if (!session?.access_token) {
