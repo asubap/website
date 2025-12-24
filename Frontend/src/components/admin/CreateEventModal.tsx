@@ -47,6 +47,7 @@ const CreateEventModal = ({
   const [checkInWindow, setCheckInWindow] = useState(15);
   const [checkInRadius, setCheckInRadius] = useState(50);
   const [eventLimit, setEventLimit] = useState(100);
+  const [isHidden, setIsHidden] = useState(false);
   // const [emailMembers, setEmailMembers] = useState(false); // Keep if needed later, removed from UI
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -65,6 +66,7 @@ const CreateEventModal = ({
     checkInWindow,
     checkInRadius,
     eventLimit,
+    isHidden,
   });
 
   // Function to check if form data has changed
@@ -81,6 +83,7 @@ const CreateEventModal = ({
       checkInWindow,
       checkInRadius,
       eventLimit,
+      isHidden,
     };
     return JSON.stringify(current) !== JSON.stringify(initialStateRef.current);
   };
@@ -170,7 +173,8 @@ const CreateEventModal = ({
         sponsors_attending: sponsors,
         check_in_window: checkInWindow,
         check_in_radius: checkInRadius,
-        event_limit: eventLimit
+        event_limit: eventLimit,
+        is_hidden: isHidden,
       };
 
       const response = await fetch(
@@ -553,6 +557,18 @@ const CreateEventModal = ({
                   {errors.eventLimit}
                 </p>
               )}
+            </div>
+            <div className="flex items-center mt-6">
+              <input
+                id="isHidden"
+                type="checkbox"
+                checked={isHidden}
+                onChange={(e) => setIsHidden(e.target.checked)}
+                className="h-4 w-4 text-bapred focus:ring-bapred border-gray-300 rounded"
+              />
+              <label htmlFor="isHidden" className="ml-2 block text-sm text-gray-900">
+                Hide event from members (Admin-only bucket)
+              </label>
             </div>
           </div>
 

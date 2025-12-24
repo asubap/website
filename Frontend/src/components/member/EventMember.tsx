@@ -51,9 +51,9 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const inSessionEvents = events.filter(event => isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
+  const inSessionEvents = events.filter(event => !event.is_hidden && isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
   const upcomingEvents = events
-    .filter(event => !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= today)
+    .filter(event => !event.is_hidden && !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= today)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
 
   return (

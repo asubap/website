@@ -47,6 +47,9 @@ const EventsPage: React.FC = () => {
   // Add search state
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Add hidden events toggle state
+  const [showHidden, setShowHidden] = useState(false);
+
   // Add event handling functions
   const handleEventCreated = () => {
     window.location.reload();
@@ -233,8 +236,20 @@ const EventsPage: React.FC = () => {
   const getEventDateTime = (event: Event) =>
     new Date(`${event.event_date}T${event.event_time || "00:00:00"}`);
 
-  // Filter events based on search query
+  const isAdmin = role === "e-board";
+
+  // Filter events based on search query AND hidden status
   const filteredEvents = allEvents.filter((event) => {
+    // 1. Filter by hidden status (Exclusive Toggle)
+    if (showHidden) {
+      // If toggle is ON, show ONLY hidden events (and verify admin status just in case)
+      if (!event.is_hidden || !isAdmin) return false;
+    } else {
+      // If toggle is OFF, show ONLY standard events
+      if (event.is_hidden) return false;
+    }
+
+    // 2. Filter by search query
     const query = searchQuery.toLowerCase();
     return (
       event.event_name.toLowerCase().includes(query) ||
@@ -292,13 +307,40 @@ const EventsPage: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-outfit font-bold text-bapred mb-6 text-center">
             Events
           </h1>
-          {/* Search Bar */}
-          <SearchInput
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search events by name, location, or description..."
-            containerClassName="mb-8"
-          />
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+            <div className="flex-grow">
+              <SearchInput
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search events by name, location, or description..."
+              />
+            </div>
+            
+            {isAdmin && (
+              <div className="flex items-center bg-gray-100 p-1 rounded-lg self-end md:self-auto">
+                <button
+                  onClick={() => setShowHidden(false)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    !showHidden
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  Standard
+                </button>
+                <button
+                  onClick={() => setShowHidden(true)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    showHidden
+                      ? 'bg-white text-bapred shadow-sm'
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  Hidden
+                </button>
+              </div>
+            )}
+          </div>
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
             <div className="space-y-4">

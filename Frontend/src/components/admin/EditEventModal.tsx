@@ -45,6 +45,7 @@ interface FormDataState {
   checkInWindow: number;
   checkInRadius: number;
   eventLimit: string;
+  isHidden: boolean;
 }
 
 const EditEventModal = ({
@@ -66,6 +67,7 @@ const EditEventModal = ({
     checkInWindow: 15,
     checkInRadius: 50,
     eventLimit: "100",
+    isHidden: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -97,6 +99,7 @@ const EditEventModal = ({
       checkInWindow: eventToEdit.check_in_window || 15,
       checkInRadius: eventToEdit.check_in_radius || 50,
       eventLimit: eventToEdit.event_limit?.toString() || "100",
+      isHidden: eventToEdit.is_hidden || false,
     };
     initialStateRef.current = initialState;
 
@@ -211,6 +214,7 @@ const EditEventModal = ({
         check_in_window: formData.checkInWindow,
         check_in_radius: formData.checkInRadius,
         event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
+        is_hidden: formData.isHidden,
       };
       if (formData.hours.trim()) eventDataToUpdate.event_hours = parseFloat(formData.hours);
       if (formData.hoursType) eventDataToUpdate.event_hours_type = formData.hoursType;
@@ -254,6 +258,7 @@ const EditEventModal = ({
         check_in_window: formData.checkInWindow,
         check_in_radius: formData.checkInRadius,
         event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
+        is_hidden: formData.isHidden,
       };
 
       onEventUpdated(updatedEvent);
@@ -443,6 +448,18 @@ const EditEventModal = ({
                 </p>
               )}
             </div>
+          </div>
+          <div className="flex items-center mt-4 mb-2">
+            <input
+              id="isHidden"
+              type="checkbox"
+              checked={formData.isHidden}
+              onChange={(e) => setFormData(prev => ({ ...prev, isHidden: e.target.checked }))}
+              className="h-4 w-4 text-bapred focus:ring-bapred border-gray-300 rounded"
+            />
+            <label htmlFor="isHidden" className="ml-2 block text-sm text-gray-900">
+              Hide event from members (Admin-only bucket)
+            </label>
           </div>
 
           {/* Action Buttons */}

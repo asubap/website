@@ -57,6 +57,7 @@ export type Event = {
   rsvped_users?: { name: string; email?: string; user_email?: string }[];
   attending_users?: { name: string; email?: string; user_email?: string }[];
   event_limit?: number;
+  is_hidden?: boolean;
 };
 
 export interface Sponsor {
