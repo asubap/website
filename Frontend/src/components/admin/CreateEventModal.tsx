@@ -452,6 +452,7 @@ const CreateEventModal = ({
                 <option value="social">Social</option>
                 <option value="service">Service</option>
                 <option value="development">Development</option>
+                <option value="n/a">Not Applicable</option>
                 {/* Add other valid types from backend if needed */}
               </select>
               {errors.hoursType && (

@@ -17,7 +17,7 @@ import { getNavLinks } from "../../components/nav/NavLink";
 import SearchInput from "../../components/common/SearchInput";
 
 const EventsPage: React.FC = () => {
-  const { session, role } = useAuth();
+  const { session, role, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,7 +205,7 @@ const EventsPage: React.FC = () => {
     };
 
     fetchEvents();
-  }, [session]);
+  }, [session, authLoading]);
 
   // Effect 2: Handle highlighting when location state changes or loading finishes
   useEffect(() => {

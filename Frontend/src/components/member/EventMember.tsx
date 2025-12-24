@@ -16,39 +16,40 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
   const { session } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
+  const fetchEvents = async () => {
+    try {
+      if (!session?.access_token) return;
+
+      const res = await fetch(`${BACKEND_URL}/events`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      // Sort events by date
+      const sortedEvents = data.sort(
+        (a: Event, b: Event) =>
+          new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+      );
+
+      setEvents(sortedEvents);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        if (!session?.access_token) return;
-
-        const res = await fetch(`${BACKEND_URL}/events`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          credentials: "include",
-        });
-
-        const data = await res.json();
-
-        // Sort events by date
-        const sortedEvents = data.sort(
-          (a: Event, b: Event) =>
-            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
-        );
-
-        setEvents(sortedEvents);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      }
-    };
-
     fetchEvents();
   }, [session, BACKEND_URL]);
 
   // Split events into in-session, upcoming, and past
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const inSessionEvents = events.filter(event => isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
   const upcomingEvents = events
@@ -63,7 +64,7 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
       <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[600px] sm:max-h-[400px] space-y-4">
         {inSessionEvents.length > 0 ? (
           inSessionEvents.map((event) => (
-            <EventCard key={event.id} event={event} isPast={false} hideRSVP={true} />
+            <EventCard key={event.id} event={event} isPast={false} hideRSVP={true} onCheckInSuccess={fetchEvents} />
           ))
         ) : (
           <p className="text-gray-500">No events in session</p>

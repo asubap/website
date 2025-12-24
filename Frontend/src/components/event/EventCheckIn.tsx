@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import { useToast } from "../../context/toast/ToastContext";
 
@@ -10,6 +10,7 @@ interface EventCheckInProps {
   eventTime: string;
   eventHours: number;
   checkInWindowMinutes?: number;
+  onCheckInSuccess?: () => void;
 }
 
 export const isEventInSession = (
@@ -32,6 +33,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
   eventTime,
   eventHours,
   checkInWindowMinutes = 15,
+  onCheckInSuccess,
 }) => {
   const [status, setStatus] = useState<
     "idle" | "locating" | "sending" | "success" | "error"
@@ -125,6 +127,9 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
           if (res.ok) {
             setStatus("success");
             showToast(data.message, "success");
+            if (onCheckInSuccess) {
+              onCheckInSuccess();
+            }
           } else {
             setStatus("error");
             showToast(data.error || "Check-in failed.", "error");

@@ -367,6 +367,7 @@ const EditEventModal = ({
                 <option value="social">Social</option>
                 <option value="service">Service</option>
                 <option value="development">Development</option>
+                <option value="n/a">Not Applicable</option>
               </select>
               {errors.hoursType && <p id="hoursType-error" className="text-red-500 text-xs mt-1">{errors.hoursType}</p>}
             </div>

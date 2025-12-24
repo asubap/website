@@ -23,6 +23,7 @@ interface EventCardProps {
   onEdit?: () => void;
   onAnnounce?: () => void;
   onDelete?: () => void;
+  onCheckInSuccess?: () => void;
 }
 
 export const formatDateTime = (date?: string, time?: string | null) => {
@@ -51,6 +52,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   onEdit,
   onAnnounce,
   onDelete,
+  onCheckInSuccess,
 }) => {
   const { session, role, loading } = useAuth();
   const { showToast } = useToast();
@@ -402,6 +404,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 eventTime={event.event_time || '00:00:00'}
                 eventHours={event.event_hours || 0}
                 checkInWindowMinutes={event.check_in_window}
+                onCheckInSuccess={onCheckInSuccess}
               />
             </div>
           )}
