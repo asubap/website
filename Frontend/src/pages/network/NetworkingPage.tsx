@@ -144,7 +144,7 @@ const NetworkingPage = () => {
 
   const availableStatuses = useMemo(() => {
     // Fixed status options for rank-based filtering
-    const rankStatuses = ["Current", "Pledge", "Alumni"];
+    const rankStatuses = ["Pledge", "Alumni"];
     
     // Dynamic member status options from actual data
     const memberStatuses = members
