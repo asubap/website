@@ -2,8 +2,10 @@ import { Sponsor } from "../../types";
 import Modal from "../ui/Modal";
 import { Info, Link as LinkIcon, Mail, Check, Eye } from 'lucide-react';
 import { useToast } from "../../context/toast/ToastContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ResourcePreviewModal from "../ui/ResourcePreviewModal";
+import { useAuth } from "../../context/auth/authProvider";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 interface SponsorProfileModalProps {
   sponsor: Sponsor;
@@ -19,6 +21,70 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
   const [previewResource, setPreviewResource] = useState<{ name: string; signed_url: string; mime_type?: string } | null>(null);
   const { showToast } = useToast();
+  const { session } = useAuth();
+  const [fullSponsor, setFullSponsor] = useState<Sponsor | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch full sponsor details when modal opens
+  useEffect(() => {
+    const fetchFullDetails = async () => {
+      // If we already have resources or emails, skip
+      if (sponsor.resources && sponsor.resources.length > 0) {
+        setFullSponsor(sponsor);
+        return;
+      }
+      if (sponsor.emails && sponsor.emails.length > 0) {
+        setFullSponsor(sponsor);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const token = session?.access_token;
+        if (!token || !sponsor.id) {
+          setFullSponsor(sponsor);
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/sponsors/${sponsor.id}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          // Merge summary data with full data
+          const fullData: Sponsor = {
+            ...sponsor,
+            resources: data.resources?.map((r: any) => ({
+              label: r.label || "Resource",
+              url: r.url || ""
+            })) || [],
+            emails: data.emails || data.email_list || [],
+          };
+          setFullSponsor(fullData);
+        } else {
+          setFullSponsor(sponsor);
+        }
+      } catch (error) {
+        console.error("Error fetching full sponsor details:", error);
+        setFullSponsor(sponsor);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchFullDetails();
+    }
+  }, [isOpen, sponsor, session]);
+
+  const displaySponsor = fullSponsor || sponsor;
 
   const handleCopyEmail = (email: string) => {
     navigator.clipboard.writeText(email);
@@ -39,25 +105,29 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
     setPreviewResource(null);
   };
 
-  const profileContent = (
+  const profileContent = isLoading ? (
+    <div className="p-8 flex justify-center items-center">
+      <LoadingSpinner text="Loading sponsor details..." size="lg" />
+    </div>
+  ) : (
     <div className="p-2 space-y-6">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="w-32 h-32 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border">
-          {sponsor.photoUrl ? (
+          {displaySponsor.photoUrl ? (
             <img
-              src={sponsor.photoUrl}
-              alt={`${sponsor.name}'s logo`}
+              src={displaySponsor.photoUrl}
+              alt={`${displaySponsor.name}'s logo`}
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-red-700 text-white text-3xl font-bold">
-              {sponsor.name?.substring(0, 1).toUpperCase() || ''}
+              {displaySponsor.name?.substring(0, 1).toUpperCase() || ''}
             </div>
           )}
         </div>
 
         <div className="text-center sm:text-left flex-1">
-          <h3 className="text-2xl font-bold">{sponsor.name || 'Name Not Provided'}</h3>
+          <h3 className="text-2xl font-bold">{displaySponsor.name || 'Name Not Provided'}</h3>
           <p className="text-md text-blue-600 font-medium mt-1">
             Sponsor
           </p>

@@ -129,7 +129,7 @@ const SponsorsNetworkPage = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/sponsors/get-all-sponsor-info`,
+          `${import.meta.env.VITE_BACKEND_URL}/sponsors/summary`,
           {
             method: "GET",
             headers: {
@@ -144,7 +144,46 @@ const SponsorsNetworkPage = () => {
         }
 
         const data = await response.json();
-        const transformedSponsors = data.map(transformBackendSponsorToSponsor);
+        // Transform summary data - resources and emails not included
+        const transformedSponsors = data.map((item: BackendSponsor) => {
+          let parsedLinks: string[] = [];
+          if (Array.isArray(item.links)) {
+            parsedLinks = item.links.filter(
+              (link) => typeof link === "string" && link.trim() !== ""
+            );
+          } else if (typeof item.links === "string" && item.links.trim() !== "") {
+            try {
+              const parsed = JSON.parse(item.links);
+              if (Array.isArray(parsed)) {
+                parsedLinks = parsed.filter(
+                  (link) => typeof link === "string" && link.trim() !== ""
+                );
+              } else {
+                parsedLinks = item.links
+                  .split(",")
+                  .map((link: string) => link.trim())
+                  .filter((link: string) => link !== "");
+              }
+            } catch (e) {
+              parsedLinks = item.links
+                .split(",")
+                .map((link: string) => link.trim())
+                .filter((link: string) => link !== "");
+            }
+          }
+
+          return {
+            id: item.id?.toString(),
+            type: "sponsor" as const,
+            name: item.company_name || "Unknown Sponsor",
+            tier: item.tier,
+            about: item.about || "No description available.",
+            links: parsedLinks,
+            photoUrl: item.pfp_url || "/placeholder-logo.png",
+            resources: [], // Not in summary
+            emails: [], // Not in summary
+          };
+        });
         setAllSponsors(transformedSponsors);
         setFilteredSponsors(transformedSponsors);
       } catch (error) {

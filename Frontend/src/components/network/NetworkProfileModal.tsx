@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MemberDetail } from "../../types";
 import Modal from "../ui/Modal";
 import {
@@ -12,6 +12,8 @@ import {
   Target,
 } from "lucide-react";
 import { useToast } from "../../context/toast/ToastContext";
+import { useAuth } from "../../context/auth/authProvider";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 interface NetworkProfileModalProps {
   member: MemberDetail;
@@ -25,39 +27,104 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
   onClose,
 }) => {
   const { showToast } = useToast();
+  const { session } = useAuth();
+  const [fullMember, setFullMember] = useState<MemberDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // No need for modal container logic - it's handled by the Modal component
+  // Fetch full member details when modal opens
+  useEffect(() => {
+    const fetchFullDetails = async () => {
+      // If we already have detailed hours data, skip
+      if (member.developmentHours && member.developmentHours !== "0") {
+        setFullMember(member);
+        return;
+      }
 
-  const profileContent = (
+      setIsLoading(true);
+      try {
+        const token = session?.access_token;
+        if (!token) {
+          setFullMember(member);
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/${encodeURIComponent(member.email)}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          // Merge summary data with full data
+          const fullData: MemberDetail = {
+            ...member,
+            phone: data.phone || "Not Provided",
+            internship: data.internship || "Not Specified",
+            developmentHours: data.development_hours?.toString() ?? "0",
+            professionalHours: data.professional_hours?.toString() ?? "0",
+            serviceHours: data.service_hours?.toString() ?? "0",
+            socialHours: data.social_hours?.toString() ?? "0",
+            links: Array.isArray(data.links) ? data.links : (member.links || []),
+            event_attendance: data.event_attendance || [],
+          };
+          setFullMember(fullData);
+        } else {
+          setFullMember(member);
+        }
+      } catch (error) {
+        console.error("Error fetching full member details:", error);
+        setFullMember(member);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchFullDetails();
+    }
+  }, [isOpen, member, session]);
+
+  const displayMember = fullMember || member;
+
+  const profileContent = isLoading ? (
+    <div className="p-8 flex justify-center items-center">
+      <LoadingSpinner text="Loading member details..." size="lg" />
+    </div>
+  ) : (
     <div className="p-2 space-y-6 max-h-[80vh] overflow-y-auto">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="w-32 h-32 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border">
-          {member.photoUrl ? (
+          {displayMember.photoUrl ? (
             <img
-              src={member.photoUrl}
-              alt={`${member.name}'s profile`}
+              src={displayMember.photoUrl}
+              alt={`${displayMember.name}'s profile`}
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-red-700 text-white text-3xl font-bold">
-              {member.name?.substring(0, 1).toUpperCase() || ""}
+              {displayMember.name?.substring(0, 1).toUpperCase() || ""}
             </div>
           )}
         </div>
 
         <div className="text-center sm:text-left flex-1">
           <h3 className="text-2xl font-bold">
-            {member.name || "Name Not Provided"}
+            {displayMember.name || "Name Not Provided"}
           </h3>
-          {member.major && member.major !== "Not Provided" && (
+          {displayMember.major && displayMember.major !== "Not Provided" && (
             <p className="text-lg text-gray-600 flex items-center justify-center sm:justify-start">
               <Briefcase className="w-5 h-5 mr-2 text-gray-500" />
-              {member.major}
+              {displayMember.major}
             </p>
           )}
           {/* <p className="text-md text-gray-500 flex items-center justify-center sm:justify-start mt-1">
             <User className="w-5 h-5 mr-2 text-gray-500" />
-            {formatRoleName(member.role)}
+            {formatRoleName(displayMember.role)}
           </p> */}
         </div>
       </div>

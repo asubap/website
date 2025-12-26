@@ -26,6 +26,7 @@ interface BackendMember {
   service_hours?: number;
   social_hours?: number;
   links?: string | null;
+  first_link?: string | null; // For summary endpoint
   name?: string | null;
   major?: string | null;
   about?: string | null;
@@ -195,7 +196,7 @@ const AlumniPage = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/member-info/alumni`,
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/alumni/summary`,
           {
             method: "GET",
             headers: {
@@ -211,8 +212,42 @@ const AlumniPage = () => {
 
         const data = await response.json();
 
-        // Backend now filters for alumni only - no need to filter here
-        const transformedData = data.map(transformBackendMemberToMember);
+        // Transform summary data - some fields not loaded initially
+        const transformedData = data.map((item: BackendMember) => {
+          const memberName =
+            item.name ||
+            `${item.first_name || ""} ${item.last_name || ""}`.trim() ||
+            "Unknown Member";
+          const memberAbout = item.about || item.bio || "";
+          const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
+          const memberRank = item.rank === "inducted" ? "Inducted" :
+                             item.rank === "alumni" ? "Alumni" :
+                             item.rank === "pledge" ? "Pledge" :
+                             "Alumni";
+
+          return {
+            id: item.id.toString(),
+            type: "member" as const,
+            name: memberName,
+            email: item.user_email || "Not Provided",
+            phone: "Not Provided", // Not in summary
+            major: item.major || "Not Provided",
+            graduationDate: item.graduating_year?.toString() || item.year || "Not Provided",
+            status: item.member_status || "Not Specified",
+            about: memberAbout,
+            internship: "Not Specified", // Not in summary
+            photoUrl: memberPhotoUrl,
+            hours: item.total_hours?.toString() ?? "0",
+            developmentHours: "0", // Not in summary
+            professionalHours: "0", // Not in summary
+            serviceHours: "0", // Not in summary
+            socialHours: "0", // Not in summary
+            links: item.first_link ? [item.first_link] : [],
+            rank: memberRank,
+            role: item.role || "general-member",
+            event_attendance: [],
+          };
+        });
 
         setMembers(transformedData);
       } catch (error) {

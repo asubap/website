@@ -131,7 +131,7 @@ const Admin = () => {
       setLoadingAdmins(true);
       const token = session.access_token;
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/summary`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -142,43 +142,20 @@ const Admin = () => {
 
         // Process e-board members
         const admins = data
-          .filter((item: UserInfo) => item.role === "e-board")
-          .map((item: UserInfo) => item.email);
+          .filter((item: UserInfo & { rank?: string }) => item.role === "e-board")
+          .map((item: UserInfo & { rank?: string }) => item.email);
         setAdminEmails(admins);
 
+        // Process general members with rank already included
         const members = data
-          .filter((item: UserInfo) => item.role === "general-member")
-          .map((item: UserInfo) => ({ email: item.email, name: item.name }));
-
-        // Fetch member-info to get rank information
-        const memberInfoResponse = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (memberInfoResponse.ok) {
-          const memberInfoData = await memberInfoResponse.json();
-          // Create a map of email to rank
-          const rankMap = new Map<string, string>();
-          memberInfoData.forEach((info: any) => {
-            if (info.user_email && info.rank) {
-              // Capitalize first letter for display
-              const displayRank = info.rank.charAt(0).toUpperCase() + info.rank.slice(1);
-              rankMap.set(info.user_email.toLowerCase(), displayRank);
-            }
-          });
-
-          // Add rank to members
-          members.forEach((member: any) => {
-            member.rank = rankMap.get(member.email.toLowerCase()) || "Not Specified";
-          });
-        }
+          .filter((item: UserInfo & { rank?: string }) => item.role === "general-member")
+          .map((item: UserInfo & { rank?: string }) => ({
+            email: item.email,
+            name: item.name,
+            rank: item.rank
+              ? item.rank.charAt(0).toUpperCase() + item.rank.slice(1)
+              : "Not Specified",
+          }));
 
         setMembers(members);
         setLoadingAdmins(false);
@@ -460,16 +437,20 @@ const Admin = () => {
         return;
       }
 
+      // Check if we already have cached data
+      if (memberDetails[email.trim().toLowerCase()]) {
+        return; // Data already loaded, modal will use it
+      }
+
       const token = session.access_token;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/${encodeURIComponent(email)}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ user_email: email }),
         }
       );
 
@@ -477,37 +458,39 @@ const Admin = () => {
         throw new Error("Failed to fetch member details");
       }
 
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const raw = data[0];
-        const freshData: MemberDetail = {
-          id: raw.id?.toString() || raw.user_id || raw.user_email,
-          email: raw.user_email || raw.email || "",
-          name: raw.name || "",
-          phone: raw.phone || "",
-          major: raw.major || "",
-          graduationDate: raw.graduating_year
-            ? String(raw.graduating_year)
-            : raw.graduationDate || "",
-          status: raw.member_status || raw.status || "Not Specified",
-          about: raw.about || "",
-          internship: raw.internship || "Not Specified",
-          photoUrl: raw.profile_photo_url || raw.photoUrl || "",
-          hours:
-            raw.total_hours !== undefined
-              ? String(raw.total_hours)
-              : raw.hours || "0",
-          rank: raw.rank || raw.role || "Not Provided",
-          role: raw.role || "general-member",
-          event_attendance: raw.event_attendance || [],
-        };
+      const raw = await response.json();
+      const freshData: MemberDetail = {
+        id: raw.id?.toString() || raw.user_id || raw.user_email,
+        email: raw.user_email || raw.email || "",
+        name: raw.name || "",
+        phone: raw.phone || "",
+        major: raw.major || "",
+        graduationDate: raw.graduating_year
+          ? String(raw.graduating_year)
+          : raw.graduationDate || "",
+        status: raw.member_status || raw.status || "Not Specified",
+        about: raw.about || "",
+        internship: raw.internship || "Not Specified",
+        photoUrl: raw.profile_photo_url || raw.photoUrl || "",
+        hours:
+          raw.total_hours !== undefined
+            ? String(raw.total_hours)
+            : raw.hours || "0",
+        developmentHours: raw.development_hours?.toString() ?? "0",
+        professionalHours: raw.professional_hours?.toString() ?? "0",
+        serviceHours: raw.service_hours?.toString() ?? "0",
+        socialHours: raw.social_hours?.toString() ?? "0",
+        links: Array.isArray(raw.links) ? raw.links : [],
+        rank: raw.rank || raw.role || "Not Provided",
+        role: raw.role || "general-member",
+        event_attendance: raw.event_attendance || [],
+      };
 
-        // Update member details with fresh data
-        setMemberDetails((prev) => ({
-          ...prev,
-          [email.trim().toLowerCase()]: freshData,
-        }));
-      }
+      // Cache the data
+      setMemberDetails((prev) => ({
+        ...prev,
+        [email.trim().toLowerCase()]: freshData,
+      }));
     } catch (error) {
       console.error("Error fetching member details:", error);
       showToast("Failed to fetch member details", "error");
@@ -524,7 +507,7 @@ const Admin = () => {
       }
       const token = session.access_token;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/users`,
+        `${import.meta.env.VITE_BACKEND_URL}/users/summary`,
         {
           method: "GET",
           headers: {
@@ -538,38 +521,14 @@ const Admin = () => {
       }
       const data = await response.json();
       const fetchedMembers = data
-        .filter((item: UserInfo) => item.role === "general-member")
-        .map((item: UserInfo) => ({ email: item.email, name: item.name })); // Keep name as is (could be undefined/null)
-
-      // Fetch member-info to get rank information
-      const memberInfoResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (memberInfoResponse.ok) {
-        const memberInfoData = await memberInfoResponse.json();
-        // Create a map of email to rank
-        const rankMap = new Map<string, string>();
-        memberInfoData.forEach((info: any) => {
-          if (info.user_email && info.rank) {
-            // Capitalize first letter for display
-            const displayRank = info.rank.charAt(0).toUpperCase() + info.rank.slice(1);
-            rankMap.set(info.user_email.toLowerCase(), displayRank);
-          }
-        });
-
-        // Add rank to fetched members
-        fetchedMembers.forEach((member: any) => {
-          member.rank = rankMap.get(member.email.toLowerCase()) || "Not Specified";
-        });
-      }
+        .filter((item: UserInfo & { rank?: string }) => item.role === "general-member")
+        .map((item: UserInfo & { rank?: string }) => ({
+          email: item.email,
+          name: item.name,
+          rank: item.rank
+            ? item.rank.charAt(0).toUpperCase() + item.rank.slice(1)
+            : "Not Specified",
+        }));
 
       fetchedMembers.sort(
         (

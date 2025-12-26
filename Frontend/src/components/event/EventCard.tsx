@@ -154,18 +154,20 @@ export const EventCard: React.FC<EventCardProps> = ({
     }
   }, [selectedEntityMenu, isAdmin]);
 
-  // Fetch all members when either modal opens
-  // Note: Only fetches users (not member-info) for better performance
-  // Alumni filtering has been removed - admins should verify members manually if needed
+  // Fetch active members when either modal opens
+  // Uses /member-info/active endpoint which filters for inducted members only (excludes Pledges, Alumni, etc.)
   useEffect(() => {
     if (showAddRSVPModal || showAddAttendeeModal) {
-      fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/active`, {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       })
         .then(res => res.json())
-        .then(usersData => {
-          // Filter for general members only
-          const members = usersData.filter((m: any) => m.role === 'general-member');
+        .then(data => {
+          // Transform backend response to include only name and email
+          const members = data.map((m: any) => ({
+            name: m.name || `${m.first_name || ""} ${m.last_name || ""}`.trim() || "Unknown Member",
+            email: m.user_email || ""
+          }));
           setAllMembers(members);
           setFilteredMembers(members);
         })
