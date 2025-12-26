@@ -14,6 +14,7 @@ interface AuthContextType {
   session: Session | null;
   role: RoleType;
   loading: boolean;
+  authError: string | null;
   setSession: (user: Session | null) => void;
   setRole: (role: RoleType) => void;
 }
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<RoleType>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Function to fetch user role
   const fetchUserRole = async (token: string, email: string) => {
@@ -39,10 +41,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: JSON.stringify({ user_email: email }),
         }
       );
-      const data = await response.json();
-      setRole(data);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Failed to authenticate" }));
+        setAuthError(errorData.error || "Failed to authenticate");
+        setRole(null);
+      } else {
+        const data = await response.json();
+        setRole(data);
+        setAuthError(null);
+      }
     } catch (error) {
       console.error("Error fetching role:", error);
+      setAuthError("Network error. Please try again.");
+      setRole(null);
     } finally {
       setLoading(false);
     }
@@ -90,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ session, role, loading, setSession, setRole }}
+      value={{ session, role, loading, authError, setSession, setRole }}
     >
       {children}
     </AuthContext.Provider>

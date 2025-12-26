@@ -14,12 +14,14 @@ import ConfirmationModal from "../../components/common/ConfirmationModal";
 import AddUserModal from "../../components/admin/AddUserModal";
 import { getNavLinks } from "../../components/nav/NavLink";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
+import ArchivedMembersList from "../../components/admin/ArchivedMembersList";
 
 import { Announcement } from "../../types/index";
 import { AnnouncementListShort } from "../../components/announcement/AnnouncementListShort";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../context/auth/authProvider";
 import { MemberDetail } from "../../types/index";
+import { archiveMember } from "../../services/memberArchiveService";
 
 // Define interfaces for API responses
 interface UserInfo {
@@ -79,6 +81,9 @@ const Admin = () => {
     [key: string]: MemberDetail;
   }>({});
 
+  // Store the refresh function for archived members list
+  const [refreshArchivedMembers, setRefreshArchivedMembers] = useState<(() => void) | null>(null);
+
   // Add new state for showAddMemberModal
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
@@ -124,6 +129,41 @@ const Admin = () => {
     });
   };
 
+  // Reusable function to fetch members
+  const fetchMembers = async () => {
+    if (!session) return;
+
+    setLoadingMembers(true);
+    const token = session.access_token;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/summary`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      // Process general members with rank already included
+      const members = data
+        .filter((item: UserInfo & { rank?: string }) => item.role === "general-member")
+        .map((item: UserInfo & { rank?: string }) => ({
+          email: item.email,
+          name: item.name,
+          rank: item.rank
+            ? item.rank.charAt(0).toUpperCase() + item.rank.slice(1)
+            : "Not Specified",
+        }));
+
+      setMembers(members);
+      setLoadingMembers(false);
+    } catch (error) {
+      console.error("Error fetching member info:", error);
+      setLoadingMembers(false);
+    }
+  };
+
   useEffect(() => {
     if (!session) return;
 
@@ -145,25 +185,10 @@ const Admin = () => {
           .filter((item: UserInfo & { rank?: string }) => item.role === "e-board")
           .map((item: UserInfo & { rank?: string }) => item.email);
         setAdminEmails(admins);
-
-        // Process general members with rank already included
-        const members = data
-          .filter((item: UserInfo & { rank?: string }) => item.role === "general-member")
-          .map((item: UserInfo & { rank?: string }) => ({
-            email: item.email,
-            name: item.name,
-            rank: item.rank
-              ? item.rank.charAt(0).toUpperCase() + item.rank.slice(1)
-              : "Not Specified",
-          }));
-
-        setMembers(members);
         setLoadingAdmins(false);
-        setLoadingMembers(false);
       } catch (error) {
         console.error("Error fetching member info:", error);
         setLoadingAdmins(false);
-        setLoadingMembers(false);
       }
     };
 
@@ -226,6 +251,7 @@ const Admin = () => {
     };
 
     fetchAdmins();
+    fetchMembers();
     fetchSponsors();
     fetchAnnouncements();
   }, [session]); // Add session as dependency
@@ -252,6 +278,19 @@ const Admin = () => {
     }
   };
 
+  const handleArchiveMember = async (email: string) => {
+    if (!session) return;
+
+    const token = session.access_token;
+    try {
+      await archiveMember(email, token);
+      // Update the state to remove the archived member from active list
+      setMembers(members.filter((m) => m.email !== email));
+    } catch (error) {
+      console.error("Error archiving member:", error);
+      throw error; // Re-throw to let EmailList handle the error toast
+    }
+  };
 
   // this is supposed to take name parameter
   const handleDeleteSponsor = async (sponsorName: string) => {
@@ -494,75 +533,6 @@ const Admin = () => {
     } catch (error) {
       console.error("Error fetching member details:", error);
       showToast("Failed to fetch member details", "error");
-    }
-  };
-
-  // Add fetchMembers function
-  const fetchMembers = async () => {
-    setLoadingMembers(true);
-    try {
-      if (!session) {
-        showToast("Authentication error. Please log in again.", "error");
-        return;
-      }
-      const token = session.access_token;
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/users/summary`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch members");
-      }
-      const data = await response.json();
-      const fetchedMembers = data
-        .filter((item: UserInfo & { rank?: string }) => item.role === "general-member")
-        .map((item: UserInfo & { rank?: string }) => ({
-          email: item.email,
-          name: item.name,
-          rank: item.rank
-            ? item.rank.charAt(0).toUpperCase() + item.rank.slice(1)
-            : "Not Specified",
-        }));
-
-      fetchedMembers.sort(
-        (
-          a: { email: string; name?: string | null },
-          b: { email: string; name?: string | null }
-        ) => {
-          const nameA = a.name?.trim().toLowerCase();
-          const nameB = b.name?.trim().toLowerCase();
-
-          // Members with no name go to the bottom
-          if (!nameA && nameB) return 1;
-          if (nameA && !nameB) return -1;
-          if (!nameA && !nameB) {
-            // Both names missing, sort by email
-            return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
-          }
-
-          // Both have names, sort by name
-          if (nameA && nameB) {
-            const nameComparison = nameA.localeCompare(nameB);
-            if (nameComparison !== 0) return nameComparison;
-          }
-
-          // Names are equivalent (or one/both were missing and handled), sort by email as tie-breaker
-          return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
-        }
-      );
-
-      setMembers(fetchedMembers);
-    } catch (error) {
-      console.error("Error fetching members:", error);
-      showToast("Failed to fetch members", "error");
-    } finally {
-      setLoadingMembers(false);
     }
   };
 
@@ -853,24 +823,37 @@ const Admin = () => {
               ) : (
                 <EmailList
                   emails={members}
-                  onDelete={handleDelete}
+                  onDelete={handleArchiveMember}
                   userType="member"
                   onEdit={handleMemberEdit}
                   onSave={handleMemberUpdateSave}
                   memberDetails={memberDetails}
                   onCreateNew={() => setShowAddMemberModal(true)}
                   showRankFilter={true}
+                  useArchiveForDelete={true}
+                  onArchiveSuccess={refreshArchivedMembers || undefined}
                 />
               )}
             </div>
 
+            {/* Archived Members */}
+            <div className="order-7 md:order-7 col-span-1 md:col-span-2">
+              <div className="flex items-center mb-2">
+                <h2 className="text-2xl font-semibold">Archived Members</h2>
+              </div>
+              <ArchivedMembersList
+                onMemberRestored={fetchMembers}
+                onRefreshRequested={(refreshFn) => setRefreshArchivedMembers(() => refreshFn)}
+              />
+            </div>
+
             {/* Resource Management */}
-            <div className="order-7 md:order-7 col-span-1 md:col-span-2 pb-8">
+            <div className="order-8 md:order-8 col-span-1 md:col-span-2 pb-8">
               <ResourceManagement />
             </div>
 
             {/* Eboard Management */}
-            <div className="order-8 md:order-8 col-span-1 md:col-span-2 pb-8">
+            <div className="order-9 md:order-9 col-span-1 md:col-span-2 pb-8">
               <EboardManagement />
             </div>
           </div>

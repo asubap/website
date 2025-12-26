@@ -7,7 +7,7 @@ import { useToast } from "../../context/toast/ToastContext";
 type AuthorizationStatus = "loading" | "authorized" | "unauthorized";
 
 export default function AuthHome() {
-  const { role, loading, setSession } = useAuth();
+  const { role, loading, authError, setSession } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast(); // Get showToast
 
@@ -104,9 +104,15 @@ export default function AuthHome() {
         <h2 className="text-2xl font-semibold mb-4 text-red-600">
           Access Denied
         </h2>
-        <p className="text-lg mb-2">
-          You do not have a valid account role associated with this email.
-        </p>
+        {authError ? (
+          <p className="text-lg mb-2 text-red-600 font-medium">
+            {authError}
+          </p>
+        ) : (
+          <p className="text-lg mb-2">
+            You do not have a valid account role associated with this email.
+          </p>
+        )}
         <p className="text-md mb-6 text-gray-600">
           If you believe this is an error, please contact your chapter's
           administrator.

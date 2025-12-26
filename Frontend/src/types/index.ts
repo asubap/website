@@ -19,7 +19,8 @@ export interface MemberDetail {
   rank: string; // e.g., "Current", "Pledge", "Alumni"
   role: string; // e.g., "e-board", "general-member", "sponsor-admin"
   event_attendance?: any[]; // Array of attended events from API
-  // id?: string; // If MemberDetail should also have an id from the DB, though email is often the unique key for users
+  // Archive/restore fields:
+  deleted_at?: string | null; // Timestamp when member was archived (null if active)
   type?: "member"; // From legacy Member, if still needed
 }
 

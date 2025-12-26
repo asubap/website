@@ -6,6 +6,7 @@ import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
 import { Trash2, MoreHorizontal } from "lucide-react";
 import { MemberDetail } from "../../types";
+import ArchiveConfirmDialog from "./ArchiveConfirmDialog";
 
 // Temporary: Re-declaring MemberDetail to match Admin.tsx for now.
 // TODO: Move MemberDetail to a shared types file and import it.
@@ -21,6 +22,8 @@ interface EmailListProps {
   clickable?: boolean;
   onCreateNew?: () => void;
   showRankFilter?: boolean;
+  useArchiveForDelete?: boolean; // When true, delete button will archive instead
+  onArchiveSuccess?: () => void; // Called after successful archive to refresh archived list
 }
 
 const EmailList = ({
@@ -33,17 +36,20 @@ const EmailList = ({
   clickable = true,
   onCreateNew,
   showRankFilter = false,
+  useArchiveForDelete = false,
+  onArchiveSuccess,
 }: EmailListProps) => {
-  const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
+  const [emailToDelete, setEmailToDelete] = useState<{ email: string; name: string } | null>(null);
   const [emailToEdit, setEmailToEdit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [rankFilter, setRankFilter] = useState("");
   const { showToast } = useToast();
 
-  const handleDeleteClick = (email: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (email: string, name: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setEmailToDelete(email);
+    setEmailToDelete({ email, name });
   };
 
   const handleEditClick = async (email: string) => {
@@ -67,14 +73,31 @@ const EmailList = ({
     "general-member": "Member", // if you use this key elsewhere
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!emailToDelete) return;
-    onDelete(emailToDelete);
-    showToast(
-      `${userTypeDisplayMap[userType] || "User"} removed successfully`,
-      "success"
-    );
-    setEmailToDelete(null);
+
+    setIsDeleting(true);
+    try {
+      await onDelete(emailToDelete.email);
+      if (useArchiveForDelete) {
+        showToast(`${emailToDelete.name} has been archived successfully`, "success");
+        // Call the callback to refresh archived members list
+        onArchiveSuccess?.();
+      } else {
+        showToast(
+          `${userTypeDisplayMap[userType] || "User"} removed successfully`,
+          "success"
+        );
+      }
+      setEmailToDelete(null);
+    } catch (error) {
+      showToast(
+        useArchiveForDelete ? "Failed to archive member" : `Failed to remove ${userType}`,
+        "error"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleEditSave = async (updatedData: MemberDetail) => {
@@ -166,7 +189,7 @@ const EmailList = ({
                 </button>
               )}
               <button
-                onClick={(e) => handleDeleteClick(email, e)}
+                onClick={(e) => handleDeleteClick(email, name || email, e)}
                 className="text-bapred hover:text-bapreddark p-1"
                 aria-label={`Delete ${email}`}
               >
@@ -176,12 +199,22 @@ const EmailList = ({
           </div>
         ))}
 
-        {emailToDelete && (
+        {emailToDelete && !useArchiveForDelete && (
           <DeleteConfirmation
-            name={emails.find(m => m.email === emailToDelete)?.name || emailToDelete}
+            name={emailToDelete.name}
             userType={userType}
             onConfirm={handleConfirmDelete}
             onCancel={() => setEmailToDelete(null)}
+          />
+        )}
+
+        {emailToDelete && useArchiveForDelete && (
+          <ArchiveConfirmDialog
+            memberName={emailToDelete.name}
+            memberEmail={emailToDelete.email}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setEmailToDelete(null)}
+            isLoading={isDeleting}
           />
         )}
 
