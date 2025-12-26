@@ -46,52 +46,6 @@ interface BackendMember {
   photo_url?: string;
 }
 
-// --- Transformation Functions ---
-const transformBackendMemberToMember = (item: BackendMember): Member => {
-  const memberName =
-    item.name ||
-    `${item.first_name || ""} ${item.last_name || ""}`.trim() ||
-    "Unknown Member";
-  const memberLinks =
-    typeof item.links === "string" && item.links.trim() !== ""
-      ? item.links
-          .split(",")
-          .map((link: string) => link.trim())
-          .filter((link: string) => link !== "")
-      : [];
-  const memberAbout = item.about || item.bio || "";
-  const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
-
-  // Map API rank to interface rank format
-  const memberRank = item.rank === "inducted" ? "Inducted" :
-                     item.rank === "alumni" ? "Alumni" :
-                     item.rank === "pledge" ? "Pledge" :
-                     "Inducted"; // default to Current
-
-  return {
-    id: item.id.toString(),
-    type: "member",
-    name: memberName,
-    email: item.user_email || "Not Provided",
-    phone: item.phone || "Not Provided",
-    major: item.major || "Not Provided",
-    graduationDate: item.graduating_year?.toString() || item.year || "Not Provided",
-    status: item.member_status || "Not Specified",
-    about: memberAbout,
-    internship: item.internship || "Not Specified",
-    photoUrl: memberPhotoUrl,
-    hours: item.total_hours?.toString() ?? "0",
-    developmentHours: item.development_hours?.toString() ?? "0",
-    professionalHours: item.professional_hours?.toString() ?? "0",
-    serviceHours: item.service_hours?.toString() ?? "0",
-    socialHours: item.social_hours?.toString() ?? "0",
-    links: memberLinks,
-    rank: memberRank,
-    role: item.role || "general-member",
-    event_attendance: item.event_attendance || [],
-  };
-};
-
 // Sort options for alumni (no rank sorting needed)
 const alumniSortOptions = [
   { value: 'name-asc', label: 'Name (A-Z)' },

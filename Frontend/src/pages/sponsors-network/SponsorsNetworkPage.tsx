@@ -29,53 +29,6 @@ interface BackendSponsor {
   emails?: string[];
 }
 
-const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
-  let parsedLinks: string[] = [];
-  if (Array.isArray(item.links)) {
-    parsedLinks = item.links.filter(
-      (link) => typeof link === "string" && link.trim() !== ""
-    );
-  } else if (typeof item.links === "string" && item.links.trim() !== "") {
-    try {
-      const parsed = JSON.parse(item.links);
-      if (Array.isArray(parsed)) {
-        parsedLinks = parsed.filter(
-          (link) => typeof link === "string" && link.trim() !== ""
-        );
-      } else {
-        parsedLinks = item.links
-          .split(",")
-          .map((link: string) => link.trim())
-          .filter((link: string) => link !== "");
-      }
-    } catch (e) {
-      console.warn(
-        "JSON parsing of sponsor links failed, falling back to comma split:",
-        e
-      );
-      parsedLinks = item.links
-        .split(",")
-        .map((link: string) => link.trim())
-        .filter((link: string) => link !== "");
-    }
-  }
-
-  return {
-    id: item.id?.toString(),
-    type: "sponsor",
-    name: item.company_name || "Unknown Sponsor",
-    tier: item.tier,
-    about: item.about || "No description available.",
-    links: parsedLinks,
-    photoUrl: item.pfp_url || "/placeholder-logo.png",
-    resources: item.resources?.map((r) => ({
-      label: r.label || "Resource",
-      url: r.url || ""
-    })) || [],
-    emails: item.emails || [],
-  };
-};
-
 // Sort options for sponsors
 const sponsorSortOptions = [
   { value: 'tier-desc', label: 'Tier (Highest First)' },
