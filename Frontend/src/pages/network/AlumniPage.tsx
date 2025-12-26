@@ -195,7 +195,7 @@ const AlumniPage = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/alumni`,
           {
             method: "GET",
             headers: {
@@ -211,10 +211,8 @@ const AlumniPage = () => {
 
         const data = await response.json();
 
-        // Use transformation function and filter for alumni only
-        const transformedData = data
-          .map(transformBackendMemberToMember)
-          .filter((member: Member) => member.rank?.toLowerCase() === "alumni");
+        // Backend now filters for alumni only - no need to filter here
+        const transformedData = data.map(transformBackendMemberToMember);
 
         setMembers(transformedData);
       } catch (error) {

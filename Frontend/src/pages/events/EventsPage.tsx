@@ -184,7 +184,7 @@ const EventsPage: React.FC = () => {
       try {
         setRankLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/me`,
           {
             method: "GET",
             headers: {
@@ -196,11 +196,8 @@ const EventsPage: React.FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          const userMemberInfo = data.find(
-            (member: any) => member.user_email === session.user?.email
-          );
-          if (userMemberInfo?.rank) {
-            setUserRank(userMemberInfo.rank);
+          if (data.rank) {
+            setUserRank(data.rank);
           }
         }
       } catch (error) {

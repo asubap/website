@@ -155,31 +155,17 @@ export const EventCard: React.FC<EventCardProps> = ({
   }, [selectedEntityMenu, isAdmin]);
 
   // Fetch all members when either modal opens
+  // Note: Only fetches users (not member-info) for better performance
+  // Alumni filtering has been removed - admins should verify members manually if needed
   useEffect(() => {
     if (showAddRSVPModal || showAddAttendeeModal) {
-      // Fetch both users and member-info to get rank data
-      Promise.all([
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
-          headers: { Authorization: `Bearer ${session?.access_token}` }
-        }).then(res => res.json()),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/`, {
-          headers: { Authorization: `Bearer ${session?.access_token}` }
-        }).then(res => res.json())
-      ])
-        .then(([usersData, memberInfoData]) => {
-          // Create a map of email -> rank
-          const rankMap = new Map(
-            memberInfoData.map((m: any) => [m.user_email, m.rank])
-          );
-
-          // Filter for general members only AND exclude alumni
-          const members = usersData
-            .filter((m: any) => m.role === 'general-member')
-            .filter((m: any) => {
-              const rank = rankMap.get(m.email) as string | undefined;
-              return rank?.toLowerCase() !== 'alumni';
-            });
-
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      })
+        .then(res => res.json())
+        .then(usersData => {
+          // Filter for general members only
+          const members = usersData.filter((m: any) => m.role === 'general-member');
           setAllMembers(members);
           setFilteredMembers(members);
         })

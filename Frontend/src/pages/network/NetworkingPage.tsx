@@ -203,7 +203,7 @@ const NetworkingPage = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/active`,
           {
             method: "GET",
             headers: {
@@ -219,10 +219,8 @@ const NetworkingPage = () => {
 
         const data = await response.json();
 
-        // Use transformation function and filter out alumni
-        const transformedData = data
-          .map(transformBackendMemberToMember)
-          .filter((member: Member) => member.rank?.toLowerCase() !== "alumni");
+        // Backend now filters out alumni - no need to filter here
+        const transformedData = data.map(transformBackendMemberToMember);
         setMembers(transformedData);
       } catch (error) {
         console.error("Error fetching members:", error);
