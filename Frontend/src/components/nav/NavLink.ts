@@ -8,7 +8,8 @@ export const navLinks = [
 ];
 
 const navLinksLoggedIn = [
-  { name: "Network", href: "/network" },
+  { name: "Members", href: "/network" },
+  { name: "Sponsors", href: "/sponsors-network" },
   { name: "Events", href: "/events" },
   { name: "Dashboard", href: "/admin" },
 ];

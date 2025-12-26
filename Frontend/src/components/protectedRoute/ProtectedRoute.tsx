@@ -27,7 +27,7 @@ const ProtectedRoute = () => {
     if (path.startsWith("/admin") && !checkRole("e-board")) {
       return false;
     }
-    if (path.startsWith("/sponsor") && !checkRole("sponsor")) {
+    if (path === "/sponsor" && !checkRole("sponsor")) {
       return false;
     }
 

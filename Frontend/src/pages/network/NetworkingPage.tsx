@@ -4,7 +4,7 @@ import NetworkSearch from "../../components/network/NetworkSearch";
 import Fuse from "fuse.js";
 
 import NetworkingLayout from "../../components/network/NetworkingLayout";
-import { MemberDetail as Member, Sponsor } from "../../types";
+import { MemberDetail as Member } from "../../types";
 import NetworkList from "../../components/network/NetworkList";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { getNavLinks } from "../../components/nav/NavLink";
@@ -43,26 +43,6 @@ interface BackendMember {
   year?: string;
   phone?: string;
   photo_url?: string;
-}
-
-// Define interface for sponsor resources
-interface SponsorResource {
-  id?: number;
-  label: string;  // Make label required since backend should provide it
-  url: string;    // Make url required since backend should provide it
-  uploadDate?: string;
-}
-
-// Define interface for backend sponsor data
-interface BackendSponsor {
-  id?: number;
-  company_name?: string;
-  about?: string;
-  links?: string | null;
-  pfp_url?: string;
-  resources?: SponsorResource[]; // Properly typed resources array
-  tier?: string;
-  emails?: string[];
 }
 
 // --- Transformation Functions ---
@@ -111,72 +91,13 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   };
 };
 
-const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
-  let parsedLinks: string[] = [];
-  if (Array.isArray(item.links)) {
-    parsedLinks = item.links.filter(
-      (link) => typeof link === "string" && link.trim() !== ""
-    );
-  } else if (typeof item.links === "string" && item.links.trim() !== "") {
-    try {
-      const parsed = JSON.parse(item.links);
-      if (Array.isArray(parsed)) {
-        parsedLinks = parsed.filter(
-          (link) => typeof link === "string" && link.trim() !== ""
-        );
-      } else {
-        parsedLinks = item.links
-          .split(",")
-          .map((link: string) => link.trim())
-          .filter((link: string) => link !== "");
-      }
-    } catch (e) {
-      // Log the error and assume comma-separated
-      console.warn(
-        "JSON parsing of sponsor links failed, falling back to comma split:",
-        e
-      );
-      parsedLinks = item.links
-        .split(",")
-        .map((link: string) => link.trim())
-        .filter((link: string) => link !== "");
-    }
-  }
-
-  return {
-    id: item.id?.toString(),
-    type: "sponsor",
-    name: item.company_name || "Unknown Sponsor",
-    tier: item.tier,
-    about: item.about || "No description available.",
-    links: parsedLinks,
-    photoUrl: item.pfp_url || "/placeholder-logo.png",
-    resources: item.resources?.map((r) => ({ 
-      label: r.label || "Resource", 
-      url: r.url || "" 
-    })) || [],
-    emails: item.emails || [],
-  };
-};
-
 const NetworkingPage = () => {
   const { session } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
-  const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
-  const [filteredEntities, setFilteredEntities] = useState<
-    (Member | Sponsor)[]
-  >([]);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
 
   const [isMembersLoading, setIsMembersLoading] = useState(true);
-  const [isSponsorsLoading, setIsSponsorsLoading] = useState(true);
   const [membersError, setMembersError] = useState<string | null>(null);
-  const [sponsorsError, setSponsorsError] = useState<string | null>(null);
-
-  // Combine members and sponsors for unified search and filtering
-  const networkEntities = useMemo(
-    () => [...members, ...allSponsors],
-    [members, allSponsors]
-  );
 
   // Generate dynamic filter options from members data
   const availableGraduationYears = useMemo(() => {
@@ -234,10 +155,10 @@ const NetworkingPage = () => {
     ],
   };
 
-  // Ensure Fuse instance depends on the memoized networkEntities
+  // Ensure Fuse instance depends on members
   const fuse = useMemo(
-    () => new Fuse(networkEntities, fuseOptions),
-    [networkEntities]
+    () => new Fuse(members, fuseOptions),
+    [members]
   );
 
   useEffect(() => {
@@ -286,60 +207,15 @@ const NetworkingPage = () => {
     fetchMembers();
   }, [session]);
 
-  useEffect(() => {
-    const fetchSponsors = async () => {
-      setIsSponsorsLoading(true);
-      setSponsorsError(null);
-
-      try {
-        const token = session?.access_token;
-        if (!token) {
-          setIsSponsorsLoading(false);
-          return;
-        }
-
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/sponsors/get-all-sponsor-info`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Error fetching sponsors: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        // Use transformation function
-        const transformedSponsors = data.map(transformBackendSponsorToSponsor);
-        setAllSponsors(transformedSponsors);
-      } catch (error) {
-        console.error("Error fetching sponsors:", error);
-        setSponsorsError("Failed to load sponsors. Please try again later.");
-      } finally {
-        setIsSponsorsLoading(false);
-      }
-    };
-
-    if (session?.access_token) {
-      fetchSponsors();
-    }
-  }, [session]);
-
   // Effect to set initial filtered list when data loads
   useEffect(() => {
-    if (!isMembersLoading && !isSponsorsLoading) {
-      setFilteredEntities(networkEntities); // Use the memoized value
+    if (!isMembersLoading) {
+      setFilteredMembers(members);
     }
-  }, [isMembersLoading, isSponsorsLoading, networkEntities]);
+  }, [isMembersLoading, members]);
 
   const handleSearch = useCallback((query: string, filters: Filters) => {
-    let results = networkEntities; // Start with combined list
+    let results = members; // Start with members list
 
     // 1. Apply Fuzzy Search (if query exists)
     if (query.trim()) {
@@ -352,41 +228,31 @@ const NetworkingPage = () => {
       }
     }
 
-    // 2. Apply Filters (on top of fuzzy search results or all entities)
-    const filteredResults = results.filter((entity) => {
-      const isMember = (entity: Member | Sponsor): entity is Member =>
-        entity.type === "member";
-
-      if (isMember(entity)) {
-        // Member filtering logic
-        const yearMatch =
-          !filters.graduationYear ||
-          entity.graduationDate === filters.graduationYear;
-        const majorMatch = !filters.major || entity.major === filters.major;
-        // Filter by status: handle both rank-based statuses and member_status values
-        const statusMatch = !filters.status || 
-          (filters.status === "Inducted" && entity.rank === "Inducted") ||
-          (filters.status === "Alumni" && entity.rank === "Alumni") ||
-          (filters.status === "Pledge" && entity.rank === "Pledge") ||
-          (filters.status === "Looking for Internship" && entity.status === "Looking for Internship") ||
-          (filters.status === "Looking for Full-time" && entity.status === "Looking for Full-time") ||
-          (filters.status === "Not Looking" && entity.status === "Not Looking");
-        return yearMatch && majorMatch && statusMatch;
-      } else {
-        // Sponsor filtering logic: only show sponsors when no member-specific filters are applied
-        const hasMemberSpecificFilters = filters.graduationYear || filters.major || filters.status;
-        return !hasMemberSpecificFilters; // Hide sponsors if any member-specific filters are active
-      }
+    // 2. Apply Filters (on top of fuzzy search results or all members)
+    const filteredResults = results.filter((member) => {
+      const yearMatch =
+        !filters.graduationYear ||
+        member.graduationDate === filters.graduationYear;
+      const majorMatch = !filters.major || member.major === filters.major;
+      // Filter by status: handle both rank-based statuses and member_status values
+      const statusMatch = !filters.status ||
+        (filters.status === "Inducted" && member.rank === "Inducted") ||
+        (filters.status === "Alumni" && member.rank === "Alumni") ||
+        (filters.status === "Pledge" && member.rank === "Pledge") ||
+        (filters.status === "Looking for Internship" && member.status === "Looking for Internship") ||
+        (filters.status === "Looking for Full-time" && member.status === "Looking for Full-time") ||
+        (filters.status === "Not Looking" && member.status === "Not Looking");
+      return yearMatch && majorMatch && statusMatch;
     });
 
-    setFilteredEntities(filteredResults);
-  }, [fuse, networkEntities]);
+    setFilteredMembers(filteredResults);
+  }, [fuse, members]);
 
   return (
     <NetworkingLayout navLinks={getNavLinks(!!session)}>
       <div className="max-w-7xl mx-auto px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
-          Network
+          Our Members
         </h1>
 
         <NetworkSearch 
@@ -397,19 +263,19 @@ const NetworkingPage = () => {
         />
 
         <div className="mt-6">
-          {isMembersLoading || isSponsorsLoading ? (
-            <LoadingSpinner text="Loading network..." />
-          ) : membersError || sponsorsError ? (
+          {isMembersLoading ? (
+            <LoadingSpinner text="Loading members..." />
+          ) : membersError ? (
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-              <p>{membersError || sponsorsError}</p>
+              <p>{membersError}</p>
             </div>
-          ) : filteredEntities.length > 0 ? (
-            <NetworkList entities={filteredEntities} />
+          ) : filteredMembers.length > 0 ? (
+            <NetworkList entities={filteredMembers} />
           ) : (
-            (members.length > 0 || allSponsors.length > 0) && (
+            members.length > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4">
                 <p>
-                  No members or sponsors found matching your search criteria.
+                  No members found matching your search criteria.
                 </p>
               </div>
             )
