@@ -7,6 +7,7 @@ import ProfileEditModal from "./ProfileEditModal";
 import EventMember from "./EventMember";
 import MemberAnnouncementsListModal from "./MemberAnnouncementsListModal";
 import { FaSlack } from "react-icons/fa";
+import { isAlumni } from "../../utils/permissions";
 
 interface MemberDescriptionProps {
   profileUrl: string;
@@ -205,10 +206,29 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
     setProfileData(newData);
   };
 
+  // Check if user is alumni to conditionally hide features
+  const isAlumniUser = isAlumni(rank);
+
+  // Refetch user details when window becomes visible (to catch rank changes)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && onRefreshUserDetails) {
+        onRefreshUserDetails();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [onRefreshUserDetails]);
+
   return (
     <main className="flex flex-col lg:flex-row flex-1 py-4 px-8 sm:py-8 sm:px-16 gap-12 lg:gap-20 mt-[150px]">
       <div className="w-full lg:w-1/2 relative">
-        <div className="absolute top-16 sm:top-2 right-2 flex flex-col items-center gap-2">
+        {!isAlumniUser && (
+          <div className="absolute top-16 sm:top-2 right-2 flex flex-col items-center gap-2">
           <button
             onClick={handleOpenAnnouncementsModal}
             className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 flex items-center justify-center w-10 h-10"
@@ -231,6 +251,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
             <FaSlack className="w-6 h-6 text-[#af272f]" />
           </button>
         </div>
+        )}
 
         <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center sm:text-left">
           <span className="block sm:inline">Welcome back,</span>{" "}
@@ -312,7 +333,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
         </div>
       </div>
 
-      <EventMember eventAttendance={eventAttendance} onRefreshUserDetails={onRefreshUserDetails} />
+      <EventMember eventAttendance={eventAttendance} onRefreshUserDetails={onRefreshUserDetails} userRank={rank} />
 
       <ProfileEditModal
         isOpen={isEditModalOpen}

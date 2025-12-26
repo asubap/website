@@ -19,7 +19,7 @@ interface Filters {
 // Updated BackendMember interface based on user query
 interface BackendMember {
   id: number;
-  user_id?: string; // Keep if still used?
+  user_id?: string;
   user_email?: string | null;
   development_hours?: number;
   professional_hours?: number;
@@ -36,7 +36,6 @@ interface BackendMember {
   rank?: string | null;
   member_status?: string;
   event_attendance?: any[];
-  // Add potential fallback fields from previous structure if needed
   first_name?: string;
   last_name?: string;
   bio?: string;
@@ -63,11 +62,11 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
 
   // Map API rank to interface rank format
-  const memberRank = item.rank === "inducted" ? "Inducted" : 
-                     item.rank === "alumni" ? "Alumni" : 
+  const memberRank = item.rank === "inducted" ? "Inducted" :
+                     item.rank === "alumni" ? "Alumni" :
                      item.rank === "pledge" ? "Pledge" :
                      "Inducted"; // default to Current
-  
+
   return {
     id: item.id.toString(),
     type: "member",
@@ -92,16 +91,14 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   };
 };
 
-// Sort options for members
-const memberSortOptions = [
+// Sort options for alumni (no rank sorting needed)
+const alumniSortOptions = [
   { value: 'name-asc', label: 'Name (A-Z)' },
   { value: 'name-desc', label: 'Name (Z-A)' },
   { value: 'graduation-asc', label: 'Graduation Year (Earliest)' },
   { value: 'graduation-desc', label: 'Graduation Year (Latest)' },
   { value: 'major-asc', label: 'Major (A-Z)' },
   { value: 'major-desc', label: 'Major (Z-A)' },
-  { value: 'rank-asc', label: 'Rank (Current First)' },
-  { value: 'rank-desc', label: 'Rank (Alumni First)' },
   { value: 'status-asc', label: 'Status (A-Z)' },
   { value: 'status-desc', label: 'Status (Z-A)' },
   { value: 'hours-desc', label: 'Total Hours (High to Low)' },
@@ -110,7 +107,7 @@ const memberSortOptions = [
   { value: 'email-desc', label: 'Email (Z-A)' },
 ];
 
-const NetworkingPage = () => {
+const AlumniPage = () => {
   const { session } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
@@ -143,10 +140,7 @@ const NetworkingPage = () => {
   }, [members]);
 
   const availableStatuses = useMemo(() => {
-    // Fixed status options for rank-based filtering (excluding Alumni since they're filtered out)
-    const rankStatuses = ["Inducted", "Pledge"];
-
-    // Dynamic member status options from actual data
+    // For alumni page, only show employment status options (not rank-based)
     const memberStatuses = members
       .map(member => member.status)
       .filter(status => status && status !== "Not Specified")
@@ -158,8 +152,7 @@ const NetworkingPage = () => {
       uniqueMemberStatuses.push("Looking for Full-time");
     }
 
-    // Combine and return all status options
-    return [...rankStatuses, ...uniqueMemberStatuses];
+    return uniqueMemberStatuses;
   }, [members]);
 
   // Fuse.js setup
@@ -177,7 +170,6 @@ const NetworkingPage = () => {
       { name: "graduationDate", weight: 0.3 },
       { name: "hours", weight: 0.2 }, // Add hours field
       { name: "links", weight: 0.2 }, // Add links field
-      // add others if needed
     ],
   };
 
@@ -219,14 +211,15 @@ const NetworkingPage = () => {
 
         const data = await response.json();
 
-        // Use transformation function and filter out alumni
+        // Use transformation function and filter for alumni only
         const transformedData = data
           .map(transformBackendMemberToMember)
-          .filter((member: Member) => member.rank?.toLowerCase() !== "alumni");
+          .filter((member: Member) => member.rank?.toLowerCase() === "alumni");
+
         setMembers(transformedData);
       } catch (error) {
         console.error("Error fetching members:", error);
-        setMembersError("Failed to load members. Please try again later.");
+        setMembersError("Failed to load alumni. Please try again later.");
       } finally {
         setIsMembersLoading(false);
       }
@@ -262,11 +255,8 @@ const NetworkingPage = () => {
         !filters.graduationYear ||
         member.graduationDate === filters.graduationYear;
       const majorMatch = !filters.major || member.major === filters.major;
-      // Filter by status: handle both rank-based statuses and member_status values
+      // Filter by employment status only (all are already alumni)
       const statusMatch = !filters.status ||
-        (filters.status === "Inducted" && member.rank === "Inducted") ||
-        (filters.status === "Alumni" && member.rank === "Alumni") ||
-        (filters.status === "Pledge" && member.rank === "Pledge") ||
         (filters.status === "Looking for Internship" && member.status === "Looking for Internship") ||
         (filters.status === "Looking for Full-time" && member.status === "Looking for Full-time") ||
         (filters.status === "Not Looking" && member.status === "Not Looking");
@@ -280,7 +270,7 @@ const NetworkingPage = () => {
     <NetworkingLayout navLinks={getNavLinks(!!session)}>
       <div className="max-w-7xl mx-auto px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
-          Our Members
+          Our Alumni
         </h1>
 
         <NetworkSearch
@@ -288,14 +278,14 @@ const NetworkingPage = () => {
           availableGraduationYears={availableGraduationYears}
           availableMajors={availableMajors}
           availableStatuses={availableStatuses}
-          sortOptions={memberSortOptions}
+          sortOptions={alumniSortOptions}
           sortValue={sortBy}
           onSortChange={handleSortChange}
         />
 
         <div className="mt-6">
           {isMembersLoading ? (
-            <LoadingSpinner text="Loading members..." />
+            <LoadingSpinner text="Loading alumni..." />
           ) : membersError ? (
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
               <p>{membersError}</p>
@@ -306,7 +296,7 @@ const NetworkingPage = () => {
             members.length > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4">
                 <p>
-                  No members found matching your search criteria.
+                  No alumni found matching your search criteria.
                 </p>
               </div>
             )
@@ -317,4 +307,4 @@ const NetworkingPage = () => {
   );
 };
 
-export default NetworkingPage;
+export default AlumniPage;

@@ -67,7 +67,7 @@ const Admin = () => {
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
   const [tiers, setTiers] = useState<string[]>([]);
-  const [members, setMembers] = useState<{ email: string; name?: string }[]>(
+  const [members, setMembers] = useState<{ email: string; name?: string; rank?: string }[]>(
     []
   );
 
@@ -130,32 +130,64 @@ const Admin = () => {
     const fetchAdmins = async () => {
       setLoadingAdmins(true);
       const token = session.access_token;
-      fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          // Process e-board members
-          const admins = data
-            .filter((item: UserInfo) => item.role === "e-board")
-            .map((item: UserInfo) => item.email);
-          setAdminEmails(admins);
-          const members = data
-            .filter((item: UserInfo) => item.role === "general-member")
-            .map((item: UserInfo) => ({ email: item.email, name: item.name }));
-          setMembers(members);
-          setLoadingAdmins(false);
-          setLoadingMembers(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching member info:", error);
-          setLoadingAdmins(false);
-          setLoadingMembers(false);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
+        const data = await response.json();
+
+        // Process e-board members
+        const admins = data
+          .filter((item: UserInfo) => item.role === "e-board")
+          .map((item: UserInfo) => item.email);
+        setAdminEmails(admins);
+
+        const members = data
+          .filter((item: UserInfo) => item.role === "general-member")
+          .map((item: UserInfo) => ({ email: item.email, name: item.name }));
+
+        // Fetch member-info to get rank information
+        const memberInfoResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (memberInfoResponse.ok) {
+          const memberInfoData = await memberInfoResponse.json();
+          // Create a map of email to rank
+          const rankMap = new Map<string, string>();
+          memberInfoData.forEach((info: any) => {
+            if (info.user_email && info.rank) {
+              // Capitalize first letter for display
+              const displayRank = info.rank.charAt(0).toUpperCase() + info.rank.slice(1);
+              rankMap.set(info.user_email.toLowerCase(), displayRank);
+            }
+          });
+
+          // Add rank to members
+          members.forEach((member: any) => {
+            member.rank = rankMap.get(member.email.toLowerCase()) || "Not Specified";
+          });
+        }
+
+        setMembers(members);
+        setLoadingAdmins(false);
+        setLoadingMembers(false);
+      } catch (error) {
+        console.error("Error fetching member info:", error);
+        setLoadingAdmins(false);
+        setLoadingMembers(false);
+      }
     };
 
     const fetchSponsors = async () => {
@@ -509,6 +541,36 @@ const Admin = () => {
         .filter((item: UserInfo) => item.role === "general-member")
         .map((item: UserInfo) => ({ email: item.email, name: item.name })); // Keep name as is (could be undefined/null)
 
+      // Fetch member-info to get rank information
+      const memberInfoResponse = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (memberInfoResponse.ok) {
+        const memberInfoData = await memberInfoResponse.json();
+        // Create a map of email to rank
+        const rankMap = new Map<string, string>();
+        memberInfoData.forEach((info: any) => {
+          if (info.user_email && info.rank) {
+            // Capitalize first letter for display
+            const displayRank = info.rank.charAt(0).toUpperCase() + info.rank.slice(1);
+            rankMap.set(info.user_email.toLowerCase(), displayRank);
+          }
+        });
+
+        // Add rank to fetched members
+        fetchedMembers.forEach((member: any) => {
+          member.rank = rankMap.get(member.email.toLowerCase()) || "Not Specified";
+        });
+      }
+
       fetchedMembers.sort(
         (
           a: { email: string; name?: string | null },
@@ -826,7 +888,6 @@ const Admin = () => {
             <div className="order-6 md:order-6">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">General Members</h2>
-          
               </div>
               {loadingMembers ? (
                 <LoadingSpinner text="Loading members..." size="md" />
@@ -839,6 +900,7 @@ const Admin = () => {
                   onSave={handleMemberUpdateSave}
                   memberDetails={memberDetails}
                   onCreateNew={() => setShowAddMemberModal(true)}
+                  showRankFilter={true}
                 />
               )}
             </div>

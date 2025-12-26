@@ -23,6 +23,9 @@ export interface MemberDetail {
   type?: "member"; // From legacy Member, if still needed
 }
 
+// Member rank type
+export type MemberRank = 'pledge' | 'inducted' | 'alumni';
+
 // Re-export other existing types from this file if any, or add them here.
 // For example, if Announcement type is also used widely:
 export interface Announcement {

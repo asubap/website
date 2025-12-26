@@ -8,6 +8,7 @@ import EmailList from "../admin/EmailList";
 import { useToast } from "../../context/toast/ToastContext";
 import Modal from "../ui/Modal";
 import SearchInput from "../common/SearchInput";
+import { isAlumni } from "../../utils/permissions";
 
 interface EventCardProps {
   event: EventType;
@@ -15,6 +16,8 @@ interface EventCardProps {
   isHighlighted?: boolean;
   registerRef?: (element: HTMLDivElement | null) => void;
   hideRSVP?: boolean;
+  userRank?: string;
+  rankLoading?: boolean;
   onEdit?: () => void;
   onAnnounce?: () => void;
   onDelete?: () => void;
@@ -44,6 +47,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   isHighlighted,
   registerRef,
   hideRSVP = false,
+  userRank: propUserRank,
+  rankLoading: propRankLoading = false,
   onEdit,
   onAnnounce,
   onDelete,
@@ -68,6 +73,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isSponsor = role === "sponsor";
   const isLoggedIn = !!session;
   const isAdmin = role === "e-board";
+  const isAlumniUser = isAlumni(propUserRank);
 
   // Fetch participants with emails (e-board only)
   const fetchParticipants = async () => {
@@ -151,15 +157,34 @@ export const EventCard: React.FC<EventCardProps> = ({
   // Fetch all members when either modal opens
   useEffect(() => {
     if (showAddRSVPModal || showAddAttendeeModal) {
-      fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
-        headers: { Authorization: `Bearer ${session?.access_token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          // Filter for general members only
-          const members = data.filter((m: any) => m.role === 'general-member');
+      // Fetch both users and member-info to get rank data
+      Promise.all([
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+          headers: { Authorization: `Bearer ${session?.access_token}` }
+        }).then(res => res.json()),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/member-info/`, {
+          headers: { Authorization: `Bearer ${session?.access_token}` }
+        }).then(res => res.json())
+      ])
+        .then(([usersData, memberInfoData]) => {
+          // Create a map of email -> rank
+          const rankMap = new Map(
+            memberInfoData.map((m: any) => [m.user_email, m.rank])
+          );
+
+          // Filter for general members only AND exclude alumni
+          const members = usersData
+            .filter((m: any) => m.role === 'general-member')
+            .filter((m: any) => {
+              const rank = rankMap.get(m.email) as string | undefined;
+              return rank?.toLowerCase() !== 'alumni';
+            });
+
           setAllMembers(members);
           setFilteredMembers(members);
+        })
+        .catch(error => {
+          console.error("Error fetching members:", error);
         });
     }
   }, [showAddRSVPModal, showAddAttendeeModal, session]);
@@ -413,7 +438,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         )}
       </div>
 
-      {!isPast && isLoggedIn && !loading && (
+      {!isPast && isLoggedIn && !loading && !propRankLoading && !isAlumniUser && (
         <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
           {(isMember || isSponsor) && !hideRSVP && (
             <div className="w-full sm:w-40">

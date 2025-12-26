@@ -10,9 +10,10 @@ const getEventDateTime = (event: Event) =>
 interface EventMemberProps {
   eventAttendance?: any[];
   onRefreshUserDetails?: () => void;
+  userRank?: string;
 }
 
-const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefreshUserDetails }) => {
+const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefreshUserDetails, userRank }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const { session } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -70,6 +71,8 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefre
               event={event}
               isPast={false}
               hideRSVP={true}
+              userRank={userRank}
+              rankLoading={false}
               onCheckInSuccess={() => {
                 fetchEvents();
                 onRefreshUserDetails?.();
@@ -92,6 +95,8 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefre
               key={event.id}
               event={event}
               isPast={false}
+              userRank={userRank}
+              rankLoading={false}
               onCheckInSuccess={() => {
                 fetchEvents();
                 onRefreshUserDetails?.();
@@ -137,7 +142,14 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefre
               };
               
               return (
-                <EventCard key={index} event={eventForCard} isPast={true} hideRSVP={true} />
+                <EventCard
+                  key={index}
+                  event={eventForCard}
+                  isPast={true}
+                  hideRSVP={true}
+                  userRank={userRank}
+                  rankLoading={false}
+                />
               );
             })
         ) : (

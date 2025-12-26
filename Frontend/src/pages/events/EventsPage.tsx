@@ -21,6 +21,8 @@ const EventsPage: React.FC = () => {
   const { showToast } = useToast();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRank, setUserRank] = useState<string | undefined>(undefined);
+  const [rankLoading, setRankLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const location = useLocation();
@@ -167,6 +169,68 @@ const EventsPage: React.FC = () => {
       setEventToAnnounce(null);
     }
   };
+
+  // Fetch user's rank once at page level
+  useEffect(() => {
+    const fetchUserRank = async () => {
+      const isAdmin = role === "e-board";
+
+      // If not logged in, admin, or still loading auth, skip rank check
+      if (!session?.access_token || !session?.user?.email || isAdmin || authLoading) {
+        setRankLoading(false);
+        return;
+      }
+
+      try {
+        setRankLoading(true);
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const userMemberInfo = data.find(
+            (member: any) => member.user_email === session.user?.email
+          );
+          if (userMemberInfo?.rank) {
+            setUserRank(userMemberInfo.rank);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user rank:", error);
+      } finally {
+        setRankLoading(false);
+      }
+    };
+
+    fetchUserRank();
+
+    // Refetch rank when window regains focus or becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchUserRank();
+      }
+    };
+
+    const handleFocus = () => {
+      fetchUserRank();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [session, role, authLoading]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -332,7 +396,7 @@ const EventsPage: React.FC = () => {
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Events In-Session</h2>
             <div className="space-y-4">
-              {loading ? (
+              {loading || rankLoading ? (
                 <LoadingSpinner text="Loading events in session..." size="md" />
               ) : inSessionEvents.length > 0 ? (
                 inSessionEvents.map((event) => (
@@ -346,6 +410,8 @@ const EventsPage: React.FC = () => {
                       else eventRefs.current.delete(event.id);
                     }}
                     hideRSVP={true}
+                    userRank={userRank}
+                    rankLoading={rankLoading}
                     onEdit={
                       role === "e-board"
                         ? () => handleEditEventClick(event)
@@ -382,7 +448,7 @@ const EventsPage: React.FC = () => {
               )}
             </div>
             <div className="space-y-4">
-              {loading ? (
+              {loading || rankLoading ? (
                 <LoadingSpinner text="Loading upcoming events..." size="md" />
               ) : upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => (
@@ -395,6 +461,8 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
+                    userRank={userRank}
+                    rankLoading={rankLoading}
                     onEdit={
                       role === "e-board"
                         ? () => handleEditEventClick(event)
@@ -421,7 +489,7 @@ const EventsPage: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold mb-6">Past Events</h2>
             <div className="space-y-4">
-              {loading ? (
+              {loading || rankLoading ? (
                 <LoadingSpinner text="Loading past events..." size="md" />
               ) : pastEvents.length > 0 ? (
                 pastEvents.slice(0, visiblePastEventsCount).map((event) => (
@@ -434,6 +502,8 @@ const EventsPage: React.FC = () => {
                       if (el) eventRefs.current.set(event.id, el);
                       else eventRefs.current.delete(event.id);
                     }}
+                    userRank={userRank}
+                    rankLoading={rankLoading}
                     onEdit={
                       role === "e-board"
                         ? () => handleEditEventClick(event)

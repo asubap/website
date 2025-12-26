@@ -9,6 +9,7 @@ export const navLinks = [
 
 const navLinksLoggedIn = [
   { name: "Members", href: "/network" },
+  { name: "Alumni", href: "/alumni" },
   { name: "Sponsors", href: "/sponsors-network" },
   { name: "Events", href: "/events" },
   { name: "Dashboard", href: "/admin" },

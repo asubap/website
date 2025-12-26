@@ -12,7 +12,7 @@ import { MemberDetail } from "../../types";
 // interface MemberDetail { ... } // Removed local definition
 
 interface EmailListProps {
-  emails: { email: string; name?: string; role?: string }[];
+  emails: { email: string; name?: string; role?: string; rank?: string }[];
   onDelete: (email: string) => void;
   userType: "admin" | "sponsor" | "member";
   onEdit?: (email: string) => void;
@@ -20,6 +20,7 @@ interface EmailListProps {
   onSave?: (updatedData: MemberDetail) => Promise<void> | void;
   clickable?: boolean;
   onCreateNew?: () => void;
+  showRankFilter?: boolean;
 }
 
 const EmailList = ({
@@ -31,11 +32,13 @@ const EmailList = ({
   onSave,
   clickable = true,
   onCreateNew,
+  showRankFilter = false,
 }: EmailListProps) => {
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const [emailToEdit, setEmailToEdit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [rankFilter, setRankFilter] = useState("");
   const { showToast } = useToast();
 
   const handleDeleteClick = (email: string, e: React.MouseEvent) => {
@@ -82,25 +85,39 @@ const EmailList = ({
     setEmailToEdit(null);
   };
 
-  // Filter emails based on search query - also filter out invalid entries
+  // Filter emails based on search query and rank - also filter out invalid entries
   const filteredEmails = emails
     .filter(item => item && item.email) // Only include items with valid email
-    .filter(({ email, name }) => {
+    .filter(({ email, name, rank }) => {
       const searchText = (name || email || '').toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
+      const matchesSearch = searchText.includes(searchQuery.toLowerCase());
+      const matchesRank = !rankFilter || rank === rankFilter;
+      return matchesSearch && matchesRank;
     });
 
   return (
     <div className="w-full flex flex-col">
-      {/* Search Bar and Add Button */}
-      <div className="flex items-center gap-4 w-full sm:w-auto mb-2">
+      {/* Search Bar, Filter, and Add Button */}
+      <div className="flex items-center gap-2 w-full mb-2">
         <SearchInput
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={`Search ${userType}s...`}
-          containerClassName="flex-grow sm:w-64"
+          containerClassName="flex-grow"
           inputClassName="px-3 py-2"
         />
+        {showRankFilter && (
+          <select
+            value={rankFilter}
+            onChange={(e) => setRankFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+          >
+            <option value="">All Ranks</option>
+            <option value="Inducted">Inducted</option>
+            <option value="Pledge">Pledge</option>
+            <option value="Alumni">Alumni</option>
+          </select>
+        )}
         {onCreateNew && (
           <button
             onClick={onCreateNew}
