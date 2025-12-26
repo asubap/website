@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import SearchInput from "../common/SearchInput";
+import SortDropdown from "../common/SortDropdown";
 
 interface Filters {
   graduationYear: string;
@@ -7,14 +8,30 @@ interface Filters {
   status: string;
 }
 
+interface SortOption {
+  value: string;
+  label: string;
+}
+
 interface NetworkSearchProps {
   onSearch: (query: string, filters: Filters) => void;
   availableGraduationYears: string[];
   availableMajors: string[];
   availableStatuses: string[];
+  sortOptions?: SortOption[];
+  sortValue?: string;
+  onSortChange?: (value: string) => void;
 }
 
-const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch, availableGraduationYears, availableMajors, availableStatuses }) => {
+const NetworkSearch: React.FC<NetworkSearchProps> = ({
+  onSearch,
+  availableGraduationYears,
+  availableMajors,
+  availableStatuses,
+  sortOptions,
+  sortValue,
+  onSortChange
+}) => {
   const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
@@ -54,12 +71,24 @@ const NetworkSearch: React.FC<NetworkSearchProps> = ({ onSearch, availableGradua
     <div className="bg-white rounded-lg shadow mb-6 p-4">
       <div className="mb-4">
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <SearchInput
-              value={query}
-              onChange={handleInputChange}
-              placeholder="Search by name, major, or email..."
-            />
+          <div className="flex-1 flex gap-2">
+            <div className="flex-1">
+              <SearchInput
+                value={query}
+                onChange={handleInputChange}
+                placeholder="Search by name, major, or email..."
+              />
+            </div>
+            {sortOptions && sortValue && onSortChange && (
+              <div className="w-48">
+                <SortDropdown
+                  options={sortOptions}
+                  value={sortValue}
+                  onChange={onSortChange}
+                  label=""
+                />
+              </div>
+            )}
           </div>
           <div className="flex gap-2 w-full md:w-auto">
             <button

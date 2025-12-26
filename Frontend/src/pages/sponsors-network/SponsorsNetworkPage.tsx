@@ -6,6 +6,8 @@ import { Sponsor } from "../../types";
 import NetworkList from "../../components/network/NetworkList";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { getNavLinks } from "../../components/nav/NavLink";
+import SortDropdown from "../../components/common/SortDropdown";
+import { useSort, sponsorSortFields } from "../../utils/sortUtils";
 
 // Define interface for sponsor resources
 interface SponsorResource {
@@ -74,6 +76,14 @@ const transformBackendSponsorToSponsor = (item: BackendSponsor): Sponsor => {
   };
 };
 
+// Sort options for sponsors
+const sponsorSortOptions = [
+  { value: 'tier-desc', label: 'Tier (Highest First)' },
+  { value: 'tier-asc', label: 'Tier (Lowest First)' },
+  { value: 'name-asc', label: 'Name (A-Z)' },
+  { value: 'name-desc', label: 'Name (Z-A)' },
+];
+
 const SponsorsNetworkPage = () => {
   const { session } = useAuth();
   const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
@@ -81,6 +91,13 @@ const SponsorsNetworkPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSponsorsLoading, setIsSponsorsLoading] = useState(true);
   const [sponsorsError, setSponsorsError] = useState<string | null>(null);
+
+  // Use the custom sort hook
+  const { sortBy, sortedData: sortedSponsors, handleSortChange } = useSort(
+    filteredSponsors,
+    'tier-desc',
+    sponsorSortFields
+  );
 
   // Fuse.js setup for sponsor search
   const fuseOptions = {
@@ -146,17 +163,19 @@ const SponsorsNetworkPage = () => {
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
 
+    let results = allSponsors;
+
     if (query.trim()) {
       try {
         const searchResults = fuse.search(query);
-        setFilteredSponsors(searchResults.map((result) => result.item));
+        results = searchResults.map((result) => result.item);
       } catch (error) {
         console.error("Error during fuse.search:", error);
-        setFilteredSponsors([]);
+        results = [];
       }
-    } else {
-      setFilteredSponsors(allSponsors);
     }
+
+    setFilteredSponsors(results);
   }, [fuse, allSponsors]);
 
   return (
@@ -166,15 +185,45 @@ const SponsorsNetworkPage = () => {
           Our Sponsors
         </h1>
 
-        {/* Simple search bar */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search sponsors..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bapred focus:border-transparent"
-          />
+        {/* Search and Sort - Integrated */}
+        <div className="bg-white rounded-lg shadow mb-6 p-4">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5 text-gray-400"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search sponsors..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bapred transition-colors"
+                />
+              </div>
+            </div>
+            <div className="w-48">
+              <SortDropdown
+                options={sponsorSortOptions}
+                value={sortBy}
+                onChange={handleSortChange}
+                label=""
+              />
+            </div>
+          </div>
         </div>
 
         <div className="mt-6">
@@ -184,8 +233,8 @@ const SponsorsNetworkPage = () => {
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
               <p>{sponsorsError}</p>
             </div>
-          ) : filteredSponsors.length > 0 ? (
-            <NetworkList entities={filteredSponsors} />
+          ) : sortedSponsors.length > 0 ? (
+            <NetworkList entities={sortedSponsors} />
           ) : (
             allSponsors.length > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4">

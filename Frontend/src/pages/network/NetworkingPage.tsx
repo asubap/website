@@ -8,6 +8,7 @@ import { MemberDetail as Member } from "../../types";
 import NetworkList from "../../components/network/NetworkList";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { getNavLinks } from "../../components/nav/NavLink";
+import { useSort, memberSortFields } from "../../utils/sortUtils";
 
 interface Filters {
   graduationYear: string;
@@ -91,6 +92,24 @@ const transformBackendMemberToMember = (item: BackendMember): Member => {
   };
 };
 
+// Sort options for members
+const memberSortOptions = [
+  { value: 'name-asc', label: 'Name (A-Z)' },
+  { value: 'name-desc', label: 'Name (Z-A)' },
+  { value: 'graduation-asc', label: 'Graduation Year (Earliest)' },
+  { value: 'graduation-desc', label: 'Graduation Year (Latest)' },
+  { value: 'major-asc', label: 'Major (A-Z)' },
+  { value: 'major-desc', label: 'Major (Z-A)' },
+  { value: 'rank-asc', label: 'Rank (Current First)' },
+  { value: 'rank-desc', label: 'Rank (Alumni First)' },
+  { value: 'status-asc', label: 'Status (A-Z)' },
+  { value: 'status-desc', label: 'Status (Z-A)' },
+  { value: 'hours-desc', label: 'Total Hours (High to Low)' },
+  { value: 'hours-asc', label: 'Total Hours (Low to High)' },
+  { value: 'email-asc', label: 'Email (A-Z)' },
+  { value: 'email-desc', label: 'Email (Z-A)' },
+];
+
 const NetworkingPage = () => {
   const { session } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
@@ -98,6 +117,13 @@ const NetworkingPage = () => {
 
   const [isMembersLoading, setIsMembersLoading] = useState(true);
   const [membersError, setMembersError] = useState<string | null>(null);
+
+  // Use the custom sort hook
+  const { sortBy, sortedData: sortedMembers, handleSortChange } = useSort(
+    filteredMembers,
+    'name-asc',
+    memberSortFields
+  );
 
   // Generate dynamic filter options from members data
   const availableGraduationYears = useMemo(() => {
@@ -255,11 +281,14 @@ const NetworkingPage = () => {
           Our Members
         </h1>
 
-        <NetworkSearch 
+        <NetworkSearch
           onSearch={handleSearch}
           availableGraduationYears={availableGraduationYears}
           availableMajors={availableMajors}
           availableStatuses={availableStatuses}
+          sortOptions={memberSortOptions}
+          sortValue={sortBy}
+          onSortChange={handleSortChange}
         />
 
         <div className="mt-6">
@@ -269,8 +298,8 @@ const NetworkingPage = () => {
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
               <p>{membersError}</p>
             </div>
-          ) : filteredMembers.length > 0 ? (
-            <NetworkList entities={filteredMembers} />
+          ) : sortedMembers.length > 0 ? (
+            <NetworkList entities={sortedMembers} />
           ) : (
             members.length > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4">
