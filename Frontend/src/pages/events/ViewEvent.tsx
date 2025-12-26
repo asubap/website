@@ -109,9 +109,9 @@ const ViewEvent = () => {
               </div>
             </div>
             <p className="text-sm">Description: {event.event_description}</p>
-            <p className="text-sm">{event.sponsors_attending}</p>
-            <p className="text-sm">{event.event_attending}</p>
-            <p className="text-sm">{event.event_rsvped}</p>
+            <p className="text-sm">Sponsors: {event.sponsors_attending?.join(", ") || "None"}</p>
+            <p className="text-sm">Attendees: {event.attending_count}</p>
+            <p className="text-sm">RSVPs: {event.rsvp_count}</p>
           </div>
         </main>
       </div>

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { supabase } from "../../context/auth/supabaseClient";
 import { useToast } from "../../context/toast/ToastContext";
 import ConfirmationModal from "../common/ConfirmationModal";
-import { Event } from "../../types";
+import { Event, AdminEvent } from "../../types";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-geosearch/dist/geosearch.css';
 import LocationPicker, { LocationObject } from '../common/LocationPicker';
@@ -54,6 +54,11 @@ const EditEventModal = ({
   eventToEdit,
   onEventUpdated,
 }: EditEventModalProps) => {
+  // Type guard for AdminEvent
+  const isAdminEvent = (event: Event): event is AdminEvent => {
+    return 'is_hidden' in event;
+  };
+
   const { showToast } = useToast();
   const [formData, setFormData] = useState<FormDataState>({
     eventTitle: "",
@@ -99,7 +104,7 @@ const EditEventModal = ({
       checkInWindow: eventToEdit.check_in_window || 15,
       checkInRadius: eventToEdit.check_in_radius || 50,
       eventLimit: eventToEdit.event_limit?.toString() || "100",
-      isHidden: eventToEdit.is_hidden || false,
+      isHidden: isAdminEvent(eventToEdit) ? eventToEdit.is_hidden : false,
     };
     initialStateRef.current = initialState;
 
@@ -240,7 +245,7 @@ const EditEventModal = ({
 
       // Assuming backend returns the updated event object or confirms success
       // Construct the updated event object locally for immediate UI update
-      const updatedEvent: Event = {
+      const updatedEvent: AdminEvent = {
         ...eventToEdit,
         event_name: formData.eventTitle.trim(),
         event_description: formData.description.trim(),
@@ -253,12 +258,16 @@ const EditEventModal = ({
         event_hours_type: formData.hoursType,
         sponsors_attending: formData.sponsors,
         id: eventToEdit.id,
-        event_attending: eventToEdit.event_attending ?? [],
-        event_rsvped: eventToEdit.event_rsvped ?? [],
+        event_attending: isAdminEvent(eventToEdit) ? eventToEdit.event_attending : [],
+        event_rsvped: isAdminEvent(eventToEdit) ? eventToEdit.event_rsvped : [],
+        rsvp_count: eventToEdit.rsvp_count,
+        attending_count: eventToEdit.attending_count,
         check_in_window: formData.checkInWindow,
         check_in_radius: formData.checkInRadius,
         event_limit: formData.eventLimit ? parseInt(formData.eventLimit) : 100,
         is_hidden: formData.isHidden,
+        user_rsvped: isAdminEvent(eventToEdit) ? eventToEdit.user_rsvped : false,
+        user_attended: isAdminEvent(eventToEdit) ? eventToEdit.user_attended : false,
       };
 
       onEventUpdated(updatedEvent);

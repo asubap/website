@@ -148,21 +148,8 @@ const EventsPage: React.FC = () => {
             Authorization: `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
-            id: eventToAnnounce.id,
-            event_name: eventToAnnounce.event_name,
-            event_description: eventToAnnounce.event_description,
-            event_location: eventToAnnounce.event_location,
-            event_lat: eventToAnnounce.event_lat,
-            event_long: eventToAnnounce.event_long,
-            event_date: eventToAnnounce.event_date,
-            event_time: eventToAnnounce.event_time,
-            event_rsvped: eventToAnnounce.event_rsvped,
-            event_attending: eventToAnnounce.event_attending,
-            event_hours: eventToAnnounce.event_hours,
-            event_hours_type: eventToAnnounce.event_hours_type,
-            sponsors_attending: eventToAnnounce.sponsors_attending,
-            check_in_window: eventToAnnounce.check_in_window,
-            rsvped_users: eventToAnnounce.rsvped_users
+            event_id: eventToAnnounce.id,
+            recipient_filter: "all"  // Backend fetches emails from database
           }),
         }
       );
@@ -240,13 +227,14 @@ const EventsPage: React.FC = () => {
 
   // Filter events based on search query AND hidden status
   const filteredEvents = allEvents.filter((event) => {
-    // 1. Filter by hidden status (Exclusive Toggle)
+    const isHiddenEvent = 'is_hidden' in event && event.is_hidden;
+
+    // 1. Filter by hidden status (admin toggle)
+    // Backend already filters out hidden events for non-admin users
     if (showHidden) {
-      // If toggle is ON, show ONLY hidden events (and verify admin status just in case)
-      if (!event.is_hidden || !isAdmin) return false;
+      if (!isHiddenEvent) return false;  // Show only hidden events
     } else {
-      // If toggle is OFF, show ONLY standard events
-      if (event.is_hidden) return false;
+      if (isHiddenEvent) return false;   // Show only standard events
     }
 
     // 2. Filter by search query

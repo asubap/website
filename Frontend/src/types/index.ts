@@ -38,27 +38,66 @@ export interface Announcement {
   announcement_date?: string | null; // Similar to date, purpose might need clarification
 }
 
-export type Event = {
+export type BaseEvent = {
   id: string;
   event_name: string;
   event_description: string;
   event_location?: string;
-  event_lat?: number;
-  event_long?: number;
   event_date: string;
   event_time?: string;
-  event_rsvped?: string[];
-  event_attending?: string[];
   event_hours?: number;
   event_hours_type?: string;
   sponsors_attending?: string[];
-  check_in_window?: number;
-  check_in_radius?: number;
-  rsvped_users?: { name: string; email?: string; user_email?: string }[];
-  attending_users?: { name: string; email?: string; user_email?: string }[];
   event_limit?: number;
-  is_hidden?: boolean;
+  rsvp_count: number;          // NEW: Aggregate RSVP count
+  attending_count: number;     // NEW: Aggregate attendance count
 };
+
+// For general-member and sponsor roles
+export type MemberEvent = BaseEvent & {
+  event_lat?: number | null;   // Nullable if user hasn't RSVP'd
+  event_long?: number | null;  // Nullable if user hasn't RSVP'd
+  user_rsvped: boolean;        // NEW: Current user's RSVP status
+  user_attended: boolean;      // NEW: Current user's attendance status
+  can_check_in: boolean;       // NEW: Whether user can check in now
+  check_in_window?: number;    // Only present if user RSVP'd
+  check_in_radius?: number;    // Only present if user RSVP'd
+};
+
+// For e-board role
+export type AdminEvent = BaseEvent & {
+  event_lat: number;           // Always present for admin
+  event_long: number;          // Always present for admin
+  event_rsvped: string[];      // User IDs only (no email objects)
+  event_attending: string[];   // User IDs only (no email objects)
+  is_hidden: boolean;          // Hidden event flag
+  check_in_window: number;     // Always present for admin
+  check_in_radius: number;     // Always present for admin
+  user_rsvped: boolean;        // Admin can also RSVP
+  user_attended: boolean;      // Admin can also attend
+};
+
+// For new /events/:eventId/participants endpoint (e-board only)
+export type EventParticipants = {
+  event_id: string;
+  event_name: string;
+  rsvped_users: {
+    user_id: string;
+    name: string;
+    user_email: string;
+  }[];
+  attending_users: {
+    user_id: string;
+    name: string;
+    user_email: string;
+    checked_in_at?: string;
+  }[];
+  rsvp_count: number;
+  attending_count: number;
+};
+
+// Union type for components (use this as the primary Event type)
+export type Event = MemberEvent | AdminEvent;
 
 export interface Sponsor {
   id?: string; // Standardizing to string for consistency, was string | number

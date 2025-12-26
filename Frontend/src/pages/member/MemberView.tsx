@@ -1,5 +1,5 @@
 import Navbar from "../../components/layout/Navbar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
 import { supabase } from "../../context/auth/supabaseClient";
@@ -58,53 +58,62 @@ const MemberView = () => {
 
   // const [photoLoading, setPhotoLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchMembers = async () => {
+  // Extract fetch logic into reusable function
+  const fetchUserDetails = useCallback(async (showLoading = true) => {
+    if (showLoading) {
       setLoading(true);
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
-          // Fetch user role
-          const token = session.access_token;
-          const response = await fetch(`${BACKEND_URL}/member-info/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              user_email: session.user.email,
-            }),
-          });
+    }
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        // Fetch user role
+        const token = session.access_token;
+        const response = await fetch(`${BACKEND_URL}/member-info/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_email: session.user.email,
+          }),
+        });
 
-          if (!response.ok) {
-            throw new Error("Failed to fetch user details");
+        if (!response.ok) {
+          throw new Error("Failed to fetch user details");
+        }
+
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          setUserDetails(data[0]);
+          // Set profile photo URL if available
+          if (data[0].profile_photo_url) {
+            setProfilePhotoUrl(data[0].profile_photo_url);
           }
-
-          const data = await response.json();
-
-          if (data && data.length > 0) {
-            setUserDetails(data[0]);
-            // Set profile photo URL if available
-            if (data[0].profile_photo_url) {
-              setProfilePhotoUrl(data[0].profile_photo_url);
-            }
-          } else {
+        } else {
+          if (showLoading) {
             setError("No user details found");
           }
         }
-      } catch (error) {
-        console.error("Error fetching member info:", error);
+      }
+    } catch (error) {
+      console.error("Error fetching member info:", error);
+      if (showLoading) {
         setError("Failed to load user details");
-      } finally {
+      }
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
-
-    fetchMembers();
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, [fetchUserDetails]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -144,6 +153,7 @@ const MemberView = () => {
             serviceHours={userDetails.service_hours || "0"}
             socialHours={userDetails.social_hours || "0"}
             eventAttendance={userDetails.event_attendance || []}
+            onRefreshUserDetails={() => fetchUserDetails(false)}
           />
         </>
       )}

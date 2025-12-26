@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Event } from "../../types";
+import { Event, AdminEvent } from "../../types";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { EventListShort } from "../event/EventListShort";
 
@@ -11,6 +11,11 @@ interface AdminEventsSectionProps {
   onEditEvent: (event: Event) => void;
 }
 
+// Type guard for AdminEvent
+const isAdminEvent = (event: Event): event is AdminEvent => {
+  return 'is_hidden' in event;
+};
+
 const AdminEventsSection: React.FC<AdminEventsSectionProps> = ({
   upcomingEvents,
   pastEvents,
@@ -20,9 +25,9 @@ const AdminEventsSection: React.FC<AdminEventsSectionProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'standard' | 'hidden'>('standard');
 
-  const visibleUpcoming = upcomingEvents.filter(e => !e.is_hidden);
-  const visiblePast = pastEvents.filter(e => !e.is_hidden);
-  const hiddenEvents = [...upcomingEvents, ...pastEvents].filter(e => e.is_hidden);
+  const visibleUpcoming = upcomingEvents.filter(e => isAdminEvent(e) && !e.is_hidden);
+  const visiblePast = pastEvents.filter(e => isAdminEvent(e) && !e.is_hidden);
+  const hiddenEvents = [...upcomingEvents, ...pastEvents].filter(e => isAdminEvent(e) && e.is_hidden);
 
   return (
     <div className="space-y-6">

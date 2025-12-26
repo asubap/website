@@ -51,7 +51,7 @@ export const EventListShort: React.FC<EventListShortProps> = ({ events, onEdit }
             )}
           </p>
           <p className="text-sm text-gray-600 mb-2">
-            <span className="font-semibold">RSVPs:</span> {event.event_rsvped?.length || 0}
+            <span className="font-semibold">RSVPs:</span> {event.rsvp_count || 0}
           </p>
           <div className="ml-auto flex gap-2 mt-1">
             <button

@@ -27,6 +27,7 @@ interface MemberDescriptionProps {
   id?: string;
   role?: string;
   eventAttendance?: any[];
+  onRefreshUserDetails?: () => void;
 }
 
 const READ_ANNOUNCEMENTS_KEY = "readAnnouncementIds";
@@ -69,6 +70,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
   id,
   role,
   eventAttendance,
+  onRefreshUserDetails,
 }) => {
   const { session } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -170,6 +172,34 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
       links: [],
     };
   });
+
+  // Sync profileData with props when they change (e.g., after check-in)
+  useEffect(() => {
+    const userId = id || session?.user?.id || email;
+    const userRole =
+      role || session?.user?.user_metadata?.role || "general-member";
+    setProfileData({
+      id: userId,
+      name: name,
+      email: email,
+      phone: phone,
+      major: major,
+      graduationDate: year,
+      status: status,
+      about: description,
+      internship: internship,
+      photoUrl: profileUrl,
+      hours: hours,
+      rank: rank,
+      role: userRole,
+      developmentHours: developmentHours,
+      professionalHours: professionalHours,
+      serviceHours: serviceHours,
+      socialHours: socialHours,
+      type: "member",
+      links: [],
+    });
+  }, [id, session, email, name, phone, major, year, status, description, internship, profileUrl, hours, rank, role, developmentHours, professionalHours, serviceHours, socialHours]);
 
   const handleSaveProfile = (newData: MemberDetail): void => {
     setProfileData(newData);
@@ -282,7 +312,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
         </div>
       </div>
 
-      <EventMember eventAttendance={eventAttendance} />
+      <EventMember eventAttendance={eventAttendance} onRefreshUserDetails={onRefreshUserDetails} />
 
       <ProfileEditModal
         isOpen={isEditModalOpen}

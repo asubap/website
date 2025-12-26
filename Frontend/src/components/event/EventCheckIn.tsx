@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import { useToast } from "../../context/toast/ToastContext";
 
 interface EventCheckInProps {
   eventId: string;
-  eventAttending: string[];
-  eventRSVPed: string[];
+  userAttended: boolean;       // NEW: Direct boolean
+  userRsvped: boolean;         // NEW: Direct boolean
+  canCheckIn: boolean;         // NEW: Backend computed
   eventDate: string;
   eventTime: string;
   eventHours: number;
@@ -27,8 +28,9 @@ export const isEventInSession = (
 
 const EventCheckIn: React.FC<EventCheckInProps> = ({
   eventId,
-  eventAttending = [],
-  eventRSVPed = [],
+  userAttended,
+  userRsvped,
+  canCheckIn: _canCheckIn, // Received from backend but currently using local inSession logic
   eventDate,
   eventTime,
   eventHours,
@@ -38,12 +40,18 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
   const [status, setStatus] = useState<
     "idle" | "locating" | "sending" | "success" | "error"
   >("idle");
+  const [localCheckedIn, setLocalCheckedIn] = useState(false); // Track local check-in state
   const { session } = useAuth();
   const { showToast } = useToast();
 
-  const alreadyCheckedIn = (eventAttending || []).includes(
-    session?.user?.id || ""
-  );
+  // Sync local state with prop when it updates
+  useEffect(() => {
+    if (userAttended) {
+      setLocalCheckedIn(true);
+    }
+  }, [userAttended]);
+
+  const alreadyCheckedIn = userAttended || localCheckedIn;  // Check both prop and local state
 
   const inSession = isEventInSession(eventDate, eventTime, eventHours);
 
@@ -87,7 +95,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
     }
 
     console.log("before rsvped");
-    if (!(eventRSVPed || []).includes(session.user.id || "")) {
+    if (!userRsvped) {
       setStatus("error");
       showToast("Cannot check in, not RSVP'd.", "error");
       return;
@@ -126,6 +134,7 @@ const EventCheckIn: React.FC<EventCheckInProps> = ({
           const data = await res.json();
           if (res.ok) {
             setStatus("success");
+            setLocalCheckedIn(true); // Update local state to disable button immediately
             showToast(data.message, "success");
             if (onCheckInSuccess) {
               onCheckInSuccess();

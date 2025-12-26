@@ -9,9 +9,10 @@ const getEventDateTime = (event: Event) =>
 
 interface EventMemberProps {
   eventAttendance?: any[];
+  onRefreshUserDetails?: () => void;
 }
 
-const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
+const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefreshUserDetails }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const { session } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -51,9 +52,9 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const inSessionEvents = events.filter(event => !event.is_hidden && isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
+  const inSessionEvents = events.filter(event => isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
   const upcomingEvents = events
-    .filter(event => !event.is_hidden && !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= today)
+    .filter(event => !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= today)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
 
   return (
@@ -64,7 +65,16 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
       <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[600px] sm:max-h-[400px] space-y-4">
         {inSessionEvents.length > 0 ? (
           inSessionEvents.map((event) => (
-            <EventCard key={event.id} event={event} isPast={false} hideRSVP={true} onCheckInSuccess={fetchEvents} />
+            <EventCard
+              key={event.id}
+              event={event}
+              isPast={false}
+              hideRSVP={true}
+              onCheckInSuccess={() => {
+                fetchEvents();
+                onRefreshUserDetails?.();
+              }}
+            />
           ))
         ) : (
           <p className="text-gray-500">No events in session</p>
@@ -78,7 +88,15 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
       <div className="overflow-y-auto pr-2 sm:pr-4 mb-8 max-h-[600px] sm:max-h-[400px] space-y-4">
         {upcomingEvents.length > 0 ? (
           upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} isPast={false} />
+            <EventCard
+              key={event.id}
+              event={event}
+              isPast={false}
+              onCheckInSuccess={() => {
+                fetchEvents();
+                onRefreshUserDetails?.();
+              }}
+            />
           ))
         ) : (
           <p className="text-gray-500">No upcoming events</p>
@@ -109,6 +127,13 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [] }) => {
                 event_time: attendedEvent.event_time,
                 event_hours: attendedEvent.event_hours,
                 event_hours_type: attendedEvent.event_hours_type,
+                rsvp_count: 0,
+                attending_count: 0,
+                event_lat: null,
+                event_long: null,
+                user_rsvped: false,
+                user_attended: true,
+                can_check_in: false,
               };
               
               return (

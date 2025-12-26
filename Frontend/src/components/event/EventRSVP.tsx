@@ -5,24 +5,22 @@ import { toast } from "react-hot-toast";
 
 interface EventRSVPProps {
   eventId: string;
-  eventRSVPed: string[];
+  userRsvped: boolean;         // CHANGED: from eventRSVPed: string[]
   eventName: string;
   isRSVPFull: boolean;
   onRSVPChange?: () => void; // Optional callback to inform parent of RSVP change
 }
 
-const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, eventRSVPed, eventName, isRSVPFull, onRSVPChange }) => {
+const EventRSVP: React.FC<EventRSVPProps> = ({ eventId, userRsvped, eventName, isRSVPFull, onRSVPChange }) => {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [localRSVPed, setLocalRSVPed] = useState<boolean>(false);
+  const [localRSVPed, setLocalRSVPed] = useState<boolean>(userRsvped);
   const { session } = useAuth();
 
-  // Keep localRSVPed in sync when session loads or eventRSVPed changes
+  // Keep localRSVPed in sync when userRsvped changes
   useEffect(() => {
-    if (session?.user?.id) {
-      setLocalRSVPed(eventRSVPed.includes(session.user.id));
-    }
-  }, [session?.user?.id, eventRSVPed]);
+    setLocalRSVPed(userRsvped);
+  }, [userRsvped]);
 
   const handleRSVPAction = async () => {
     if (!session?.access_token) {

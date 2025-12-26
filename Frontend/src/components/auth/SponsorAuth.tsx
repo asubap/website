@@ -9,6 +9,7 @@ const SponsorAuth = () => {
   const [sponsors, setSponsors] = useState<string[]>([]);
   const { setSession, setRole } = useAuth();
   const [showPasscode, setShowPasscode] = useState(false);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchSponsors = async () => {
@@ -62,6 +63,8 @@ const SponsorAuth = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(""); // Clear any previous errors
+
     const form = e.target as HTMLFormElement;
     const sponsorElement = form.elements.namedItem(
       "sponsor"
@@ -71,7 +74,7 @@ const SponsorAuth = () => {
     ) as HTMLInputElement;
 
     if (!sponsorElement || !passcodeElement) {
-      console.error("Form elements not found");
+      setError("Form elements not found");
       return;
     }
 
@@ -81,13 +84,19 @@ const SponsorAuth = () => {
     // After backend says "auth success" and sends token
     // replace spaces with -
     const sponsorEmail = companyName.replace(/\s+/g, "-");
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: `${sponsorEmail.toLowerCase()}@example.com`,
       password: `${passcode}`,
     });
 
-    if (error) {
-      console.error("Error signing in:", error);
+    if (authError) {
+      console.error("Error signing in:", authError);
+      // Set user-friendly error message
+      if (authError.message.includes("Invalid login credentials")) {
+        setError("Invalid passcode. Please try again.");
+      } else {
+        setError(authError.message || "An error occurred during login. Please try again.");
+      }
       return;
     }
 
@@ -101,6 +110,11 @@ const SponsorAuth = () => {
   return (
     <div className="flex flex-col items-center w-full max-w-xs">
       <h1 className="text-2xl font-outfit mb-4">Sponsors</h1>
+      {error && (
+        <div className="w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       <form
         className="flex flex-col gap-2 items-center w-full"
         onSubmit={handleSubmit}

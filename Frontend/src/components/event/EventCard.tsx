@@ -2,20 +2,15 @@ import React, { useState, useEffect } from "react";
 import EventCheckIn from "./EventCheckIn";
 import EventRSVP from "./EventRSVP";
 import { useAuth } from "../../context/auth/authProvider";
-import { Event as EventType } from "../../types";
+import { Event as EventType, EventParticipants } from "../../types";
 import { Megaphone, Trash2, ChevronDown, ChevronUp, Plus, MoreHorizontal } from "lucide-react";
 import EmailList from "../admin/EmailList";
 import { useToast } from "../../context/toast/ToastContext";
 import Modal from "../ui/Modal";
 import SearchInput from "../common/SearchInput";
 
-interface EventWithUsers extends EventType {
-  attending_users?: { name: string; email?: string; user_email?: string }[];
-  rsvped_users?: { name: string; email?: string; user_email?: string }[];
-}
-
 interface EventCardProps {
-  event: EventWithUsers;
+  event: EventType;
   isPast: boolean;
   isHighlighted?: boolean;
   registerRef?: (element: HTMLDivElement | null) => void;
@@ -56,8 +51,8 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const { session, role, loading } = useAuth();
   const { showToast } = useToast();
-  const [attendees, setAttendees] = useState<{name: string, email?: string, user_email?: string}[]>(event.attending_users || []);
-  const [rsvps, setRSVPs] = useState<{name: string, email?: string, user_email?: string}[]>(event.rsvped_users || []);
+  const [participants, setParticipants] = useState<EventParticipants | null>(null);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [selectedEntityMenu, setSelectedEntityMenu] = useState<"attendees" | "rsvps" | null>(null);
   const [showAddRSVPModal, setShowAddRSVPModal] = useState(false);
   const [showAddAttendeeModal, setShowAddAttendeeModal] = useState(false);
@@ -74,12 +69,68 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isLoggedIn = !!session;
   const isAdmin = role === "e-board";
 
+  // Fetch participants with emails (e-board only)
+  const fetchParticipants = async () => {
+    if (!isAdmin || !session?.access_token) return;
+
+    setLoadingParticipants(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/events/${event.id}/participants`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          showToast("You don't have permission to view participants", "error");
+          return;
+        }
+        throw new Error("Failed to fetch participants");
+      }
+
+      const data = await response.json();
+
+      // Transform backend response to expected format
+      const transformedData: EventParticipants = {
+        event_id: data.event_id?.toString() || event.id,
+        event_name: data.event_name || event.event_name,
+        rsvped_users: data.participants?.filter((p: any) => p.status === 'rsvped').map((p: any) => ({
+          user_id: p.user_id,
+          name: p.name,
+          user_email: p.user_email,
+        })) || [],
+        attending_users: data.participants?.filter((p: any) => p.status === 'attended').map((p: any) => ({
+          user_id: p.user_id,
+          name: p.name,
+          user_email: p.user_email,
+          checked_in_at: p.checked_in_at,
+        })) || [],
+        rsvp_count: data.participants?.filter((p: any) => p.status === 'rsvped').length || 0,
+        attending_count: data.participants?.filter((p: any) => p.status === 'attended').length || 0,
+      };
+
+      setParticipants(transformedData);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+      showToast("Failed to load participant details", "error");
+    } finally {
+      setLoadingParticipants(false);
+    }
+  };
+
   const handleRSVPChange = async () => {
     try {
-      const updatedEvent = await fetchEventById(event.id);
-      setRSVPs(updatedEvent.rsvped_users || []);
+      if (participants) {
+        await fetchParticipants();  // Refetch if already loaded
+      }
     } catch (error) {
-      console.error("Error refetching event after RSVP:", error);
+      console.error("Error refetching after RSVP:", error);
     }
   };
 
@@ -88,14 +139,14 @@ export const EventCard: React.FC<EventCardProps> = ({
     ? "ring-bapred" // Apply red ring color when highlighted
     : "ring-transparent"; // Use transparent ring color when not highlighted
 
-  const isRSVPFull = event.event_limit ? rsvps.length >= event.event_limit : false;
-  // Update state when event prop changes
+  const isRSVPFull = event.event_limit ? event.rsvp_count >= event.event_limit : false;
+
+  // Fetch participants when admin opens dropdown
   useEffect(() => {
-    const attending = event.attending_users || [];
-    const rsvped = event.rsvped_users || [];
-    setAttendees(attending);
-    setRSVPs(rsvped);
-  }, [event]);
+    if (selectedEntityMenu === "attendees" && isAdmin && !participants) {
+      fetchParticipants();
+    }
+  }, [selectedEntityMenu, isAdmin]);
 
   // Fetch all members when either modal opens
   useEffect(() => {
@@ -151,9 +202,9 @@ export const EventCard: React.FC<EventCardProps> = ({
       });
 
       if (!response.ok) throw new Error("Failed to remove RSVP");
-      // Fetch the latest event data
-      const updatedEvent = await fetchEventById(event.id);
-      setRSVPs(updatedEvent.rsvped_users || []);
+
+      // Refetch participants to get updated list
+      await fetchParticipants();
       showToast("RSVP removed successfully", "success");
     } catch (error) {
       console.error("Error removing RSVP:", error);
@@ -182,9 +233,9 @@ export const EventCard: React.FC<EventCardProps> = ({
         return;
       }
 
-      // Fetch the latest event data
-      const updatedEvent = await fetchEventById(event.id);
-      setAttendees(updatedEvent.attending_users || []);
+      // Refetch participants to get updated list
+      await fetchParticipants();
+      showToast("Attendee removed successfully", "success");
     } catch (error) {
       console.error("Error removing attendee:", error);
       showToast("Failed to remove attendee", "error");
@@ -223,9 +274,8 @@ export const EventCard: React.FC<EventCardProps> = ({
         }
       }
 
-      // Fetch the latest event data
-      const updatedEvent = await fetchEventById(event.id);
-      setRSVPs(updatedEvent.rsvped_users || []);
+      // Refetch participants to get updated list
+      await fetchParticipants();
 
       if (errors.length > 0) {
         showToast(`${errors.join(', ')}`, "error");
@@ -268,12 +318,8 @@ export const EventCard: React.FC<EventCardProps> = ({
         }
       }
 
-
-      // Fetch the latest event data
-      const result = await fetchEventById(event.id);
-      const updatedEvent = result;
-
-      setAttendees(updatedEvent.attending_users || []);
+      // Refetch participants to get updated list
+      await fetchParticipants();
       showToast("Attendee(s) added successfully", "success");
       setShowAddAttendeeModal(false);
       setSelectedMembers([]);
@@ -283,20 +329,6 @@ export const EventCard: React.FC<EventCardProps> = ({
     } finally {
       setIsAddingAttendee(false);
     }
-  };
-
-  // Helper to fetch the latest event data by ID
-  const fetchEventById = async (eventId: string) => {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/events`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify({ event_id: eventId }),
-    });
-    if (!response.ok) throw new Error("Failed to fetch event");
-    return await response.json();
   };
 
   return (
@@ -385,9 +417,9 @@ export const EventCard: React.FC<EventCardProps> = ({
         <div className="col-span-2 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 mt-4">
           {(isMember || isSponsor) && !hideRSVP && (
             <div className="w-full sm:w-40">
-              <EventRSVP 
-                eventId={event.id} 
-                eventRSVPed={event.event_rsvped || []} 
+              <EventRSVP
+                eventId={event.id}
+                userRsvped={'user_rsvped' in event ? event.user_rsvped : false}
                 eventName={event.event_name}
                 isRSVPFull={isRSVPFull}
                 onRSVPChange={handleRSVPChange}
@@ -398,12 +430,13 @@ export const EventCard: React.FC<EventCardProps> = ({
             <div className="w-full sm:w-40">
               <EventCheckIn
                 eventId={event.id}
-                eventAttending={event.event_attending || []}
-                eventRSVPed={event.event_rsvped || []}
+                userAttended={'user_attended' in event ? event.user_attended : false}
+                userRsvped={'user_rsvped' in event ? event.user_rsvped : false}
+                canCheckIn={'can_check_in' in event ? event.can_check_in : false}
                 eventDate={event.event_date}
                 eventTime={event.event_time || '00:00:00'}
                 eventHours={event.event_hours || 0}
-                checkInWindowMinutes={event.check_in_window}
+                checkInWindowMinutes={'check_in_window' in event ? event.check_in_window : undefined}
                 onCheckInSuccess={onCheckInSuccess}
               />
             </div>
@@ -426,7 +459,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               </div>
               <div className="flex items-center flex-shrink-0 ml-2">
                 <span className="text-sm text-gray-500 mr-3 whitespace-nowrap">
-                  {rsvps.length} RSVPs, {attendees.length} Attendees
+                  {event.rsvp_count} RSVPs, {event.attending_count} Attendees
                 </span>
                 {selectedEntityMenu === "attendees" ? (
                   <ChevronUp size={20} className="text-gray-600" />
@@ -455,16 +488,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                     </button>
                   )}
                 </div>
-                {rsvps.length > 0 ? (
+                {loadingParticipants ? (
+                  <div className="text-gray-500">Loading participants...</div>
+                ) : participants?.rsvped_users && participants.rsvped_users.length > 0 ? (
                   <EmailList
-                    emails={rsvps
-                      .filter((rsvp): rsvp is {name: string, email: string, user_email: string} =>
-                        rsvp && !!(rsvp.email || rsvp.user_email)
-                      )
-                      .map(rsvp => ({
-                        email: (rsvp.email || rsvp.user_email)!,
-                        name: rsvp.name
-                      }))}
+                    emails={participants.rsvped_users.map(rsvp => ({
+                      email: rsvp.user_email,
+                      name: rsvp.name
+                    }))}
                     userType="admin"
                     clickable={false}
                     onDelete={handleDeleteRSVP}
@@ -488,16 +519,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                     <span className="hidden sm:inline">Add</span>
                   </button>
                 </div>
-                {attendees.length > 0 ? (
+                {loadingParticipants ? (
+                  <div className="text-gray-500">Loading participants...</div>
+                ) : participants?.attending_users && participants.attending_users.length > 0 ? (
                   <EmailList
-                    emails={attendees
-                      .filter((attendee): attendee is {name: string, email: string, user_email: string} =>
-                        attendee && !!(attendee.email || attendee.user_email)
-                      )
-                      .map(attendee => ({
-                        email: (attendee.email || attendee.user_email)!,
-                        name: attendee.name
-                      }))}
+                    emails={participants.attending_users.map(attendee => ({
+                      email: attendee.user_email,
+                      name: attendee.name
+                    }))}
                     userType="member"
                     clickable={false}
                     onDelete={handleDeleteAttendee}
