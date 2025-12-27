@@ -15,7 +15,7 @@ const CACHE_KEY = 'eboard_faculty_cache';
 const CACHE_DURATION = 6000;
 
 const EboardFacultyPage: React.FC = () => {
-  const { session, role, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [eboardEntries, setEboardEntries] = useState<EboardFacultyEntry[]>([]);
 

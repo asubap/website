@@ -7,7 +7,7 @@ import { getNavLinks } from "../../components/nav/NavLink";
 
 
 export default function Homepage() {
-  const { session, role, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">

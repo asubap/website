@@ -39,7 +39,7 @@ const staticSocialLinks = [
 ];
 
 const ContactUsPage: React.FC = () => {
-  const { session, role, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   // showToast("Event created successfully", "success");
 

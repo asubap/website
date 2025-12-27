@@ -8,7 +8,7 @@ interface NetworkingLayoutProps {
 }
 
 const NetworkingLayout = ({ children, navLinks }: NetworkingLayoutProps) => {
-  const { session, role, isAuthenticated } = useAuth();
+  const { role, isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
