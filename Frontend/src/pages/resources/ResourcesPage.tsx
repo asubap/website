@@ -41,7 +41,7 @@ interface RawCategoryData {
 }
 
 const ResourcesPage: React.FC = () => {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,11 +163,11 @@ const ResourcesPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={getNavLinks(!!session)}
+        links={getNavLinks(isAuthenticated)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={Boolean(session)}
+        isLogged={isAuthenticated}
       />
 
       <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">

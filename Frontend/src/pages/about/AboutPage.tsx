@@ -6,7 +6,7 @@ import { getNavLinks } from "../../components/nav/NavLink";
 import { useAuth } from "../../context/auth/authProvider";
 
 export default function AboutPage() {
-  const { session } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Load Vimeo embed script
   useEffect(() => {
@@ -25,8 +25,8 @@ export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={!!session}
-        links={getNavLinks(!!session)}
+        isLogged={isAuthenticated}
+        links={getNavLinks(isAuthenticated)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

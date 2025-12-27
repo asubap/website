@@ -7,8 +7,8 @@ import { useAuth } from "../../context/auth/authProvider";
 import { getNavLinks } from "../../components/nav/NavLink";
 
 export const ProcessFlow = () => {
-  const { session } = useAuth();
-  const navLinks = getNavLinks(!!session);
+  const { isAuthenticated } = useAuth();
+  const navLinks = getNavLinks(isAuthenticated);
   const [applyFormUrl, setApplyFormUrl] = useState("");
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export const ProcessFlow = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar
-        isLogged={!!session}
+        isLogged={isAuthenticated}
         links={navLinks}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"

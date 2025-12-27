@@ -54,7 +54,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   onDelete,
   onCheckInSuccess,
 }) => {
-  const { session, role, loading } = useAuth();
+  const { session, role, loading, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [participants, setParticipants] = useState<EventParticipants | null>(null);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
@@ -71,7 +71,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   // Role checking logic - Check for string role names
   const isMember = role === "general-member" || role === "admin";
   const isSponsor = role === "sponsor";
-  const isLoggedIn = !!session;
+  const isLoggedIn = isAuthenticated;
   const isAdmin = role === "e-board";
   const isAlumniUser = isAlumni(propUserRank);
 

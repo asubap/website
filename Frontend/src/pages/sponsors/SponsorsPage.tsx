@@ -25,7 +25,7 @@ interface ApiSponsorData {
 }
 
 export default function SponsorsPage() {
-  const { session } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [platinumSponsors, setPlatinumSponsors] = useState<Sponsor[]>([]);
@@ -89,8 +89,8 @@ export default function SponsorsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        isLogged={!!session}
-        links={getNavLinks(!!session)}
+        isLogged={isAuthenticated}
+        links={getNavLinks(isAuthenticated)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

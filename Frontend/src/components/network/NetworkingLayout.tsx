@@ -8,14 +8,14 @@ interface NetworkingLayoutProps {
 }
 
 const NetworkingLayout = ({ children, navLinks }: NetworkingLayoutProps) => {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar
         links={navLinks}
         title="Beta Alpha Psi | Beta Tau Chapter"
-        isLogged={!!session}
+        isLogged={isAuthenticated}
         outlineColor="#AF272F"
         role={role}
       />

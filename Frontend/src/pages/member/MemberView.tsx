@@ -11,7 +11,7 @@ import { getNavLinks } from "../../components/nav/NavLink";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const MemberView = () => {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
   const email = session?.user?.email || "";
 
   const [sponsorProfileUrl] = useState(
@@ -118,8 +118,8 @@ const MemberView = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={getNavLinks(!!session)}
-        isLogged={!!session}
+        links={getNavLinks(isAuthenticated)}
+        isLogged={isAuthenticated}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

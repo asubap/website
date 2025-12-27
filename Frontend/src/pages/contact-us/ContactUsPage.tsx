@@ -39,7 +39,7 @@ const staticSocialLinks = [
 ];
 
 const ContactUsPage: React.FC = () => {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   // showToast("Event created successfully", "success");
 
@@ -68,7 +68,7 @@ const ContactUsPage: React.FC = () => {
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={Boolean(session)}
+        isLogged={isAuthenticated}
         role={role}
       />
       <main className="flex-grow p-8 pt-32">

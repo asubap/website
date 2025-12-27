@@ -26,7 +26,7 @@ interface SponsorResource {
 // IMAGE_URL_REGEX is now likely only used within ResourcePreviewModal or its caller
 
 const SponsorHome = () => {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
   const token = session?.access_token;
 
   const [sponsorData, setSponsorData] = useState<{
@@ -368,8 +368,8 @@ const SponsorHome = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={getNavLinks(!!session)}
-        isLogged={!!session}
+        links={getNavLinks(isAuthenticated)}
+        isLogged={isAuthenticated}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"

@@ -15,7 +15,7 @@ const CACHE_KEY = 'eboard_faculty_cache';
 const CACHE_DURATION = 6000;
 
 const EboardFacultyPage: React.FC = () => {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [eboardEntries, setEboardEntries] = useState<EboardFacultyEntry[]>([]);
 
@@ -68,11 +68,11 @@ const EboardFacultyPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={getNavLinks(!!session)}
+        links={getNavLinks(isAuthenticated)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={Boolean(session)}
+        isLogged={isAuthenticated}
         role={role}
       />
       <main className="flex-grow">

@@ -7,15 +7,15 @@ import { getNavLinks } from "../../components/nav/NavLink";
 
 
 export default function Homepage() {
-  const { session, role } = useAuth();
+  const { session, role, isAuthenticated } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Add padding-top to account for fixed navbar */}
       <div>
         <Navbar
-          links={getNavLinks(!!session)}
-          isLogged={!!session}
+          links={getNavLinks(isAuthenticated)}
+          isLogged={isAuthenticated}
           title="Beta Alpha Psi | Beta Tau Chapter"
           backgroundColor="#FFFFFF"
           outlineColor="#AF272F"

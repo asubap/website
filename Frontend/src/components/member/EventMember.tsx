@@ -50,12 +50,11 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefre
   }, [session, BACKEND_URL]);
 
   // Split events into in-session, upcoming, and past
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
 
   const inSessionEvents = events.filter(event => isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0));
   const upcomingEvents = events
-    .filter(event => !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= today)
+    .filter(event => !isEventInSession(event.event_date, event.event_time || '00:00:00', event.event_hours || 0) && getEventDateTime(event) >= now)
     .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime());
 
   return (

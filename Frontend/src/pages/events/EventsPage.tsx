@@ -17,7 +17,7 @@ import { getNavLinks } from "../../components/nav/NavLink";
 import SearchInput from "../../components/common/SearchInput";
 
 const EventsPage: React.FC = () => {
-  const { session, role, loading: authLoading } = useAuth();
+  const { session, role, loading: authLoading, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -278,8 +278,7 @@ const EventsPage: React.FC = () => {
     }
   }, [location.state, loading]);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
 
   const getEventDateTime = (event: Event) =>
     new Date(`${event.event_date}T${event.event_time || "00:00:00"}`);
@@ -319,7 +318,7 @@ const EventsPage: React.FC = () => {
           event.event_date,
           event.event_time || '00:00:00',
           event.event_hours || 0
-        ) && getEventDateTime(event) >= today
+        ) && getEventDateTime(event) >= now
     )
     .sort(
       (a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime()
@@ -331,7 +330,7 @@ const EventsPage: React.FC = () => {
           event.event_date,
           event.event_time || '00:00:00',
           event.event_hours || 0
-        ) && getEventDateTime(event) < today
+        ) && getEventDateTime(event) < now
     )
     .sort(
       (a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime()
@@ -344,11 +343,11 @@ const EventsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        links={getNavLinks(!!session)}
+        links={getNavLinks(isAuthenticated)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={Boolean(session)}
+        isLogged={isAuthenticated}
         role={role}
       />
       <main className="flex-grow p-8 pt-32 px-8 sm:px-16 lg:px-24">

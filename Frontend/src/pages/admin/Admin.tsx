@@ -64,7 +64,7 @@ const Admin = () => {
   const [announcementToDelete, setAnnouncementToDelete] =
     useState<Announcement | null>(null);
 
-  const { role, session } = useAuth();
+  const { role, session, isAuthenticated } = useAuth();
 
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [sponsors, setSponsors] = useState<string[]>([]);
@@ -745,11 +745,11 @@ const Admin = () => {
   return (
     <div className="flex flex-col min-h-screen font-outfit">
       <Navbar
-        links={getNavLinks(!!session)}
+        links={getNavLinks(isAuthenticated)}
         title="Beta Alpha Psi | Beta Tau Chapter"
         backgroundColor="#FFFFFF"
         outlineColor="#AF272F"
-        isLogged={!!session}
+        isLogged={isAuthenticated}
         role={role}
       />
 

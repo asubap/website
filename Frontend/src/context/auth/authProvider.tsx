@@ -15,6 +15,7 @@ interface AuthContextType {
   role: RoleType;
   loading: boolean;
   authError: string | null;
+  isAuthenticated: boolean;
   setSession: (user: Session | null) => void;
   setRole: (role: RoleType) => void;
 }
@@ -44,8 +45,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Failed to authenticate" }));
-        setAuthError(errorData.error || "Failed to authenticate");
+        const errorMessage = errorData.error || "Failed to authenticate";
+
+        // Auto sign-out archived or non-existent members
+        // Clear state immediately to prevent auto-login after unarchiving
+        setSession(null);
         setRole(null);
+        setAuthError(errorMessage);
+
+        // Sign out from Supabase - this clears all auth tokens and localStorage
+        await supabase.auth.signOut({ scope: 'local' });
+
+        // Force clear all Supabase-related localStorage keys
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            localStorage.removeItem(key);
+          }
+        });
       } else {
         const data = await response.json();
         setRole(data);
@@ -95,14 +111,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
+    // Periodic role validation - check every 30 seconds if user is still valid
+    const roleValidationInterval = setInterval(async () => {
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (currentSession?.user?.email) {
+        // Silently revalidate the user's role
+        await fetchUserRole(currentSession.access_token, currentSession.user.email);
+      }
+    }, 30000); // Check every 30 seconds
+
     return () => {
       authListener.subscription.unsubscribe();
+      clearInterval(roleValidationInterval);
     };
   }, []);
 
+  // User is truly authenticated only if they have both a session AND a valid role
+  const isAuthenticated = !!session && !!role && !authError;
+
   return (
     <AuthContext.Provider
-      value={{ session, role, loading, authError, setSession, setRole }}
+      value={{ session, role, loading, authError, isAuthenticated, setSession, setRole }}
     >
       {children}
     </AuthContext.Provider>
