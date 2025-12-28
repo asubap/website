@@ -55,6 +55,11 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" />;
   }
 
+  // Allow access to /auth/Home even without a role (to show error message)
+  if (location.pathname === "/auth/Home") {
+    return <Outlet />;
+  }
+
   // If user doesn't have permission for this route
   if (!hasPermission()) {
     return <Navigate to="/auth/Home" />;

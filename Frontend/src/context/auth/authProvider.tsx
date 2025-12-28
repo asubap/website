@@ -47,21 +47,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const errorData = await response.json().catch(() => ({ error: "Failed to authenticate" }));
         const errorMessage = errorData.error || "Failed to authenticate";
 
-        // Auto sign-out archived or non-existent members
-        // Clear state immediately to prevent auto-login after unarchiving
-        setSession(null);
+        // DON'T clear session yet - let AuthHome show the error first
+        // Just set role to null and error message
         setRole(null);
         setAuthError(errorMessage);
 
-        // Sign out from Supabase - this clears all auth tokens and localStorage
-        await supabase.auth.signOut({ scope: 'local' });
-
-        // Force clear all Supabase-related localStorage keys
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-') || key.includes('supabase')) {
-            localStorage.removeItem(key);
-          }
-        });
+        // AuthHome will handle the sign-out after displaying the error
       } else {
         const data = await response.json();
         setRole(data);
