@@ -75,6 +75,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: { session },
         } = await supabase.auth.getSession();
 
+        console.log("🔐 initializeAuth - got session:", !!session, session?.user?.email);
+
+        // Set session in state immediately
+        setSession(session);
+
         if (session?.user?.email) {
           await fetchUserRole(session.access_token, session.user.email);
         } else {

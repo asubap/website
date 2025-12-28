@@ -12,16 +12,9 @@ const GoogleLogin = () => {
       // : "https://frontend-iota-gules-58.vercel.app";
       : "http://asubap.com";
 
-  // Redirect to saved path or default to auth home
+  // Always redirect to /login after OAuth, let LogInPage handle the final redirect
   const getRedirectUrl = useCallback(() => {
-    const savedPath = localStorage.getItem("redirectAfterLogin");
-    // If there's a saved path, use it and clear storage
-    if (savedPath) {
-      localStorage.removeItem("redirectAfterLogin");
-      return `${baseUrl}${savedPath}`;
-    }
-    // Otherwise default to auth home
-    return `${baseUrl}/auth/Home`;
+    return `${baseUrl}/login`;
   }, [baseUrl]);
 
   const handleGoogleLogin = async () => {
