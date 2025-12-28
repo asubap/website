@@ -18,6 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   setSession: (user: Session | null) => void;
   setRole: (role: RoleType) => void;
+  setAuthError: (error: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -130,7 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ session, role, loading, authError, isAuthenticated, setSession, setRole }}
+      value={{ session, role, loading, authError, isAuthenticated, setSession, setRole, setAuthError }}
     >
       {children}
     </AuthContext.Provider>
