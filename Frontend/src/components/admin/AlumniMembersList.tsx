@@ -4,7 +4,6 @@ import { useToast } from "../../context/toast/ToastContext";
 import { MemberDetail } from "../../types";
 import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
-import { GraduationCap } from "lucide-react";
 
 interface AlumniMembersListProps {
   onRefreshRequested?: (refreshFn: () => void) => void;
@@ -59,8 +58,8 @@ const AlumniMembersList = ({ onRefreshRequested }: AlumniMembersListProps) => {
   };
 
   // Filter members based on search query
-  const filteredMembers = alumniMembers.filter(({ email, name, major }) => {
-    const searchText = `${name} ${email} ${major || ""}`.toLowerCase();
+  const filteredMembers = alumniMembers.filter(({ email, name }) => {
+    const searchText = `${name} ${email}`.toLowerCase();
     return searchText.includes(searchQuery.toLowerCase());
   });
 
@@ -97,38 +96,11 @@ const AlumniMembersList = ({ onRefreshRequested }: AlumniMembersListProps) => {
           filteredMembers.map((member) => (
             <div
               key={member.email}
-              className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center hover:bg-gray-50 transition-colors"
+              className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center"
             >
-              <div className="flex items-center gap-3">
-                {member.photoUrl && (
-                  <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                    <img
-                      src={member.photoUrl}
-                      alt={`${member.name}'s profile`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div>
-                  <span className="text-gray-800 text-m font-medium">
-                    {member.name}
-                  </span>
-                  {member.major && (
-                    <span className="text-xs ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                      {member.major}
-                    </span>
-                  )}
-                  {member.graduationDate && (
-                    <div className="text-xs text-gray-600 flex items-center mt-1">
-                      <GraduationCap size={12} className="mr-1" />
-                      Class of {member.graduationDate}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="text-sm text-gray-600">
-                {member.email}
-              </div>
+              <span className="text-gray-800 text-m pr-2">
+                {member.name ? member.name : member.email}
+              </span>
             </div>
           ))
         )}

@@ -56,7 +56,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     <img
                       src={entity.photoUrl}
                       alt={`${entity.name}'s profile/logo`}
-                      className="w-full h-full object-cover object-center"
+                      className="w-full h-full object-contain object-center"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-red-700 text-white text-xl font-bold">
