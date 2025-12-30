@@ -138,7 +138,6 @@ const EmailList = ({
             <option value="">All Ranks</option>
             <option value="Inducted">Inducted</option>
             <option value="Pledge">Pledge</option>
-            <option value="Alumni">Alumni</option>
           </select>
         )}
         {onCreateNew && (

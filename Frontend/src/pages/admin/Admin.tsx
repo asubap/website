@@ -838,7 +838,7 @@ const Admin = () => {
             </div>
 
             {/* Archived Members */}
-            <div className="order-7 md:order-7 col-span-1 md:col-span-2">
+            <div className="order-7 md:order-7">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Archived Members</h2>
               </div>
@@ -849,7 +849,7 @@ const Admin = () => {
             </div>
 
             {/* Alumni Members */}
-            <div className="order-8 md:order-8 col-span-1 md:col-span-2">
+            <div className="order-8 md:order-8">
               <div className="flex items-center mb-2">
                 <h2 className="text-2xl font-semibold">Alumni Members</h2>
               </div>
