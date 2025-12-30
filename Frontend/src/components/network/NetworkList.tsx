@@ -89,12 +89,14 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                         {entity.email || "Not Provided"}
                       </span>
                     </div>
-                    <div className="flex items-center text-sm">
-                      <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700 font-bold">
-                        Total Hours: {entity.hours ?? "0"}
-                      </span>
-                    </div>
+                    {entity.rank?.toLowerCase() !== "alumni" && (
+                      <div className="flex items-center text-sm">
+                        <Clock className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="text-gray-700 font-bold">
+                          Total Hours: {entity.hours ?? "0"}
+                        </span>
+                      </div>
+                    )}
                     {entity.links && entity.links.length > 0 ? (
                       <div className="flex items-center text-sm">
                         <LinkIcon className="w-4 h-4 mr-2 text-gray-500" />

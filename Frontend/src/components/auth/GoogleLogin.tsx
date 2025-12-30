@@ -12,6 +12,9 @@ const GoogleLogin = () => {
       // : "https://frontend-iota-gules-58.vercel.app";
       : "http://asubap.com";
 
+  // Debug log to verify environment
+  console.log("ENV_STATE:", import.meta.env.VITE_ENV_STATE, "| Redirect URL:", baseUrl);
+
   // Always redirect to /login after OAuth, let LogInPage handle the final redirect
   const getRedirectUrl = useCallback(() => {
     return `${baseUrl}/login`;

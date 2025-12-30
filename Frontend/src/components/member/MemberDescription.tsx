@@ -288,9 +288,11 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
           <div>
             <span className="font-bold">Status:</span> {profileData.status}
           </div>
-          <div>
-            <span className="font-bold">Hours:</span> {profileData.hours}
-          </div>
+          {!isAlumniUser && (
+            <div>
+              <span className="font-bold">Hours:</span> {profileData.hours}
+            </div>
+          )}
           <div>
             <span className="font-bold">Rank:</span>{" "}
             {profileData.rank
@@ -299,24 +301,26 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
               : "Not set"}
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 mb-6">
-          <div>
-            <span className="font-semibold">Social Hours:</span>{" "}
-            {profileData.socialHours}
+        {!isAlumniUser && (
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 mb-6">
+            <div>
+              <span className="font-semibold">Social Hours:</span>{" "}
+              {profileData.socialHours}
+            </div>
+            <div>
+              <span className="font-semibold">Professional Hours:</span>{" "}
+              {profileData.professionalHours}
+            </div>
+            <div>
+              <span className="font-semibold">Service Hours:</span>{" "}
+              {profileData.serviceHours}
+            </div>
+            <div>
+              <span className="font-semibold">Development Hours:</span>{" "}
+              {profileData.developmentHours ?? "0"}
+            </div>
           </div>
-          <div>
-            <span className="font-semibold">Professional Hours:</span>{" "}
-            {profileData.professionalHours}
-          </div>
-          <div>
-            <span className="font-semibold">Service Hours:</span>{" "}
-            {profileData.serviceHours}
-          </div>
-          <div>
-            <span className="font-semibold">Development Hours:</span>{" "}
-            {profileData.developmentHours ?? "0"}
-          </div>
-        </div>
+        )}
 
         <div className="mb-8">
           <h4 className="font-bold mb-2">About</h4>
