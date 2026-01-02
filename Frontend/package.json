@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.3",
+    "@tinymce/tinymce-react": "^6.3.0",
     "@vercel/blob": "^1.1.1",
     "axios": "^1.8.4",
     "date-fns": "^4.1.0",
