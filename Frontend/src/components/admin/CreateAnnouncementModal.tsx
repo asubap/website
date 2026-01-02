@@ -247,7 +247,7 @@ const CreateAnnouncementModal = ({
           { value: 'Email', title: 'Email' },
         ],
        
-        uploadcare_public_key: 'aead0eab364d63422c24',
+        uploadcare_public_key: import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY,
       }}
       initialValue="Welcome to TinyMCE!"
     />
