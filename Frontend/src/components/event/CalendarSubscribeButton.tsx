@@ -33,17 +33,6 @@ const CalendarSubscribeButton = () => {
   const baseUrl = import.meta.env.VITE_BACKEND_URL || "";
   const icsUrl = `${baseUrl}/events/calendar.ics`;
 
-  const handleGoogleCalendar = () => {
-    // Open Google Calendar's "Add calendar from URL" page
-    window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");
-    // Also copy the URL to clipboard for easy pasting
-    navigator.clipboard.writeText(icsUrl).catch(err => console.error("Failed to copy:", err));
-  };
-
-  const handleOtherApps = () => {
-    setShowModal(true);
-  };
-
   const handleCopyUrl = async () => {
     try {
       await navigator.clipboard.writeText(icsUrl);
@@ -56,25 +45,13 @@ const CalendarSubscribeButton = () => {
 
   return (
     <>
-      <div className="relative inline-flex items-center gap-2">
-        <button
-          onClick={handleGoogleCalendar}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-bapred text-white text-sm font-medium rounded-md hover:bg-bapreddark transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
-        >
-          <Calendar size={18} />
-          <span className="hidden sm:inline">Add to Google Calendar</span>
-          <span className="sm:hidden">Google Calendar</span>
-        </button>
-
-        <button
-          onClick={handleOtherApps}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
-        >
-          <Calendar size={18} />
-          <span className="hidden sm:inline">Other Calendar Apps</span>
-          <span className="sm:hidden">Other Apps</span>
-        </button>
-      </div>
+      <button
+        onClick={() => setShowModal(true)}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-bapred text-white text-sm font-medium rounded-md hover:bg-bapreddark transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bapred"
+      >
+        <Calendar size={18} />
+        <span>Subscribe to Calendar</span>
+      </button>
 
       {/* Modal for Other Calendar Apps */}
       {showModal && (
@@ -86,7 +63,7 @@ const CalendarSubscribeButton = () => {
             </div>
 
             <p className="text-sm text-gray-600 mb-4">
-              Copy the URL below and paste it into your calendar app to subscribe to all BAP events:
+              Copy the calendar URL below and follow the instructions for your calendar app:
             </p>
 
             {/* URL Display with Copy Button */}
@@ -105,6 +82,12 @@ const CalendarSubscribeButton = () => {
 
             {/* Instructions */}
             <div className="space-y-3 mb-6">
+              <div>
+                <h3 className="font-semibold text-sm mb-1">Google Calendar:</h3>
+                <p className="text-xs text-gray-600">
+                  Open Google Calendar → Settings (gear icon) → Add calendar → From URL → Paste URL above → Add calendar
+                </p>
+              </div>
               <div>
                 <h3 className="font-semibold text-sm mb-1">Apple Calendar:</h3>
                 <p className="text-xs text-gray-600">
