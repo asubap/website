@@ -32,7 +32,7 @@ const CalendarSubscribeButton = () => {
 
   const baseUrl = import.meta.env.VITE_BACKEND_URL || "";
   const icsUrl = `${baseUrl}/events/calendar.ics`;
-  const googleCalendarUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(icsUrl)}`;
+  const googleCalendarUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(icsUrl)}`;
 
   const handleGoogleCalendar = () => {
     window.open(googleCalendarUrl, "_blank");
