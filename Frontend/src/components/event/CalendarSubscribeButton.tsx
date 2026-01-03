@@ -32,8 +32,7 @@ const CalendarSubscribeButton = () => {
 
   const baseUrl = import.meta.env.VITE_BACKEND_URL || "";
   const icsUrl = `${baseUrl}/events/calendar.ics`;
-  const webcalUrl = icsUrl.replace("http://", "webcal://").replace("https://", "webcal://");
-  const googleCalendarUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
+  const googleCalendarUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(icsUrl)}`;
 
   const handleGoogleCalendar = () => {
     window.open(googleCalendarUrl, "_blank");
@@ -45,7 +44,7 @@ const CalendarSubscribeButton = () => {
 
   const handleCopyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(webcalUrl);
+      await navigator.clipboard.writeText(icsUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -91,7 +90,7 @@ const CalendarSubscribeButton = () => {
             {/* URL Display with Copy Button */}
             <div className="bg-gray-50 border border-gray-300 rounded-md p-3 mb-4">
               <div className="flex items-center gap-2">
-                <code className="text-xs text-gray-800 flex-1 break-all">{webcalUrl}</code>
+                <code className="text-xs text-gray-800 flex-1 break-all">{icsUrl}</code>
                 <button
                   onClick={handleCopyUrl}
                   className="flex-shrink-0 p-2 text-gray-600 hover:text-bapred transition-colors"
