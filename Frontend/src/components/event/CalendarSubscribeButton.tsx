@@ -35,7 +35,10 @@ const CalendarSubscribeButton = () => {
   const googleCalendarUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(icsUrl)}`;
 
   const handleGoogleCalendar = () => {
-    window.open(googleCalendarUrl, "_blank");
+    // Open Google Calendar's "Add calendar from URL" page
+    window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");
+    // Also copy the URL to clipboard for easy pasting
+    navigator.clipboard.writeText(icsUrl).catch(err => console.error("Failed to copy:", err));
   };
 
   const handleOtherApps = () => {
