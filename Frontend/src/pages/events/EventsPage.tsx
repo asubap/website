@@ -15,7 +15,6 @@ import ConfirmationModal from "../../components/common/ConfirmationModal";
 
 import { getNavLinks } from "../../components/nav/NavLink";
 import SearchInput from "../../components/common/SearchInput";
-import CalendarSubscribeButton from "../../components/event/CalendarSubscribeButton";
 
 const EventsPage: React.FC = () => {
   const { session, role, loading: authLoading, isAuthenticated } = useAuth();
@@ -365,9 +364,6 @@ const EventsPage: React.FC = () => {
                 placeholder="Search events by name, location, or description..."
               />
             </div>
-
-            {/* Calendar Subscribe Button */}
-            <CalendarSubscribeButton />
 
             {isAdmin && (
               <div className="flex items-center bg-gray-100 p-1 rounded-lg self-end md:self-auto">
