@@ -26,3 +26,8 @@ input[type="password"]::-webkit-input-password-reveal {
 input[type="password"]::-moz-password-reveal {
   display: none;
 }
+
+/* TinyMCE floating elements (dropdowns, menus, dialogs) need higher z-index to appear above modals */
+.tox-tinymce-aux {
+  z-index: 10001 !important;
+}

@@ -76,8 +76,8 @@ const CreateAnnouncementModal = ({
     const newErrors: FormErrors = {};
 
     // --- Validation ---
-    if (!title.trim()) newErrors.title = "Title is required";
-    if (!description.trim()) newErrors.description = "Description is required";
+    if (!title) newErrors.title = "Title is required";
+    if (!description) newErrors.description = "Description is required";
 
     // --- Update errors state and return if invalid ---
     if (Object.keys(newErrors).length > 0) {
@@ -109,11 +109,13 @@ const CreateAnnouncementModal = ({
       }
 
       const token = session.access_token;
+      
 
       const announcementData = {
-        title: title.trim(),
-        description: description.trim(),
+        title: title,
+        description: description,
       };
+      console.log(announcementData)
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/announcements/add-announcement`,
@@ -250,8 +252,14 @@ const CreateAnnouncementModal = ({
         uploadcare_public_key: import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY,
       }}
       initialValue="Welcome to TinyMCE!"
+      id="description"
+      value={description}
+      onEditorChange={(newValue, editor) => {
+        setDescription(newValue);
+        setDescription(editor.getContent());
+      }}
     />
-            <textarea
+            {/* <textarea
               id="description"
               placeholder="Announcement details..."
               value={description}
@@ -268,7 +276,7 @@ const CreateAnnouncementModal = ({
               aria-describedby={
                 errors.description ? "description-error" : undefined
               }
-            />
+            /> */}
             {errors.description && (
               <p id="description-error" className="text-red-500 text-xs mt-1">
                 {errors.description}
