@@ -115,7 +115,7 @@ const CreateAnnouncementModal = ({
         title: title,
         description: description,
       };
-      console.log(announcementData)
+   
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/announcements/add-announcement`,
@@ -143,6 +143,7 @@ const CreateAnnouncementModal = ({
 
       const data = await response.json();
       onAnnouncementCreated(data);
+   
       
     } catch (error) {
       console.error("Error creating announcement:", error);

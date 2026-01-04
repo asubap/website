@@ -83,9 +83,11 @@ const ViewAnnouncementModal = ({
               : 'No date available'}
           </p>
           <div className="border-t border-gray-200 pt-4 mt-2">
-            <p className="text-gray-700 whitespace-pre-wrap">
-              {announcement.description}
-            </p>
+          {/** if we go back to just plaintext then use the className: "whitespace-pre-wrap" as spaces will be shown  */}
+          <div 
+            className="prose prose-md max-w-none text-gray-600"
+            dangerouslySetInnerHTML={{ __html: announcement.description }}
+          />
           </div>
         </div>
 
