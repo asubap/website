@@ -366,7 +366,6 @@ const EventsPage: React.FC = () => {
               />
             </div>
 
-            {/* Calendar Subscribe Button */}
             <CalendarSubscribeButton />
 
             {isAdmin && (
