@@ -5,6 +5,8 @@ import { useToast } from "../../context/toast/ToastContext";
 import ConfirmationModal from "../common/ConfirmationModal";
 import { Announcement } from "../../types";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { Editor } from '@tinymce/tinymce-react';
+
 
 interface CreateAnnouncementModalProps {
   onClose: () => void;
@@ -74,8 +76,8 @@ const CreateAnnouncementModal = ({
     const newErrors: FormErrors = {};
 
     // --- Validation ---
-    if (!title.trim()) newErrors.title = "Title is required";
-    if (!description.trim()) newErrors.description = "Description is required";
+    if (!title) newErrors.title = "Title is required";
+    if (!description) newErrors.description = "Description is required";
 
     // --- Update errors state and return if invalid ---
     if (Object.keys(newErrors).length > 0) {
@@ -107,11 +109,13 @@ const CreateAnnouncementModal = ({
       }
 
       const token = session.access_token;
+      
 
       const announcementData = {
-        title: title.trim(),
-        description: description.trim(),
+        title: title,
+        description: description,
       };
+   
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/announcements/add-announcement`,
@@ -139,6 +143,7 @@ const CreateAnnouncementModal = ({
 
       const data = await response.json();
       onAnnouncementCreated(data);
+   
       
     } catch (error) {
       console.error("Error creating announcement:", error);
@@ -227,7 +232,32 @@ const CreateAnnouncementModal = ({
             >
               Description *
             </label>
-            <textarea
+            <Editor
+      apiKey={import.meta.env.VITE_TINY_MCE_KEY}
+      init={{
+        plugins: [
+          // Core editing features
+          'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+           ],
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+        tinycomments_mode: 'embedded',
+        tinycomments_author: 'Author name',
+        mergetags_list: [
+          { value: 'First.Name', title: 'First Name' },
+          { value: 'Email', title: 'Email' },
+        ],
+       
+        uploadcare_public_key: import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY,
+      }}
+      initialValue="Welcome to TinyMCE!"
+      id="description"
+      value={description}
+      onEditorChange={(newValue, editor) => {
+        setDescription(newValue);
+        setDescription(editor.getContent());
+      }}
+    />
+            {/* <textarea
               id="description"
               placeholder="Announcement details..."
               value={description}
@@ -244,7 +274,7 @@ const CreateAnnouncementModal = ({
               aria-describedby={
                 errors.description ? "description-error" : undefined
               }
-            />
+            /> */}
             {errors.description && (
               <p id="description-error" className="text-red-500 text-xs mt-1">
                 {errors.description}
