@@ -35,14 +35,21 @@ export const AnnouncementListShort = ({
       return "Invalid date";
     }
   };
+  const getPlainText = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  };
 
   // Filter announcements based on search query
-  const filteredAnnouncements = announcements.filter(
-    (a) =>
-      a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (a.description &&
-        a.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredAnnouncements = announcements.filter((a) => {
+    const searchTerm = searchQuery.toLowerCase();
+    const plainDescription = a.description ? getPlainText(a.description).toLowerCase() : "";
+    
+    return (
+      a.title.toLowerCase().includes(searchTerm) ||
+      plainDescription.includes(searchTerm)
+    );
+  });
 
   return (
     <div className="w-full flex flex-col">
@@ -138,8 +145,8 @@ export const AnnouncementListShort = ({
               </div>
             </div>
             <p className="text-sm text-gray-600 line-clamp-2 mb-1">
-              {announcement.description}
-            </p>
+  {getPlainText(announcement.description)}
+</p>
             <p className="text-xs text-gray-500">
               {announcement.created_at
                 ? formatDateTime(announcement.created_at)
