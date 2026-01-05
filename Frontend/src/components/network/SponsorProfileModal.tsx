@@ -139,7 +139,7 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
           <Info className="w-5 h-5 mr-2 text-gray-500" /> About
         </h4>
         <p className="text-gray-700 whitespace-pre-wrap">
-          {sponsor.about || 'Not Provided'}
+          {displaySponsor.about || 'Not Provided'}
         </p>
       </div>
 
@@ -147,9 +147,9 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
         <h4 className="text-lg font-semibold mb-2 flex items-center">
           <LinkIcon className="w-5 h-5 mr-2 text-gray-500" /> Links
         </h4>
-        {sponsor.links && sponsor.links.length > 0 ? (
+        {displaySponsor.links && displaySponsor.links.length > 0 ? (
           <div className="flex flex-col">
-            {sponsor.links.map((link, index) => (
+            {displaySponsor.links.map((link, index) => (
               <a 
                 key={index}
                 href={link.startsWith('http') ? link : `https://${link}`}
@@ -168,9 +168,9 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
 
       <div className="border-t pt-6">
         <h4 className="text-lg font-semibold mb-2">Resources</h4>
-        {sponsor.resources && sponsor.resources.length > 0 ? (
+        {displaySponsor.resources && displaySponsor.resources.length > 0 ? (
           <div className="space-y-2">
-            {sponsor.resources.map((resource, index) => (
+            {displaySponsor.resources.map((resource, index) => (
               <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                 <span className="text-gray-700 truncate flex-1">
                   {resource.label}
@@ -196,9 +196,9 @@ const SponsorProfileModal: React.FC<SponsorProfileModalProps> = ({
         <h4 className="text-lg font-semibold mb-2 flex items-center">
           <Mail className="w-5 h-5 mr-2 text-gray-500" /> Emails
         </h4>
-        {sponsor.emails && sponsor.emails.length > 0 ? (
+        {displaySponsor.emails && displaySponsor.emails.length > 0 ? (
           <div className="flex flex-col space-y-1">
-            {sponsor.emails.map((email, idx) => (
+            {displaySponsor.emails.map((email, idx) => (
               <button
                 key={idx}
                 type="button"
