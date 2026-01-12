@@ -76,7 +76,7 @@ const NetworkingPage = () => {
   // Use the custom sort hook
   const { sortBy, sortedData: sortedMembers, handleSortChange } = useSort(
     filteredMembers,
-    'name-asc',
+    'hours-desc',
     memberSortFields
   );
 
