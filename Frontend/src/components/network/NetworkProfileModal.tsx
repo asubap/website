@@ -169,32 +169,32 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
           <div className="flex items-center">
             <Clock className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
             <span className="font-bold text-gray-800 whitespace-nowrap">
-              Total Hours: {member.hours ?? "0"} hrs
+              Total Hours: {displayMember.hours ?? "0"} hrs
             </span>
           </div>
           <div className="flex flex-col md:flex-row gap-y-1 md:gap-y-0 gap-x-5 whitespace-nowrap">
             <span className="text-gray-600">
               Development:{" "}
               <span className="font-medium text-gray-800">
-                {member.developmentHours ?? "0"} hrs
+                {displayMember.developmentHours ?? "0"} hrs
               </span>
             </span>
             <span className="text-gray-600">
               Professional:{" "}
               <span className="font-medium text-gray-800">
-                {member.professionalHours ?? "0"} hrs
+                {displayMember.professionalHours ?? "0"} hrs
               </span>
             </span>
             <span className="text-gray-600">
               Service:{" "}
               <span className="font-medium text-gray-800">
-                {member.serviceHours ?? "0"} hrs
+                {displayMember.serviceHours ?? "0"} hrs
               </span>
             </span>
             <span className="text-gray-600">
               Social:{" "}
               <span className="font-medium text-gray-800">
-                {member.socialHours ?? "0"} hrs
+                {displayMember.socialHours ?? "0"} hrs
               </span>
             </span>
           </div>
