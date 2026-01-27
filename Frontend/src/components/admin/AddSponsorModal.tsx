@@ -131,21 +131,28 @@ const AddSponsorModal = ({ onClose, onSponsorAdded }: AddSponsorModalProps) => {
         }
       );
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Failed to add sponsor" }));
-        console.error("Backend error:", errorData);
-        showToast(
-          `Error: ${errorData.message || "Failed to add sponsor"}`,
-          "error"
-        ); // Keep toast for server errors
-        // Potentially set server-side validation errors here if backend provides field-specific errors
-        // setErrors(mapBackendErrorsToFormErrors(errorData));
-        throw new Error(errorData.message || "Failed to add sponsor");
+        const errorMessage = data?.message || data?.error || "Failed to add sponsor";
+        console.error("Backend error:", data);
+        showToast(`Error: ${errorMessage}`, "error");
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      // Check for error in response body even when status is 200
+      if (data?.error || data?.message?.toLowerCase().includes("error")) {
+        const errorMessage = data.error || data.message;
+        console.error("Backend returned error in response body:", data);
+        showToast(`Error: ${errorMessage}`, "error");
+        throw new Error(errorMessage);
+      }
+
+      if (!data) {
+        console.error("No data returned from backend");
+        showToast("Error: No response from server", "error");
+        throw new Error("No response from server");
+      }
 
       onSponsorAdded(data);
       showToast("Sponsor added successfully", "success"); // Keep toast for success
