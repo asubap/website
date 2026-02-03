@@ -120,7 +120,7 @@ const ArchivedMembersList = ({ onMemberRestored, onRefreshRequested }: ArchivedM
               className="w-full border border-bapgray rounded-md px-4 py-2 flex justify-between items-center"
             >
               <span className="text-gray-800 text-m pr-2">
-                {member.name}
+                {member.name || member.email}
                 {member.rank && (
                   <span className="text-xs ml-2 px-2 py-1 bg-gray-100 text-gray-600 rounded">
                     {member.rank}
