@@ -231,6 +231,8 @@ const EventsPage: React.FC = () => {
   }, [session, role, authLoading]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchEvents = async () => {
       try {
         const endpoint = session?.access_token
@@ -242,21 +244,30 @@ const EventsPage: React.FC = () => {
         }
 
         setLoading(true);
-        const response = await fetch(endpoint, { method: "GET", headers });
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers,
+          signal: controller.signal,
+        });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         setAllEvents(data);
       } catch (error) {
+        if ((error as Error).name === "AbortError") return;
         console.error("Error fetching events:", error);
         setAllEvents([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchEvents();
+
+    return () => controller.abort();
   }, [session, authLoading]);
 
   // Effect 2: Handle highlighting when location state changes or loading finishes
