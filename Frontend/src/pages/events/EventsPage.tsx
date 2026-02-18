@@ -152,7 +152,7 @@ const EventsPage: React.FC = () => {
           },
           body: JSON.stringify({
             event_id: eventToAnnounce.id,
-            recipient_filter: "all"  // Backend fetches emails from database
+            recipient_filter: "rsvped"  // Backend fetches emails from database
           }),
         }
       );
