@@ -14,6 +14,7 @@ import { useSponsors } from "./hooks/useSponsors";
 import { useConfirmDialog } from "./hooks/useConfirmDialog";
 import { useMemberDetails } from "./hooks/useMemberDetails";
 import { authFetch, getToken } from "./adminApi";
+import type { MemberDetail } from "./adminTypes";
 
 import { AdminAnnouncementsSection } from "./sections/AdminAnnouncementsSection";
 import { AdminUsersSection } from "./sections/AdminUsersSection";
@@ -55,15 +56,26 @@ const Admin = () => {
     const token = getToken(session);
     if (!token) return;
     try {
-      await authFetch(token, "/users/delete-user", {
+      const res = await authFetch(token, "/users/delete-user", {
         method: "POST",
         body: JSON.stringify({ user_email: email }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const message =
+          err && typeof (err as { message?: string }).message === "string"
+            ? (err as { message: string }).message
+            : "Failed to delete user";
+        console.error("Delete user failed:", message);
+        showToast(message, "error");
+        return;
+      }
       setAdminEmails((p) => p.filter((e) => e !== email));
       setMembers((p) => p.filter((m) => m.email !== email));
       setSponsors((p) => p.filter((e) => e !== email));
     } catch (e) {
       console.error("Error deleting user:", e);
+      showToast("Failed to delete user.", "error");
     }
   };
 
@@ -109,7 +121,7 @@ const Admin = () => {
     );
   };
 
-  const handleSaveMember = async (data: import("../../types").MemberDetail) => {
+  const handleSaveMember = async (data: MemberDetail) => {
     setMemberDetails(data.email, data);
     showToast("Member details updated successfully", "success");
     await refetchUsers();

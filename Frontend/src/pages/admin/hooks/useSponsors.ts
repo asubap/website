@@ -10,39 +10,52 @@ export function useSponsors() {
   const [sponsors, setSponsors] = useState<string[]>([]);
   const [tiers, setTiers] = useState<string[]>([]);
 
-  const refetch = useCallback(async () => {
+  const refetch = useCallback(async (): Promise<boolean> => {
     const token = getToken(session);
-    if (!token) return;
+    if (!token) return false;
     try {
       const res = await authFetch(token, "/sponsors/");
-      if (!res.ok) return;
+      if (!res.ok) {
+        let errorMessage = "Failed to fetch sponsor data";
+        try {
+          const errBody = await res.json();
+          if (errBody && typeof errBody.message === "string") {
+            errorMessage = errBody.message;
+          }
+        } catch {
+          // use default message
+        }
+        showToast(errorMessage, "error");
+        return false;
+      }
       const data = await res.json();
       setSponsors(data.map((s: ApiSponsor) => s.company_name));
       setTiers(data.map((s: ApiSponsor) => s.tier));
+      return true;
     } catch (e) {
       console.error("Error fetching sponsors:", e);
       showToast("Failed to refresh sponsor data", "error");
+      return false;
     }
   }, [session, showToast]);
 
   useEffect(() => {
     if (!session) return;
-    refetch();
+    void refetch();
   }, [session, refetch]);
 
   const addSponsor = useCallback(
     async (newSponsor: ApiSponsor) => {
       const token = getToken(session);
       if (!token) return;
-      try {
-        await refetch();
-      } catch {
+      const success = await refetch();
+      if (!success) {
         setSponsors((p) => [...p, newSponsor.company_name]);
         setTiers((p) => [...p, newSponsor.tier]);
       }
-      showToast("Sponsor added successfully", "success");
+      // Success toast is shown by AddSponsorModal
     },
-    [session, showToast, refetch]
+    [session, refetch]
   );
 
   const deleteSponsor = useCallback(
@@ -50,17 +63,29 @@ export function useSponsors() {
       const token = getToken(session);
       if (!token) return;
       try {
-        await authFetch(token, "/sponsors/delete-sponsor", {
+        const res = await authFetch(token, "/sponsors/delete-sponsor", {
           method: "POST",
           body: JSON.stringify({ sponsor_name: sponsorName }),
         });
-        setSponsors((p) => p.filter((e) => e !== sponsorName));
+        if (!res.ok) {
+          let message = "Failed to delete sponsor";
+          try {
+            const err = await res.json();
+            if (err && typeof err.message === "string") message = err.message;
+          } catch {
+            // use default
+          }
+          showToast(message, "error");
+          return;
+        }
+        await refetch();
         showToast("Sponsor deleted successfully", "success");
       } catch (e) {
         console.error("Error deleting sponsor:", e);
+        showToast("Failed to delete sponsor.", "error");
       }
     },
-    [session, showToast]
+    [session, showToast, refetch]
   );
 
   const updateTier = useCallback(
@@ -102,7 +127,7 @@ export function useSponsors() {
       try {
         const res = await authFetch(
           token,
-          `/sponsors/${data.companyName}/details`,
+          `/sponsors/${encodeURIComponent(data.companyName)}/details`,
           {
             method: "POST",
             body: JSON.stringify({

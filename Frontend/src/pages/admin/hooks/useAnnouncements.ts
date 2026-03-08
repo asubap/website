@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../context/auth/authProvider";
 import { useToast } from "../../../context/toast/ToastContext";
-import { getToken, authFetch } from "../adminApi";
-import { sortAnnouncements } from "../adminApi";
+import { getToken, authFetch, sortAnnouncements } from "../adminApi";
 import type { Announcement } from "../adminTypes";
 
 export function useAnnouncements() {
