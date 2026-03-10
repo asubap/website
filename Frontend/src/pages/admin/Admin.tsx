@@ -41,7 +41,7 @@ const Admin = () => {
     sponsors,
     setSponsors,
     tiers,
-    addSponsor,
+    refetch: refetchSponsors,
     deleteSponsor,
     updateTier,
     updateProfile,
@@ -157,7 +157,7 @@ const Admin = () => {
               sponsors={sponsors}
               tiers={tiers}
               onDelete={deleteSponsor}
-              onAdd={addSponsor}
+              onAdd={async () => { await refetchSponsors(); }}
               onTierChange={updateTier}
               onProfileUpdate={updateProfile}
               showConfirm={confirm.show}

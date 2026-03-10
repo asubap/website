@@ -1,13 +1,12 @@
 import { useState } from "react";
 import SponsorList from "../../../components/admin/SponsorList";
 import AddSponsorModal from "../../../components/admin/AddSponsorModal";
-import type { ApiSponsor } from "../adminTypes";
 
 interface SponsorsSectionProps {
   sponsors: string[];
   tiers: string[];
   onDelete: (name: string) => Promise<void>;
-  onAdd: (s: ApiSponsor) => Promise<void>;
+  onAdd: () => Promise<void>;
   onTierChange: (email: string, newTier: string) => Promise<void>;
   onProfileUpdate: (data: {
     companyName: string;
@@ -59,8 +58,8 @@ export function SponsorsSection({
       {addOpen && (
         <AddSponsorModal
           onClose={() => setAddOpen(false)}
-          onSponsorAdded={(s) => {
-            onAdd(s);
+          onSponsorAdded={async () => {
+            await onAdd();
             setAddOpen(false);
           }}
         />

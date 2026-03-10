@@ -44,20 +44,6 @@ export function useSponsors() {
     void refetch();
   }, [session, refetch]);
 
-  const addSponsor = useCallback(
-    async (newSponsor: ApiSponsor) => {
-      const token = getToken(session);
-      if (!token) return;
-      const success = await refetch();
-      if (!success) {
-        setSponsors((p) => [...p, newSponsor.company_name]);
-        setTiers((p) => [...p, newSponsor.tier]);
-      }
-      // Success toast is shown by AddSponsorModal
-    },
-    [session, refetch]
-  );
-
   const deleteSponsor = useCallback(
     async (sponsorName: string) => {
       const token = getToken(session);
@@ -159,7 +145,6 @@ export function useSponsors() {
     setSponsors,
     setTiers,
     refetch,
-    addSponsor,
     deleteSponsor,
     updateTier,
     updateProfile,
