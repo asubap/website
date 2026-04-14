@@ -40,6 +40,7 @@ interface FormDataState {
   sponsors: string[];
   date: string;
   time: string;
+  dressCode: string;
   hours: string;
   hoursType: string;
   checkInWindow: number;
@@ -67,6 +68,7 @@ const EditEventModal = ({
     sponsors: [],
     date: "",
     time: "",
+    dressCode: "",
     hours: "",
     hoursType: "professional", // Default value
     checkInWindow: 15,
@@ -99,6 +101,7 @@ const EditEventModal = ({
       sponsors: eventToEdit.sponsors_attending || [],
       date: eventToEdit.event_date ? eventToEdit.event_date.split("T")[0] : "",
       time: eventToEdit.event_time || "",
+      dressCode: eventToEdit.dress_code || "",
       hours: eventToEdit.event_hours?.toString() || "",
       hoursType: eventToEdit.event_hours_type || "professional",
       checkInWindow: eventToEdit.check_in_window || 15,
@@ -204,7 +207,7 @@ const EditEventModal = ({
       const token = session.access_token;
 
       // --- Prepare data for EDIT endpoint ---
-      const eventDataToUpdate: { [key: string]: any } = {
+      const eventDataToUpdate: Record<string, unknown> = {
         event_id: eventToEdit.id,
         name: formData.eventTitle.trim(),
         date: formData.date || "",
@@ -215,6 +218,7 @@ const EditEventModal = ({
         },
         description: formData.description.trim(),
         time: formData.time || "",
+        dress_code: formData.dressCode.trim(),
         sponsors: formData.sponsors,
         check_in_window: formData.checkInWindow,
         check_in_radius: formData.checkInRadius,
@@ -254,6 +258,7 @@ const EditEventModal = ({
         event_long: formData.location.longitude,
         event_date: formData.date,
         event_time: formData.time,
+        dress_code: formData.dressCode.trim(),
         event_hours: parseFloat(formData.hours),
         event_hours_type: formData.hoursType,
         sponsors_attending: formData.sponsors,
@@ -365,6 +370,19 @@ const EditEventModal = ({
               <input id="time" name="time" type="time" placeholder="--:-- --" value={formData.time} onChange={handleInputChange} className={`w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred ${errors.time ? 'border-red-500' : 'border-gray-300'}`} required aria-invalid={!!errors.time} aria-describedby={errors.time ? 'time-error' : undefined} />
               {errors.time && <p id="time-error" className="text-red-500 text-xs mt-1">{errors.time}</p>}
             </div>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="dressCode" className="block text-sm font-medium text-gray-700 mb-1">Dress Code</label>
+            <input
+              id="dressCode"
+              name="dressCode"
+              type="text"
+              placeholder="e.g., Business Professional"
+              value={formData.dressCode}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred"
+            />
           </div>
 
           {/* ... Hours & Type ... */}

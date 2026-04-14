@@ -21,6 +21,7 @@ interface BackendMember {
   id: number;
   user_id?: string; // Keep if still used?
   user_email?: string | null;
+  display_email?: string | null;
   development_hours?: number;
   professional_hours?: number;
   service_hours?: number;
@@ -191,7 +192,8 @@ const NetworkingPage = () => {
             id: item.id.toString(),
             type: "member" as const,
             name: memberName,
-            email: item.user_email || "Not Provided",
+            email: item.display_email || item.user_email || "Not Provided",
+            userEmail: item.user_email || undefined,
             phone: "Not Provided", // Not in summary
             major: item.major || "Not Provided",
             graduationDate: item.graduating_year?.toString() || item.year || "Not Provided",

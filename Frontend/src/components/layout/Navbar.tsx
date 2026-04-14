@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import BAPLogo from "../../assets/BAP_Logo.png";
 import LogOut from "../logOut/LogOut";
 import type { RoleType } from "../../context/auth/authProvider";
+import type { NavItem } from "../nav/NavLink";
 
 interface NavbarProps {
-  links: { name: string; href: string; onClick?: () => void }[];
+  links: NavItem[];
   title: string;
   isLogged: boolean;
   backgroundColor?: string;
@@ -26,7 +27,11 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openMobileSections, setOpenMobileSections] = useState<Record<string, boolean>>({});
   const menuRef = useRef<HTMLDivElement>(null);
+  const desktopNavRef = useRef<HTMLDivElement>(null);
+  const dropdownCloseTimeoutRef = useRef<number | null>(null);
   const lastScrollTop = useRef(0);
   const lastToggleTime = useRef(0);
 
@@ -40,7 +45,7 @@ const Navbar: React.FC<NavbarProps> = ({
     lastToggleTime.current = now;
 
     setIsMenuOpen((prev) => !prev);
-  }, [isMenuOpen]);
+  }, []);
 
   // Handle scroll events to hide/show navbar
   useEffect(() => {
@@ -66,6 +71,9 @@ const Navbar: React.FC<NavbarProps> = ({
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
+      if (desktopNavRef.current && !desktopNavRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -74,10 +82,19 @@ const Navbar: React.FC<NavbarProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (dropdownCloseTimeoutRef.current) {
+        window.clearTimeout(dropdownCloseTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle menu item clicks to close the menu
   const handleMenuItemClick = useCallback((linkOnClick?: () => void) => {
     return () => {
       setIsMenuOpen(false);
+      setOpenDropdown(null);
       if (linkOnClick) {
         linkOnClick();
       }
@@ -100,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   // Add Resources link if logged in and not a sponsor
-  let navLinks = [...links];
+  const navLinks = [...links];
   const isSponsor =
     (typeof role === "string" && role === "sponsor") ||
     (typeof role === "object" && role !== null && "type" in role && role.type === "sponsor");
@@ -114,6 +131,32 @@ const Navbar: React.FC<NavbarProps> = ({
     const [resourcesLink] = navLinks.splice(resourcesIndex, 1);
     navLinks.unshift(resourcesLink);
   }
+
+  const toggleDesktopDropdown = (name: string) => {
+    setOpenDropdown((prev) => (prev === name ? null : name));
+  };
+
+  const openDesktopDropdown = (name: string) => {
+    if (dropdownCloseTimeoutRef.current) {
+      window.clearTimeout(dropdownCloseTimeoutRef.current);
+      dropdownCloseTimeoutRef.current = null;
+    }
+    setOpenDropdown(name);
+  };
+
+  const closeDesktopDropdown = (name: string) => {
+    dropdownCloseTimeoutRef.current = window.setTimeout(() => {
+      setOpenDropdown((prev) => (prev === name ? null : prev));
+      dropdownCloseTimeoutRef.current = null;
+    }, 180);
+  };
+
+  const toggleMobileSection = (name: string) => {
+    setOpenMobileSections((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 font-outfit">
@@ -154,17 +197,53 @@ const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop Navigation - Change breakpoint to lg */}
           <div className="hidden lg:flex items-center space-x-6 z-10">
             {/* Main navigation links */}
-            <div className="flex space-x-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  onClick={handleMenuItemClick(link.onClick)}
-                  className="hover:text-bapred text-xl font-medium"
-                >
-                  {link.name}
-                </Link>
-              ))}
+            <div ref={desktopNavRef} className="flex space-x-6">
+              {navLinks.map((link) =>
+                link.children?.length ? (
+                  <div
+                    key={link.name}
+                    className="relative"
+                    onMouseEnter={() => openDesktopDropdown(link.name)}
+                    onMouseLeave={() => closeDesktopDropdown(link.name)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleDesktopDropdown(link.name)}
+                      className="hover:text-bapred text-xl font-medium flex items-center gap-1"
+                      aria-expanded={openDropdown === link.name}
+                    >
+                      <span>{link.name}</span>
+                      <span className="text-sm">▼</span>
+                    </button>
+                    {openDropdown === link.name && (
+                      <div className="absolute left-0 top-full pt-1">
+                        <div className="absolute left-0 -top-1 h-3 w-full" />
+                        <div className="min-w-[220px] rounded-md border border-gray-200 bg-white py-2 shadow-lg">
+                          {link.children.map((child) => (
+                            <Link
+                              key={child.name}
+                              to={child.href}
+                              onClick={handleMenuItemClick()}
+                              className="block px-4 py-3 text-base text-gray-700 hover:bg-gray-50 hover:text-bapred"
+                            >
+                              {child.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : link.href ? (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    onClick={handleMenuItemClick(link.onClick)}
+                    className="hover:text-bapred text-xl font-medium"
+                  >
+                    {link.name}
+                  </Link>
+                ) : null
+              )}
             </div>
 
             {/* Login/Logout always on the right */}
@@ -234,13 +313,43 @@ const Navbar: React.FC<NavbarProps> = ({
             {/* Navigation links */}
             {navLinks.map((link) => (
               <li key={link.name}>
-                <Link
-                  to={link.href}
-                  onClick={handleMenuItemClick(link.onClick)}
-                  className="hover:text-bapred text-xl font-medium"
-                >
-                  {link.name}
-                </Link>
+                {link.children?.length ? (
+                  <div className="flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => toggleMobileSection(link.name)}
+                      className="hover:text-bapred text-xl font-medium flex items-center gap-2"
+                      aria-expanded={!!openMobileSections[link.name]}
+                    >
+                      <span>{link.name}</span>
+                      <span className="text-sm">
+                        {openMobileSections[link.name] ? "▲" : "▼"}
+                      </span>
+                    </button>
+                    {openMobileSections[link.name] && (
+                      <div className="mt-4 flex flex-col gap-4">
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.name}
+                            to={child.href}
+                            onClick={handleMenuItemClick()}
+                            className="text-lg text-gray-700 hover:text-bapred"
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : link.href ? (
+                  <Link
+                    to={link.href}
+                    onClick={handleMenuItemClick(link.onClick)}
+                    className="hover:text-bapred text-xl font-medium"
+                  >
+                    {link.name}
+                  </Link>
+                ) : null}
               </li>
             ))}
 

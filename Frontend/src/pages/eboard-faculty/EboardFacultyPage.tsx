@@ -57,7 +57,7 @@ const EboardFacultyPage: React.FC = () => {
         } else {
           setEboardEntries([]);
         }
-      } catch (err) {
+      } catch {
         setEboardEntries([]);
       }
     };
@@ -99,17 +99,17 @@ const EboardFacultyPage: React.FC = () => {
                     <h2 className="text-xl font-semibold">{entry.name || "-"}</h2>
                     <p className="text-bapred font-medium">{entry.role}</p>
                     <p className="text-sm text-bapgray">{entry.major || ""}</p>
-                    {entry.role_email && (
+                    {(entry.display_email || entry.role_email || entry.email) && (
                       <button
                         type="button"
                         className="text-bapred hover:underline focus:outline-none text-sm mt-2"
                         title="Copy role email to clipboard"
                         onClick={() => {
-                          navigator.clipboard.writeText(entry.role_email);
+                          navigator.clipboard.writeText(entry.display_email || entry.role_email || entry.email);
                           showToast("Role email copied to clipboard!", "success");
                         }}
                       >
-                        {entry.role_email}
+                        {entry.display_email || entry.role_email || entry.email}
                       </button>
                     )}
                   </div>

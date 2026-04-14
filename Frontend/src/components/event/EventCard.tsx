@@ -382,6 +382,12 @@ export const EventCard: React.FC<EventCardProps> = ({
               </span>
             </div>
           )}
+          {event.dress_code && (
+            <div>
+              <span className="font-semibold text-gray-700">Dress Code: </span>
+              <span className="text-gray-600">{event.dress_code}</span>
+            </div>
+          )}
           {event.sponsors_attending && event.sponsors_attending.length > 0 && (
             <div>
               <span className="font-semibold text-gray-700">Sponsors: </span>

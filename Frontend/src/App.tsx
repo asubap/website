@@ -14,6 +14,7 @@ import Admin from "./pages/admin/Admin";
 import MemberView from "./pages/member/MemberView";
 import NetworkingPage from "./pages/network/NetworkingPage";
 import AlumniPage from "./pages/network/AlumniPage";
+import EboardPage from "./pages/network/EboardPage";
 import SponsorsNetworkPage from "./pages/sponsors-network/SponsorsNetworkPage";
 import NotFound from "./pages/notfound/NotFound";
 import ViewEvent from "./pages/events/ViewEvent";
@@ -68,6 +69,7 @@ function App() {
                   <Route path="/member" element={<MemberView />} />
                   <Route path="/network" element={<NetworkingPage />} />
                   <Route path="/alumni" element={<AlumniPage />} />
+                  <Route path="/eboard-network" element={<EboardPage />} />
                   <Route path="/sponsors-network" element={<SponsorsNetworkPage />} />
                   <Route path="/events/:eventId" element={<ViewEvent />} />
                   <Route path="/resources" element={<ResourcesPage />} />

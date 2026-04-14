@@ -1,10 +1,11 @@
 import Navbar from "../layout/Navbar";
 import Footer from "../layout/Footer";
 import { useAuth } from "../../context/auth/authProvider";
+import type { NavItem } from "../nav/NavLink";
 
 interface NetworkingLayoutProps {
   children: React.ReactNode;
-  navLinks: { name: string; href: string }[];
+  navLinks: NavItem[];
 }
 
 const NetworkingLayout = ({ children, navLinks }: NetworkingLayoutProps) => {
