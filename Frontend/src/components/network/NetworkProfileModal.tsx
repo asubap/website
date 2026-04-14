@@ -48,8 +48,10 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
           return;
         }
 
+        const memberLookupEmail = member.userEmail || member.email;
+
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/member-info/${encodeURIComponent(member.email)}`,
+          `${import.meta.env.VITE_BACKEND_URL}/member-info/${encodeURIComponent(memberLookupEmail)}`,
           {
             headers: {
               "Content-Type": "application/json",

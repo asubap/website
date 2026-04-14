@@ -53,6 +53,11 @@ export const EventListShort: React.FC<EventListShortProps> = ({ events, onEdit }
           <p className="text-sm text-gray-600 mb-2">
             <span className="font-semibold">RSVPs:</span> {event.rsvp_count || 0}
           </p>
+          {event.dress_code && (
+            <p className="text-sm text-gray-600 mb-2">
+              <span className="font-semibold">Dress Code:</span> {event.dress_code}
+            </p>
+          )}
           <div className="ml-auto flex gap-2 mt-1">
             <button
               className="px-3 py-1 border border-bapred text-bapred text-xs rounded-md hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-bapred"

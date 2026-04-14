@@ -1,6 +1,7 @@
 export interface MemberDetail {
   id: string;
   email: string;
+  userEmail?: string;
   name: string;
   phone: string;
   major: string;
@@ -49,6 +50,7 @@ export type BaseEvent = {
   event_location?: string;
   event_date: string;
   event_time?: string;
+  dress_code?: string;
   event_hours?: number;
   event_hours_type?: string;
   sponsors_attending?: string[];
@@ -119,6 +121,7 @@ export type EboardFacultyEntry = {
   role: string;
   role_email: string;
   email: string;
+  display_email?: string;
   profile_photo_url?: string;
   name: string | null;
   major: string | null;

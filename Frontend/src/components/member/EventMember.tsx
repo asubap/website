@@ -129,6 +129,7 @@ const EventMember: React.FC<EventMemberProps> = ({ eventAttendance = [], onRefre
                 event_location: attendedEvent.event_location,
                 event_date: attendedEvent.event_date || new Date().toISOString().split('T')[0],
                 event_time: attendedEvent.event_time,
+                dress_code: attendedEvent.dress_code,
                 event_hours: attendedEvent.event_hours,
                 event_hours_type: attendedEvent.event_hours_type,
                 rsvp_count: 0,

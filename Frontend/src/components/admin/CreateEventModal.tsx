@@ -44,6 +44,7 @@ const CreateEventModal = ({
   const [time, setTime] = useState("");
   const [hours, setHours] = useState("");
   const [hoursType, setHoursType] = useState("professional");
+  const [dressCode, setDressCode] = useState("");
   const [checkInWindow, setCheckInWindow] = useState(15);
   const [checkInRadius, setCheckInRadius] = useState(50);
   const [eventLimit, setEventLimit] = useState(100);
@@ -63,6 +64,7 @@ const CreateEventModal = ({
     time,
     hours,
     hoursType,
+    dressCode,
     checkInWindow,
     checkInRadius,
     eventLimit,
@@ -80,6 +82,7 @@ const CreateEventModal = ({
       time,
       hours,
       hoursType,
+      dressCode,
       checkInWindow,
       checkInRadius,
       eventLimit,
@@ -170,6 +173,7 @@ const CreateEventModal = ({
         event_time: time,
         event_hours: parsedHours, // Send parsed number
         event_hours_type: hoursType,
+        dress_code: dressCode.trim(),
         sponsors_attending: sponsors,
         check_in_window: checkInWindow,
         check_in_radius: checkInRadius,
@@ -394,6 +398,23 @@ const CreateEventModal = ({
                 </p>
               )}
             </div>
+          </div>
+
+          <div className="mb-4">
+            <label
+              htmlFor="dressCode"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Dress Code
+            </label>
+            <input
+              id="dressCode"
+              type="text"
+              placeholder="e.g., Business Professional"
+              value={dressCode}
+              onChange={(e) => setDressCode(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bapred"
+            />
           </div>
 
           {/* Hours & Type */}
