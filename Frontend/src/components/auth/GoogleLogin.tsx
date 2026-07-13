@@ -5,7 +5,12 @@ import { useAuth } from "../../context/auth/authProvider";
 const GoogleLogin = () => {
   const { session } = useAuth();
 
-  const baseUrl = window.location.origin;
+  // Get base URL for redirect
+  const baseUrl =
+    import.meta.env.VITE_ENV_STATE === "development"
+      ? "http://localhost:5173"
+      // : "https://frontend-iota-gules-58.vercel.app";
+      : "http://asubap.com";
 
   // Debug log to verify environment
   console.log("ENV_STATE:", import.meta.env.VITE_ENV_STATE, "| Redirect URL:", baseUrl);
