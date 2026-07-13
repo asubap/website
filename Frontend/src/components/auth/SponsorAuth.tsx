@@ -35,12 +35,7 @@ const SponsorAuth = () => {
     fetchSponsors();
   }, []);
 
-  // Get base URL for redirect
-  const baseUrl =
-    import.meta.env.VITE_ENV_STATE === "development"
-      ? "http://localhost:5173"
-      // : "https://frontend-iota-gules-58.vercel.app";
-      : "http://asubap.com";
+  const baseUrl = window.location.origin;
 
   // Redirect to saved path or default to auth home
   const getRedirectUrl = () => {
