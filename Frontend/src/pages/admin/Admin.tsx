@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import EmailList from "../../components/admin/EmailList";
@@ -760,6 +761,14 @@ const Admin = () => {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-bapred mb-6 text-center">
             Admin Dashboard
           </h1>
+          <section aria-labelledby="public-pages-heading" className="mb-10 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 id="public-pages-heading" className="text-2xl font-semibold mb-2">Public Website Pages</h2>
+            <p className="text-gray-600 mb-4">Open a page and select Edit page to update its content.</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/about" className="rounded-md bg-bapred px-5 py-3 text-center font-semibold text-white hover:bg-[#8f1f25] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bapred">About Us</Link>
+              <Link to="/membership" className="rounded-md bg-bapred px-5 py-3 text-center font-semibold text-white hover:bg-[#8f1f25] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bapred">Membership</Link>
+            </div>
+          </section>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full">
             {/* Announcements column - now order-3 on mobile to appear after Past Events */}
             <div className="order-3 md:order-2">
