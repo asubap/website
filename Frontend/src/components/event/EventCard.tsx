@@ -20,7 +20,7 @@ interface EventCardProps {
   rankLoading?: boolean;
   onEdit?: () => void;
   onAnnounce?: () => void;
-  onDelete?: () => void;
+  onRemove?: () => void;
   onCheckInSuccess?: () => void;
 }
 
@@ -51,7 +51,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   rankLoading: propRankLoading = false,
   onEdit,
   onAnnounce,
-  onDelete,
+  onRemove,
   onCheckInSuccess,
 }) => {
   const { session, role, loading, isAuthenticated } = useAuth();
@@ -421,11 +421,12 @@ export const EventCard: React.FC<EventCardProps> = ({
             <MoreHorizontal size={18} />
           </button>
         )}
-        {isAdmin && onDelete && (
+        {isAdmin && onRemove && (
           <button
-            onClick={onDelete}
+            onClick={onRemove}
             className="p-1.5 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-100"
-            title="Delete this event"
+            title="Remove this past hidden event"
+            aria-label={`Remove ${event.event_name}`}
           >
             <Trash2 size={18} />
           </button>

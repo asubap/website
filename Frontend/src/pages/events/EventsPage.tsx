@@ -33,9 +33,10 @@ const EventsPage: React.FC = () => {
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
-  // Add state for delete confirmation modal
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  // State for removing a past hidden event from event listings
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [eventToRemove, setEventToRemove] = useState<Event | null>(null);
+  const [showBulkRemoveModal, setShowBulkRemoveModal] = useState(false);
 
   // Add state for announce confirmation modal
   const [showAnnounceModal, setShowAnnounceModal] = useState(false);
@@ -85,17 +86,17 @@ const EventsPage: React.FC = () => {
     setShowEditEventModal(true);
   };
 
-  const handleDeleteEventClick = (event: Event) => {
-    setEventToDelete(event);
-    setShowDeleteModal(true);
+  const handleRemoveEventClick = (event: Event) => {
+    setEventToRemove(event);
+    setShowRemoveModal(true);
   };
 
-  const handleDeleteEvent = async () => {
-    if (!eventToDelete || !session?.access_token) return;
+  const handleRemoveEvent = async () => {
+    if (!eventToRemove || !session?.access_token) return;
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/events/delete-event`,
+        `${import.meta.env.VITE_BACKEND_URL}/events/archive-event`,
         {
           method: "POST",
           headers: {
@@ -103,25 +104,25 @@ const EventsPage: React.FC = () => {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            event_id: eventToDelete.id,
+            event_id: eventToRemove.id,
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to delete event");
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || "Failed to remove event");
       }
 
-      // Remove the deleted event from the local state
-      setAllEvents(allEvents.filter((event) => event.id !== eventToDelete.id));
+      setAllEvents((events) => events.filter((event) => event.id !== eventToRemove.id));
 
-      showToast("Event deleted successfully", "success");
+      showToast("Event removed successfully", "success");
     } catch (error) {
-      console.error("Error deleting event:", error);
-      showToast("Failed to delete event", "error");
+      console.error("Error removing event:", error);
+      showToast(error instanceof Error ? error.message : "Failed to remove event", "error");
     } finally {
-      setShowDeleteModal(false);
-      setEventToDelete(null);
+      setShowRemoveModal(false);
+      setEventToRemove(null);
     }
   };
 
@@ -335,21 +336,59 @@ const EventsPage: React.FC = () => {
     .sort(
       (a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime()
     );
+  const isPastEvent = (event: Event) =>
+    !isEventInSession(
+      event.event_date,
+      event.event_time || '00:00:00',
+      event.event_hours || 0
+    ) && getEventDateTime(event) < now;
   const pastEvents = filteredEvents
-    .filter(
-      (event) =>
-        !isEventInSession(
-          event.event_date,
-          event.event_time || '00:00:00',
-          event.event_hours || 0
-        ) && getEventDateTime(event) < now
-    )
+    .filter(isPastEvent)
     .sort(
       (a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime()
     );
+  const hasPastHiddenEvents = allEvents.some(
+    (event) => 'is_hidden' in event && event.is_hidden && isPastEvent(event)
+  );
 
   const handleLoadMorePastEvents = () => {
     setVisiblePastEventsCount((prevCount) => prevCount + PAST_EVENTS_INCREMENT);
+  };
+
+  const handleBulkRemovePastHiddenEvents = async () => {
+    if (!session?.access_token) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/events/archive-past-hidden`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to remove past hidden events");
+      }
+
+      setAllEvents((events) => events.filter((event) => {
+        const hidden = 'is_hidden' in event && event.is_hidden;
+        return !(hidden && isPastEvent(event));
+      }));
+      const count = Number(result?.archived_count || 0);
+      showToast(
+        `${count} past hidden event${count === 1 ? '' : 's'} removed; current hour totals reset`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error removing past hidden events:", error);
+      showToast(error instanceof Error ? error.message : "Failed to remove past hidden events", "error");
+    } finally {
+      setShowBulkRemoveModal(false);
+    }
   };
 
   return (
@@ -433,11 +472,6 @@ const EventsPage: React.FC = () => {
                         ? () => handleAnnounceEvent(event)
                         : undefined
                     }
-                    onDelete={
-                      role === "e-board"
-                        ? () => handleDeleteEventClick(event)
-                        : undefined
-                    }
                   />
                 ))
               ) : (
@@ -484,11 +518,6 @@ const EventsPage: React.FC = () => {
                         ? () => handleAnnounceEvent(event)
                         : undefined
                     }
-                    onDelete={
-                      role === "e-board"
-                        ? () => handleDeleteEventClick(event)
-                        : undefined
-                    }
                   />
                 ))
               ) : (
@@ -498,7 +527,18 @@ const EventsPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold mb-6">Past Events</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <h2 className="text-2xl font-bold">Past Events</h2>
+              {isAdmin && showHidden && hasPastHiddenEvents && (
+                <button
+                  type="button"
+                  onClick={() => setShowBulkRemoveModal(true)}
+                  className="px-4 py-2 border border-red-600 text-red-700 text-sm font-medium rounded-md hover:bg-red-50 transition-colors"
+                >
+                  Remove All Past Hidden Events
+                </button>
+              )}
+            </div>
             <div className="space-y-4">
               {loading || rankLoading ? (
                 <LoadingSpinner text="Loading past events..." size="md" />
@@ -520,9 +560,9 @@ const EventsPage: React.FC = () => {
                         ? () => handleEditEventClick(event)
                         : undefined
                     }
-                    onDelete={
-                      role === "e-board"
-                        ? () => handleDeleteEventClick(event)
+                    onRemove={
+                      isAdmin && showHidden
+                        ? () => handleRemoveEventClick(event)
                         : undefined
                     }
                   />
@@ -568,18 +608,30 @@ const EventsPage: React.FC = () => {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && eventToDelete && (
+      {/* Remove Confirmation Modal */}
+      {showRemoveModal && eventToRemove && (
         <ConfirmationModal
-          isOpen={showDeleteModal}
+          isOpen={showRemoveModal}
           onClose={() => {
-            setShowDeleteModal(false);
-            setEventToDelete(null);
+            setShowRemoveModal(false);
+            setEventToRemove(null);
           }}
-          onConfirm={handleDeleteEvent}
-          title="Delete Event"
-          message={`Are you sure you want to delete the event "${eventToDelete.event_name}"? This action cannot be undone.`}
-          confirmText="Delete"
+          onConfirm={handleRemoveEvent}
+          title="Remove Past Hidden Event"
+          message={`Remove "${eventToRemove.event_name}" from the website and current hour totals? Its attendance history will remain stored.`}
+          confirmText="Remove"
+          cancelText="Cancel"
+        />
+      )}
+
+      {showBulkRemoveModal && (
+        <ConfirmationModal
+          isOpen={showBulkRemoveModal}
+          onClose={() => setShowBulkRemoveModal(false)}
+          onConfirm={handleBulkRemovePastHiddenEvents}
+          title="Remove All Past Hidden Events"
+          message="Remove every completed hidden event from the website and reset the hours they contributed for all members? Attendance history will remain stored."
+          confirmText="Remove All"
           cancelText="Cancel"
         />
       )}
