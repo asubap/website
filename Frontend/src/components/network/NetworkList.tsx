@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { MemberDetail, Sponsor } from "../../types";
 import NetworkProfileModal from "./NetworkProfileModal";
 import SponsorProfileModal from "./SponsorProfileModal";
+import { formatMemberRank } from "../../utils/memberRanks";
 import {
   Briefcase,
   GraduationCap,
@@ -145,7 +146,7 @@ const NetworkList: React.FC<NetworkListProps> = ({ entities }) => {
                     <div className="flex items-center text-sm">
                       <Award className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="text-gray-700">
-                        Rank: {entity.rank || "Not Provided"}
+                        Rank: {formatMemberRank(entity.rank)}
                       </span>
                     </div>
                     <div className="flex items-center text-sm">

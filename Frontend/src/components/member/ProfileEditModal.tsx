@@ -8,6 +8,7 @@ import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../context/toast/ToastContext";
 import ProfilePictureUpload from "../../components/common/ProfilePictureUpload";
 import { MemberDetail } from "../../types";
+import { MEMBER_RANK_OPTIONS } from '../../utils/memberRanks';
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -245,7 +246,7 @@ export default function ProfileEditModal({
             major: formData.major,
             phone: formData.phone,
             member_status: formData.status,
-            member_rank: formData.rank,
+            ...(showRank ? { member_rank: formData.rank } : {}),
           }),
         }
       );
@@ -430,11 +431,15 @@ export default function ProfileEditModal({
                   className="appearance-none border border-[#d9d9d9] rounded-lg p-3 w-full pr-10"
                 >
                   <option value="">Select Rank</option>
-                  {/* <option value="current">Current</option> */}
-                  <option value="pledge">Pledge</option>
-                  <option value="alumni">Alumni</option>
-                  <option value="inducted">Inducted</option>
+                  {MEMBER_RANK_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
+                {formData.rank === 'returning-candidate' && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Same access as a pledge. All completed candidate hours carry forward, including archived events.
+                  </p>
+                )}
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none mt-3.5"
                   size={16}

@@ -1,3 +1,4 @@
+import { formatMemberRank } from '../../utils/memberRanks';
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Fuse from "fuse.js";
 import { useAuth } from "../../context/auth/authProvider";
@@ -35,10 +36,7 @@ type BackendMemberSummary = {
 };
 
 const formatRank = (rank?: string | null) => {
-  if (rank === "inducted") return "Inducted";
-  if (rank === "pledge") return "Pledge";
-  if (rank === "alumni") return "Alumni";
-  return "Inducted";
+  return formatMemberRank(rank ?? undefined);
 };
 
 const mapEboardEntryToMember = (

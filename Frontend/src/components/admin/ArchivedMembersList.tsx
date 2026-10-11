@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import { useToast } from "../../context/toast/ToastContext";
-import { getArchivedMembers, restoreMember, ArchivedMember } from "../../services/memberArchiveService";
+import { getArchivedMembers, restoreMember, permanentlyDeleteMember, ArchivedMember } from "../../services/memberArchiveService";
 import LoadingSpinner from "../common/LoadingSpinner";
 import SearchInput from "../common/SearchInput";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 import RestoreConfirmDialog from "./RestoreConfirmDialog";
+import PermanentDeleteMemberDialog from './PermanentDeleteMemberDialog';
+import { formatMemberRank } from '../../utils/memberRanks';
 
 interface ArchivedMembersListProps {
   onMemberRestored?: () => void;
@@ -16,9 +18,11 @@ const ArchivedMembersList = ({ onMemberRestored, onRefreshRequested }: ArchivedM
   const [archivedMembers, setArchivedMembers] = useState<ArchivedMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<ArchivedMember | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [memberToRestore, setMemberToRestore] = useState<ArchivedMember | null>(null);
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -78,6 +82,23 @@ const ArchivedMembersList = ({ onMemberRestored, onRefreshRequested }: ArchivedM
     }
   };
 
+  const handlePermanentDelete = async (confirmationEmail: string) => {
+    if (!memberToDelete || !session || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await permanentlyDeleteMember(memberToDelete.email, confirmationEmail, session.access_token);
+      setArchivedMembers(previous => previous.filter(member => member.email !== memberToDelete.email));
+      setMemberToDelete(null);
+      showToast('Member permanently deleted.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Permanent deletion failed.', 'error');
+      // Refresh pending status after partial storage cleanup; keep the member available for retry.
+      await fetchArchivedMembers();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Filter members based on search query
   const filteredMembers = archivedMembers.filter(({ email, name }) => {
     const searchText = `${name} ${email}`.toLowerCase();
@@ -123,19 +144,27 @@ const ArchivedMembersList = ({ onMemberRestored, onRefreshRequested }: ArchivedM
                 {member.name || member.email}
                 {member.rank && (
                   <span className="text-xs ml-2 px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                    {member.rank}
+                    {formatMemberRank(member.rank)}
                   </span>
                 )}
               </span>
+              {member.deletion_pending_at && <span className="text-xs text-red-700">Deletion incomplete—retry to finish</span>}
               <div className="flex items-center space-x-1">
                 <button
                   onClick={(e) => handleRestoreClick(member, e)}
-                  disabled={isRestoring}
+                  disabled={isRestoring || isDeleting || !!member.deletion_pending_at}
                   className="text-green-600 hover:text-green-800 p-1"
                   aria-label={`Restore ${member.name}`}
                 >
                   <RotateCcw size={16} />
                 </button>
+                {role === 'e-board' && ['general-member', 'pledge', 'e-board'].includes(member.role) && (
+                  <button onClick={() => setMemberToDelete(member)} disabled={isRestoring || isDeleting}
+                    className="p-1 text-red-600 hover:text-red-800 disabled:opacity-50"
+                    aria-label={`Permanently delete ${member.name || member.email}`} title="Permanently delete">
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           ))
@@ -143,6 +172,11 @@ const ArchivedMembersList = ({ onMemberRestored, onRefreshRequested }: ArchivedM
       </div>
 
       {/* Restore Confirmation Dialog */}
+      {memberToDelete && (
+        <PermanentDeleteMemberDialog key={memberToDelete.email} member={memberToDelete}
+          isDeleting={isDeleting} onConfirm={handlePermanentDelete}
+          onCancel={() => { if (!isDeleting) setMemberToDelete(null); }} />
+      )}
       {memberToRestore && (
         <RestoreConfirmDialog
           memberName={memberToRestore.name}
