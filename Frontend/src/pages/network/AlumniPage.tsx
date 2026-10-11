@@ -1,3 +1,4 @@
+import { formatMemberRank } from '../../utils/memberRanks';
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "../../context/auth/authProvider";
 import NetworkSearch from "../../components/network/NetworkSearch";
@@ -175,10 +176,7 @@ const AlumniPage = () => {
             "Unknown Member";
           const memberAbout = item.about || item.bio || "";
           const memberPhotoUrl = item.profile_photo_url || item.photo_url || "";
-          const memberRank = item.rank === "inducted" ? "Inducted" :
-                             item.rank === "alumni" ? "Alumni" :
-                             item.rank === "pledge" ? "Pledge" :
-                             "Alumni";
+          const memberRank = formatMemberRank(item.rank);
 
           return {
             id: item.id.toString(),

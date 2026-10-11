@@ -14,6 +14,7 @@ import {
 import { useToast } from "../../context/toast/ToastContext";
 import { useAuth } from "../../context/auth/authProvider";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { formatMemberRank } from "../../utils/memberRanks";
 
 interface NetworkProfileModalProps {
   member: MemberDetail;
@@ -158,7 +159,7 @@ const NetworkProfileModal: React.FC<NetworkProfileModalProps> = ({
 
         <div className="flex items-center">
           <Award className="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" />
-          <span>Rank: {member.rank || "Not Provided"}</span>
+          <span>Rank: {formatMemberRank(member.rank)}</span>
         </div>
 
         <div className="flex items-center">

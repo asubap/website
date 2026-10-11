@@ -74,7 +74,7 @@ export const sortByTier = (
 
 /**
  * Get numeric value for member rank
- * Current > Pledge > Alumni
+ * Inducted > Returning Candidate > Pledge > Alumni
  */
 export const getRankValue = (rank: string): number => {
   const lowerRank = rank.toLowerCase();
@@ -82,6 +82,9 @@ export const getRankValue = (rank: string): number => {
   switch (lowerRank) {
     case 'current':
     case 'inducted':
+      return 4;
+    case 'returning-candidate':
+    case 'returning candidate':
       return 3;
     case 'pledge':
       return 2;
@@ -93,7 +96,7 @@ export const getRankValue = (rank: string): number => {
 };
 
 /**
- * Sort by member rank (Current > Pledge > Alumni)
+ * Sort by member rank (Inducted > Returning Candidate > Pledge > Alumni)
  */
 export const sortByRank = (
   a: string,

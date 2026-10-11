@@ -1,3 +1,4 @@
+import { formatMemberRank } from '../../utils/memberRanks';
 import React, { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { supabase } from "../../context/auth/supabaseClient";
@@ -295,10 +296,7 @@ const MemberDescription: React.FC<MemberDescriptionProps> = ({
           )}
           <div>
             <span className="font-bold">Rank:</span>{" "}
-            {profileData.rank
-              ? profileData.rank.charAt(0).toUpperCase() +
-                profileData.rank.slice(1)
-              : "Not set"}
+            {formatMemberRank(profileData.rank)}
           </div>
         </div>
         {!isAlumniUser && (

@@ -1,3 +1,4 @@
+import { formatMemberRank } from '../../utils/memberRanks';
 import { useState } from "react";
 import DeleteConfirmation from "./DeleteConfirmation";
 import { useToast } from "../../context/toast/ToastContext";
@@ -114,7 +115,7 @@ const EmailList = ({
     .filter(({ email, name, rank }) => {
       const searchText = (name || email || '').toLowerCase();
       const matchesSearch = searchText.includes(searchQuery.toLowerCase());
-      const matchesRank = !rankFilter || rank === rankFilter;
+      const matchesRank = !rankFilter || formatMemberRank(rank) === rankFilter;
       return matchesSearch && matchesRank;
     });
 
@@ -131,6 +132,7 @@ const EmailList = ({
         />
         {showRankFilter && (
           <select
+            aria-label="Filter members by rank"
             value={rankFilter}
             onChange={(e) => setRankFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
@@ -138,6 +140,7 @@ const EmailList = ({
             <option value="">All Ranks</option>
             <option value="Inducted">Inducted</option>
             <option value="Pledge">Pledge</option>
+            <option value="Returning Candidate">Returning Candidate</option>
           </select>
         )}
         {onCreateNew && (

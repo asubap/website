@@ -12,6 +12,7 @@ export interface ArchivedMember {
   email: string;
   name: string;
   deleted_at: string;
+  deletion_pending_at?: string | null;
   role: string;
   rank?: string;
   major?: string;
@@ -105,4 +106,22 @@ export const getArchivedMembers = async (
   }
 
   return await response.json();
+};
+
+export const permanentlyDeleteMember = async (
+  email: string, confirmationEmail: string, token: string
+): Promise<ArchiveResponse> => {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_URL}/member-info/${encodeURIComponent(email)}/permanent`,
+    {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ confirmation_email: confirmationEmail }),
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Permanent deletion failed. Retry from the archived members list.');
+  }
+  return response.json();
 };

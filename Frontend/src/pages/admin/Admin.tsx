@@ -1,3 +1,4 @@
+import { formatMemberRank } from '../../utils/memberRanks';
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
@@ -153,9 +154,7 @@ const Admin = () => {
         .map((item: UserInfo & { rank?: string }) => ({
           email: item.email,
           name: item.name,
-          rank: item.rank
-            ? item.rank.charAt(0).toUpperCase() + item.rank.slice(1)
-            : "Not Specified",
+          rank: formatMemberRank(item.rank),
         }));
 
       setMembers(members);

@@ -26,7 +26,7 @@ export interface MemberDetail {
 }
 
 // Member rank type
-export type MemberRank = 'pledge' | 'inducted' | 'alumni';
+export type MemberRank = 'pledge' | 'returning-candidate' | 'inducted' | 'alumni';
 
 // Re-export other existing types from this file if any, or add them here.
 // For example, if Announcement type is also used widely:
